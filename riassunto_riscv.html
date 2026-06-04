@@ -1,0 +1,2678 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RISC-V — Guida Completa</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --surface: #141416;
+    --surface2: #1c1c20;
+    --surface3: #242428;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8e6e0;
+    --muted: #888680;
+    --dim: #555350;
+
+    --blue: #5b9cf6;
+    --blue-bg: rgba(91,156,246,0.12);
+    --blue-border: rgba(91,156,246,0.3);
+
+    --green: #6bcb8b;
+    --green-bg: rgba(107,203,139,0.1);
+    --green-border: rgba(107,203,139,0.3);
+
+    --amber: #f5a623;
+    --amber-bg: rgba(245,166,35,0.1);
+    --amber-border: rgba(245,166,35,0.3);
+
+    --red: #f06b6b;
+    --red-bg: rgba(240,107,107,0.1);
+    --red-border: rgba(240,107,107,0.3);
+
+    --purple: #a78bfa;
+    --purple-bg: rgba(167,139,250,0.1);
+    --purple-border: rgba(167,139,250,0.3);
+
+    --teal: #4ecdc4;
+    --teal-bg: rgba(78,205,196,0.1);
+    --teal-border: rgba(78,205,196,0.3);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── LAYOUT ── */
+  .layout { display: flex; min-height: 100vh; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    width: 260px;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 28px 0;
+    z-index: 100;
+  }
+
+  .sidebar-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 17px;
+    color: var(--text);
+    padding: 0 24px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .sidebar-title span { color: var(--muted); font-size: 13px; font-family: 'DM Sans', sans-serif; display:block; margin-top:3px; }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 24px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+  .nav-item:hover { color: var(--text); background: var(--surface2); }
+  .nav-item.active { color: var(--text); border-left-color: var(--blue); background: var(--blue-bg); }
+  .nav-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dim); flex-shrink: 0; transition: background 0.15s;
+  }
+  .nav-item.active .nav-dot { background: var(--blue); }
+  .nav-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+    margin-left: auto;
+  }
+
+  /* ── MAIN ── */
+  .main { margin-left: 260px; max-width: 900px; padding: 60px 60px 120px; }
+
+  /* ── HERO ── */
+  .hero {
+    margin-bottom: 72px;
+    padding-bottom: 48px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-tag {
+    display: inline-block;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--blue);
+    background: var(--blue-bg);
+    border: 1px solid var(--blue-border);
+    border-radius: 4px;
+    padding: 3px 10px;
+    margin-bottom: 20px;
+    letter-spacing: 0.05em;
+  }
+  .hero h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 52px;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 16px;
+  }
+  .hero h1 em { font-style: italic; color: var(--blue); }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 520px; }
+
+  /* ── SECTIONS ── */
+  .section { margin-bottom: 80px; scroll-margin-top: 40px; }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    padding-top: 5px;
+    flex-shrink: 0;
+  }
+  .section-header h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 30px;
+    line-height: 1.2;
+    color: var(--text);
+  }
+  .section-header h2 .accent { color: var(--blue); }
+
+  .lead {
+    font-size: 16px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    line-height: 1.8;
+    max-width: 640px;
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── CARDS ── */
+  .card-grid { display: grid; gap: 12px; margin: 20px 0; }
+  .card-grid.cols2 { grid-template-columns: 1fr 1fr; }
+  .card-grid.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+  .card-grid.cols4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    transition: border-color 0.15s;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  .card.blue { border-color: var(--blue-border); background: var(--blue-bg); }
+  .card.green { border-color: var(--green-border); background: var(--green-bg); }
+  .card.amber { border-color: var(--amber-border); background: var(--amber-bg); }
+  .card.red { border-color: var(--red-border); background: var(--red-bg); }
+  .card.purple { border-color: var(--purple-border); background: var(--purple-bg); }
+  .card.teal { border-color: var(--teal-border); background: var(--teal-bg); }
+
+  .card-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 6px; }
+  .card.blue .card-title { color: var(--blue); }
+  .card.green .card-title { color: var(--green); }
+  .card.amber .card-title { color: var(--amber); }
+  .card.red .card-title { color: var(--red); }
+  .card.purple .card-title { color: var(--purple); }
+  .card.teal .card-title { color: var(--teal); }
+
+  .card-val {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .card-desc { font-size: 12px; color: var(--muted); margin-top: 5px; }
+
+  /* ── CALLOUT ── */
+  .callout {
+    border-left: 3px solid var(--blue);
+    background: var(--blue-bg);
+    border-radius: 0 8px 8px 0;
+    padding: 14px 18px;
+    margin: 20px 0;
+    font-size: 14px;
+    color: var(--text);
+    line-height: 1.7;
+  }
+  .callout.amber { border-color: var(--amber); background: var(--amber-bg); }
+  .callout.green { border-color: var(--green); background: var(--green-bg); }
+  .callout.red { border-color: var(--red); background: var(--red-bg); }
+  .callout strong { color: var(--blue); }
+  .callout.amber strong { color: var(--amber); }
+  .callout.green strong { color: var(--green); }
+  .callout.red strong { color: var(--red); }
+
+  /* ── CODE ── */
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    background: var(--surface3);
+    color: var(--green);
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+  }
+
+  pre {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+  pre .kw { color: var(--blue); }
+  pre .reg { color: var(--green); }
+  pre .imm { color: var(--amber); }
+  pre .cmt { color: var(--dim); font-style: italic; }
+  pre .label { color: var(--purple); }
+  pre .hi { background: rgba(245,166,35,0.15); border-radius: 3px; padding: 0 3px; }
+
+  /* ── TABLE ── */
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  th {
+    text-align: left; padding: 10px 14px;
+    background: var(--surface3); color: var(--muted);
+    font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+    border-bottom: 1px solid var(--border2);
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface2); }
+  td code { font-size: 12px; }
+  .t-blue { color: var(--blue); font-weight: 500; }
+  .t-green { color: var(--green); font-weight: 500; }
+  .t-amber { color: var(--amber); font-weight: 500; }
+  .t-purple { color: var(--purple); font-weight: 500; }
+
+  /* ── MEMORY MAP ── */
+  .mem-map { display: flex; flex-direction: column; gap: 3px; margin: 20px 0; max-width: 420px; }
+  .mem-seg {
+    padding: 12px 16px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px;
+  }
+  .mem-seg-name { font-weight: 500; }
+  .mem-seg-addr { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .mem-seg.stack { background: var(--blue-bg); border-color: var(--blue-border); }
+  .mem-seg.free { background: var(--surface2); border-style: dashed; color: var(--dim); }
+  .mem-seg.heap { background: var(--amber-bg); border-color: var(--amber-border); }
+  .mem-seg.data { background: var(--green-bg); border-color: var(--green-border); }
+  .mem-seg.code { background: var(--surface3); }
+  .mem-seg.reserved { background: var(--surface2); }
+  .mem-arrow {
+    font-size: 11px; color: var(--muted); padding: 2px 0;
+    font-family: 'DM Mono', monospace; text-align: center;
+  }
+
+  /* ── BYTE VISUAL ── */
+  .byte-row { display: flex; gap: 4px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+  .b {
+    width: 38px; height: 38px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    border-radius: 6px; border: 1px solid var(--border);
+    background: var(--surface2);
+    font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500;
+  }
+  .b .baddr { font-size: 9px; color: var(--dim); }
+  .b .bval { color: var(--text); }
+  .b.be { background: var(--blue-bg); border-color: var(--blue-border); }
+  .b.be .bval { color: var(--blue); }
+  .b.le { background: var(--green-bg); border-color: var(--green-border); }
+  .b.le .bval { color: var(--green); }
+  .b.b1 { background: rgba(245,166,35,0.12); border-color: var(--amber-border); }
+  .b.b1 .bval { color: var(--amber); }
+  .b.b2 { background: var(--purple-bg); border-color: var(--purple-border); }
+  .b.b2 .bval { color: var(--purple); }
+  .b.b3 { background: var(--red-bg); border-color: var(--red-border); }
+  .b.b3 .bval { color: var(--red); }
+  .b.b4 { background: var(--green-bg); border-color: var(--green-border); }
+  .b.b4 .bval { color: var(--green); }
+
+  /* ── STACK VISUAL ── */
+  .stack-vis { max-width: 380px; margin: 16px 0; }
+  .sf {
+    padding: 10px 16px;
+    border-radius: 6px; border: 1px solid var(--border);
+    margin: 3px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px;
+  }
+  .sf .sf-name { font-weight: 500; }
+  .sf .sf-addr { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+  .sf .sf-pointer {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 2px 8px; border-radius: 4px; font-weight: 600;
+  }
+  .sf.local-new { background: var(--blue-bg); border-color: var(--blue-border); }
+  .sf.fp-addr { background: var(--red-bg); border-color: var(--red-border); }
+  .sf.next-pc { background: var(--amber-bg); border-color: var(--amber-border); }
+  .sf.params { background: var(--green-bg); border-color: var(--green-border); }
+  .sf.retval { background: var(--teal-bg); border-color: var(--teal-border); }
+  .sf.caller { background: var(--surface3); }
+  .sf-ptr-fp { background: rgba(240,107,107,0.2); color: var(--red); }
+  .sf-ptr-sp { background: rgba(91,156,246,0.2); color: var(--blue); }
+
+  /* ── REGISTER TABLE ── */
+  .reg-group { margin: 16px 0; }
+  .reg-group-title {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px;
+  }
+  .reg-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .reg-chip {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 10px; font-size: 12px;
+  }
+  .reg-chip .rname { font-family: 'DM Mono', monospace; font-weight: 500; }
+  .reg-chip .ralt { color: var(--muted); font-size: 11px; }
+  .reg-chip.blue { border-color: var(--blue-border); }
+  .reg-chip.blue .rname { color: var(--blue); }
+  .reg-chip.green { border-color: var(--green-border); }
+  .reg-chip.green .rname { color: var(--green); }
+  .reg-chip.amber { border-color: var(--amber-border); }
+  .reg-chip.amber .rname { color: var(--amber); }
+  .reg-chip.purple { border-color: var(--purple-border); }
+  .reg-chip.purple .rname { color: var(--purple); }
+  .reg-chip.teal { border-color: var(--teal-border); }
+  .reg-chip.teal .rname { color: var(--teal); }
+
+  /* ── TABS ── */
+  .tabs-demo { margin: 20px 0; }
+  .tabs-header { display: flex; gap: 4px; margin-bottom: 0; flex-wrap: wrap; }
+  .tabs-btn {
+    padding: 7px 14px; border-radius: 6px 6px 0 0;
+    border: 1px solid var(--border); border-bottom: none;
+    background: var(--surface2); color: var(--muted);
+    font-size: 12px; font-family: 'DM Mono', monospace;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .tabs-btn:hover { color: var(--text); }
+  .tabs-btn.on { background: var(--surface3); color: var(--text); border-color: var(--border2); }
+  .tabs-body {
+    background: var(--surface3); border: 1px solid var(--border2);
+    border-radius: 0 8px 8px 8px; padding: 20px; font-family: 'DM Mono', monospace; font-size: 12px;
+    line-height: 1.8; min-height: 120px;
+  }
+  .tabs-panel { display: none; }
+  .tabs-panel.on { display: block; }
+  .tab-row-mem { display: flex; gap: 12px; color: var(--muted); margin: 2px 0; }
+  .tab-row-mem .taddr { color: var(--blue); width: 90px; }
+  .tab-row-mem .tval { color: var(--text); }
+  .tab-row-mem .tasm { color: var(--green); }
+  .tab-row-mem .tcmt { color: var(--dim); }
+
+  /* ── ENDIAN VIS ── */
+  .endian-side { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .endian-block { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .endian-block h4 { font-size: 13px; font-weight: 500; margin-bottom: 12px; }
+  .endian-block h4.be { color: var(--blue); }
+  .endian-block h4.le { color: var(--green); }
+
+  /* ── DIVIDER ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; padding: 32px 24px 80px; }
+    .card-grid.cols4 { grid-template-columns: 1fr 1fr; }
+    .card-grid.cols3 { grid-template-columns: 1fr 1fr; }
+    .endian-side { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-title">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </div>
+  <a class="nav-item active" href="#s1" onclick="setActive(this)">
+    <div class="nav-dot"></div> Bit, Byte e Word
+    <span class="nav-num">01</span>
+  </a>
+  <a class="nav-item" href="#s2" onclick="setActive(this)">
+    <div class="nav-dot"></div> La RAM
+    <span class="nav-num">02</span>
+  </a>
+  <a class="nav-item" href="#s3" onclick="setActive(this)">
+    <div class="nav-dot"></div> Registri CPU
+    <span class="nav-num">03</span>
+  </a>
+  <a class="nav-item" href="#s4" onclick="setActive(this)">
+    <div class="nav-dot"></div> Mappa della memoria
+    <span class="nav-num">04</span>
+  </a>
+  <a class="nav-item" href="#s5" onclick="setActive(this)">
+    <div class="nav-dot"></div> Little &amp; Big Endian
+    <span class="nav-num">05</span>
+  </a>
+  <a class="nav-item" href="#s6" onclick="setActive(this)">
+    <div class="nav-dot"></div> Chiamata di funzione
+    <span class="nav-num">06</span>
+  </a>
+  <a class="nav-item" href="#s7" onclick="setActive(this)">
+    <div class="nav-dot"></div> Le tab del simulatore
+    <span class="nav-num">07</span>
+  </a>
+  <a class="nav-item" href="#s9" onclick="setActive(this)">
+    <div class="nav-dot"></div> Cos'è RISC-V
+    <span class="nav-num">09</span>
+  </a>
+  <a class="nav-item" href="#s10" onclick="setActive(this)">
+    <div class="nav-dot"></div> Istruzioni aritmetiche
+    <span class="nav-num">10</span>
+  </a>
+  <a class="nav-item" href="#s11" onclick="setActive(this)">
+    <div class="nav-dot"></div> Accesso alla memoria
+    <span class="nav-num">11</span>
+  </a>
+  <a class="nav-item" href="#s12" onclick="setActive(this)">
+    <div class="nav-dot"></div> Operazioni logiche
+    <span class="nav-num">12</span>
+  </a>
+  <a class="nav-item" href="#s13" onclick="setActive(this)">
+    <div class="nav-dot"></div> Linguaggio macchina
+    <span class="nav-num">13</span>
+  </a>
+  <a class="nav-item" href="#s14" onclick="setActive(this)">
+    <div class="nav-dot"></div> Salti e controllo flusso
+    <span class="nav-num">14</span>
+  </a>
+  <a class="nav-item" href="#s15" onclick="setActive(this)">
+    <div class="nav-dot"></div> Procedure e convenzioni
+    <span class="nav-num">15</span>
+  </a>
+  <a class="nav-item" href="#s16" onclick="setActive(this)">
+    <div class="nav-dot"></div> Le 7 fasi
+    <span class="nav-num">16</span>
+  </a>
+  <a class="nav-item" href="#s18" onclick="setActive(this)">
+    <div class="nav-dot"></div> Catena di traduzione
+    <span class="nav-num">18</span>
+  </a>
+  <a class="nav-item" href="#s19" onclick="setActive(this)">
+    <div class="nav-dot"></div> Assemblatore a due passi
+    <span class="nav-num">19</span>
+  </a>
+  <a class="nav-item" href="#s20" onclick="setActive(this)">
+    <div class="nav-dot"></div> Direttive e macro
+    <span class="nav-num">20</span>
+  </a>
+  <a class="nav-item" href="#s21" onclick="setActive(this)">
+    <div class="nav-dot"></div> Il Linker
+    <span class="nav-num">21</span>
+  </a>
+  <a class="nav-item" href="#s22" onclick="setActive(this)">
+    <div class="nav-dot"></div> Loader e binding
+    <span class="nav-num">22</span>
+  </a>
+  <a class="nav-item" href="#s8" onclick="setActive(this)">
+    <div class="nav-dot"></div> Riepilogo finale
+    <span class="nav-num">23</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">INFORMATICA — RISC-V 32bit</div>
+    <h1>Architettura<br>e <em>Memoria</em></h1>
+    <p>Tutto quello che devi sapere: dai bit ai registri, dallo stack alle chiamate di funzione. In ordine, senza saltare nulla.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 1 ══════════════ -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2>Bit, Byte <span class="accent">e Word</span></h2>
+    </div>
+
+    <p class="lead">Prima di parlare di memoria e CPU, bisogna capire le unità fondamentali con cui tutto viene misurato.</p>
+
+    <p>Un <strong>bit</strong> è la quantità minima di informazione: può valere solo <code>0</code> oppure <code>1</code>. È la base di tutto il digitale — ogni dato nel computer, alla fine, è una sequenza di bit.</p>
+
+    <div class="card-grid cols4" style="margin: 20px 0;">
+      <div class="card blue">
+        <div class="card-title">Bit</div>
+        <div class="card-val">1</div>
+        <div class="card-desc">Solo 0 o 1</div>
+      </div>
+      <div class="card green">
+        <div class="card-title">Byte</div>
+        <div class="card-val">8 bit</div>
+        <div class="card-desc">256 valori (0–255)</div>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Halfword</div>
+        <div class="card-val">16 bit</div>
+        <div class="card-desc">2 byte, 65536 valori</div>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Word</div>
+        <div class="card-val">32 bit</div>
+        <div class="card-desc">4 byte — nativa RISC-V</div>
+      </div>
+    </div>
+
+    <p>La <strong>word</strong> è l'unità nativa di RISC-V a 32 bit: ogni registro è largo esattamente 32 bit, ogni istruzione occupa esattamente 32 bit. Il numero <code>0xA30012FF</code> è una word: 4 byte uno accanto all'altro.</p>
+
+    <div class="callout green">
+      <strong>Regola pratica:</strong> In RISC-V usi quasi sempre <code>lw</code> (load word) e <code>sw</code> (store word) perché lavorano con l'unità nativa da 32 bit. <code>lb</code> e <code>sb</code> servono per caratteri e dati da 1 byte (es. stringhe).
+    </div>
+
+    <p>Le istruzioni di accesso alla memoria in RISC-V riflettono esattamente queste unità:</p>
+
+    <table>
+      <tr><th>Istruzione</th><th>Dimensione</th><th>Byte letti</th><th>Uso tipico</th></tr>
+      <tr><td><code class="t-green">lb</code> / <code class="t-green">sb</code></td><td>byte</td><td>1</td><td>Caratteri ASCII, array di char</td></tr>
+      <tr><td><code class="t-amber">lh</code> / <code class="t-amber">sh</code></td><td>halfword</td><td>2</td><td>Rare, audio 16bit</td></tr>
+      <tr><td><code class="t-blue">lw</code> / <code class="t-blue">sw</code></td><td>word</td><td>4</td><td>Interi, puntatori, registri ← il più usato</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 2 ══════════════ -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <h2>La RAM: ogni <span class="accent">indirizzo = 1 byte</span></h2>
+    </div>
+
+    <p class="lead">La RAM è organizzata come un lunghissimo array dove ogni cella ha un indirizzo e contiene esattamente 1 byte.</p>
+
+    <p>Immagina la RAM come una fila infinita di cassetti. Ogni cassetto ha un numero (l'indirizzo) e contiene 8 bit (1 byte). L'indirizzo non punta a un bit, non punta a una word: punta sempre e solo a 1 byte.</p>
+
+    <p>Quindi se vuoi salvare il numero <code>0xA30012FF</code> (che è una word, 4 byte) all'indirizzo <code>0x1000</code>, occuperà 4 cassetti consecutivi:</p>
+
+    <div class="byte-row" style="margin: 20px 0;">
+      <div class="b b1"><span class="baddr">0x1000</span><span class="bval">A3</span></div>
+      <div class="b b2"><span class="baddr">0x1001</span><span class="bval">00</span></div>
+      <div class="b b3"><span class="baddr">0x1002</span><span class="bval">12</span></div>
+      <div class="b b4"><span class="baddr">0x1003</span><span class="bval">FF</span></div>
+      <span style="color:var(--muted);font-size:13px;margin-left:8px">← 4 indirizzi, 1 word</span>
+    </div>
+
+    <p>Quando scrivi <code>lw t0, 0(sp)</code>, stai dicendo alla CPU: "vai all'indirizzo in <code>sp</code>, prendi i prossimi 4 byte e mettili nel registro <code>t0</code>". La CPU fa 1 viaggio in RAM ma porta via 4 byte.</p>
+
+    <div class="callout" style="border-color:var(--purple);background:var(--purple-bg);margin-bottom:0">
+      <strong style="color:var(--purple)">Indirizzo ≠ contenuto della cella — confusione comune!</strong><br>
+      Il fatto che ogni cella contenga 8 bit <em>non significa</em> che l'indirizzo sia a 8 bit. Sono due cose indipendenti. Pensa a un palazzo: il numero civico (indirizzo) può essere lungo quanto si vuole — non ha nulla a che fare con quante persone abitano dentro (contenuto).<br><br>
+      In <strong style="color:var(--purple)">RV32I</strong>: indirizzo = <strong>32 bit</strong> → puoi indicare 2³² ≈ 4 miliardi di celle distinte. Contenuto di ogni cella = sempre <strong>8 bit</strong>.<br>
+      In <strong style="color:var(--purple)">RV64I</strong>: indirizzo = <strong>64 bit</strong> → 2⁶⁴ celle teoriche. Le celle rimangono sempre da 8 bit — cambia solo quante puoi indirizzare.
+    </div>
+
+    <div class="callout amber" style="margin-top:8px">
+      <strong>Perché la RAM è "lontana":</strong> La RAM è un chip fisicamente separato dalla CPU, collegato tramite un bus (fili sulla scheda madre). Ogni accesso costa <strong>centinaia di cicli di clock</strong>. Un registro invece è dentro la CPU: costa <strong>1 solo ciclo</strong>. Ecco il "lungo viaggio".
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 3 ══════════════ -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <h2>I registri <span class="accent">RISC-V</span></h2>
+    </div>
+
+    <p class="lead">I registri sono piccole celle di memoria costruite direttamente dentro il chip della CPU. Sono 32, ognuno da 32 bit. Non sono nella RAM.</p>
+
+    <p>La differenza fisica è fondamentale: i registri sono fatti di flip-flop — circuiti ultraveloci incisi sullo stesso silicio della ALU. La RAM è fatta di condensatori su un chip separato. Per questo i registri sono istantanei e la RAM è lenta.</p>
+
+    <p>RISC-V ha esattamente 32 registri (x0–x31), ma ognuno ha anche un <strong>nome simbolico</strong> che ne descrive il ruolo:</p>
+
+    <div class="reg-group">
+      <div class="reg-group-title" style="color: var(--dim);">Speciali</div>
+      <div class="reg-row">
+        <div class="reg-chip teal"><span class="rname">x0</span><span class="ralt">zero — vale sempre 0</span></div>
+        <div class="reg-chip teal"><span class="rname">x1</span><span class="ralt">ra — return address</span></div>
+        <div class="reg-chip teal"><span class="rname">x2</span><span class="ralt">sp — stack pointer</span></div>
+        <div class="reg-chip teal"><span class="rname">x3</span><span class="ralt">gp — global pointer</span></div>
+      </div>
+    </div>
+
+    <div class="reg-group">
+      <div class="reg-group-title" style="color:var(--blue)">a0–a7 — argomenti e valori di ritorno</div>
+      <div class="reg-row">
+        <div class="reg-chip blue"><span class="rname">a0</span><span class="ralt">x10</span></div>
+        <div class="reg-chip blue"><span class="rname">a1</span><span class="ralt">x11</span></div>
+        <div class="reg-chip blue"><span class="rname">a2</span><span class="ralt">x12</span></div>
+        <div class="reg-chip blue"><span class="rname">a3</span><span class="ralt">x13</span></div>
+        <div class="reg-chip blue"><span class="rname">a4–a7</span><span class="ralt">x14–x17</span></div>
+      </div>
+    </div>
+
+    <div class="reg-group">
+      <div class="reg-group-title" style="color:var(--amber)">t0–t6 — temporanei (caller-saved)</div>
+      <div class="reg-row">
+        <div class="reg-chip amber"><span class="rname">t0</span><span class="ralt">x5</span></div>
+        <div class="reg-chip amber"><span class="rname">t1</span><span class="ralt">x6</span></div>
+        <div class="reg-chip amber"><span class="rname">t2</span><span class="ralt">x7</span></div>
+        <div class="reg-chip amber"><span class="rname">t3–t6</span><span class="ralt">x28–x31</span></div>
+      </div>
+    </div>
+
+    <div class="reg-group">
+      <div class="reg-group-title" style="color:var(--purple)">s0–s11 — saved (callee-saved)</div>
+      <div class="reg-row">
+        <div class="reg-chip purple"><span class="rname">s0</span><span class="ralt">x8 / fp</span></div>
+        <div class="reg-chip purple"><span class="rname">s1</span><span class="ralt">x9</span></div>
+        <div class="reg-chip purple"><span class="rname">s2–s11</span><span class="ralt">x18–x27</span></div>
+      </div>
+    </div>
+
+    <div class="card-grid cols2" style="margin-top:20px">
+      <div class="card amber">
+        <div class="card-title">Registri t (temporanei)</div>
+        <p style="font-size:13px;margin:0">Il <strong>chiamante</strong> deve salvarli se vuole conservarli. La funzione chiamata può sovrascriverli liberamente senza avvisare.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Registri s (saved)</div>
+        <p style="font-size:13px;margin:0">La funzione <strong>chiamata</strong> deve salvarli e ripristinarli prima di fare <code>ret</code>. Il chiamante può fidarsi che siano intatti.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 4 ══════════════ -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2>Mappa della <span class="accent">memoria</span></h2>
+    </div>
+
+    <p class="lead">La RAM non è un blocco indistinto. È divisa in zone con scopi precisi. In cima (indirizzi alti) c'è lo stack; in basso (indirizzi bassi) il codice.</p>
+
+    <div style="display:flex; gap:40px; flex-wrap:wrap; margin: 20px 0;">
+      <div>
+        <div class="mem-map">
+          <div style="font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;text-align:right;padding-right:4px">0xFFFFFFFF ↑ indirizzi alti</div>
+          <div class="mem-seg stack">
+            <span class="mem-seg-name" style="color:var(--blue)">Stack ↓</span>
+            <span class="mem-seg-addr">cresce verso il basso</span>
+          </div>
+          <div class="mem-seg free">
+            <span>zona libera</span>
+            <span class="mem-seg-addr">si restringe se serve</span>
+          </div>
+          <div class="mem-seg heap">
+            <span class="mem-seg-name" style="color:var(--amber)">Heap ↑</span>
+            <span class="mem-seg-addr">malloc / new</span>
+          </div>
+          <div class="mem-seg data">
+            <span class="mem-seg-name" style="color:var(--green)">Dati statici</span>
+            <span class="mem-seg-addr">0x10000000</span>
+          </div>
+          <div class="mem-seg code">
+            <span class="mem-seg-name">Codice (.text)</span>
+            <span class="mem-seg-addr">0x00400000</span>
+          </div>
+          <div class="mem-seg reserved">
+            <span>Area riservata</span>
+            <span class="mem-seg-addr">0x00000000</span>
+          </div>
+          <div style="font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;padding-right:4px">0x00000000 ↓ indirizzi bassi</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:220px">
+        <p style="font-size:14px;margin-bottom:14px">Ogni zona ha un registro che la "presidia":</p>
+        <table>
+          <tr><th>Registro</th><th>Zona</th><th>Ruolo</th></tr>
+          <tr><td><code class="t-blue">sp</code></td><td>Stack</td><td>Punta alla cima dello stack</td></tr>
+          <tr><td><code class="t-blue">fp / s0</code></td><td>Stack</td><td>Punta alla base del frame corrente</td></tr>
+          <tr><td><code class="t-green">gp</code></td><td>Dati statici</td><td>Accesso rapido ai globali</td></tr>
+          <tr><td><code class="t-amber">pc</code></td><td>Codice</td><td>Istruzione corrente</td></tr>
+        </table>
+        <div class="callout" style="margin-top:16px">
+          <strong>Lo stack cresce verso il basso</strong> — SP diminuisce (numericamente) quando aggiungi dati. Se SP vale 1000 e fai <code>addi sp, sp, -16</code>, SP diventa 984. Hai "allocato" 16 byte verso indirizzi più bassi.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 5 ══════════════ -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <h2>Little e <span class="accent">Big Endian</span></h2>
+    </div>
+
+    <p class="lead">Quando una word (4 byte) viene scritta in RAM, i 4 byte devono andare in 4 indirizzi consecutivi. Ma in quale ordine? Dipende dall'endianness.</p>
+
+    <p>Prendiamo la word <code>0x<span style="color:var(--amber)">A3</span><span style="color:var(--purple)">00</span><span style="color:var(--red)">12</span><span style="color:var(--green)">FF</span></code>. Ha 4 byte: <code style="background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)">A3</code> è il più significativo (MSB), <code style="background:var(--green-bg);border-color:var(--green-border);color:var(--green)">FF</code> il meno significativo (LSB).</p>
+
+    <div class="endian-side">
+      <div class="endian-block">
+        <h4 class="be">🔵 Big Endian</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">MSB all'indirizzo più basso.<br>Ordine "naturale" per noi umani.</p>
+        <div class="byte-row">
+          <div class="b b1"><span class="baddr">0x1000</span><span class="bval">A3</span></div>
+          <div class="b b2"><span class="baddr">0x1001</span><span class="bval">00</span></div>
+          <div class="b b3"><span class="baddr">0x1002</span><span class="bval">12</span></div>
+          <div class="b b4"><span class="baddr">0x1003</span><span class="bval">FF</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">Usato da: protocolli di rete TCP/IP, MIPS, Motorola</p>
+      </div>
+      <div class="endian-block">
+        <h4 class="le">🟢 Little Endian</h4>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">LSB all'indirizzo più basso.<br>Byte "invertiti" ma la CPU li rimette a posto.</p>
+        <div class="byte-row">
+          <div class="b b4"><span class="baddr">0x1000</span><span class="bval">FF</span></div>
+          <div class="b b3"><span class="baddr">0x1001</span><span class="bval">12</span></div>
+          <div class="b b2"><span class="baddr">0x1002</span><span class="bval">00</span></div>
+          <div class="b b1"><span class="baddr">0x1003</span><span class="bval">A3</span></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px">Usato da: <strong style="color:var(--green)">RISC-V</strong>, x86/x64, ARM (default)</p>
+      </div>
+    </div>
+
+    <div class="callout green">
+      <strong>Nella pratica con RISC-V:</strong> Non te ne accorgi mai quando usi <code>lw</code>/<code>sw</code> — la CPU gestisce tutto da sola. Il problema sorge solo se leggi la memoria byte per byte con <code>lb</code>, o se comunichi in rete (dove si usa big endian).
+    </div>
+
+    <p><strong>Trucco mnemonico:</strong> <em>Little</em> Endian → il byte <em>little</em> (piccolo, LSB) sta all'indirizzo <em>little</em> (basso). <em>Big</em> Endian → il byte <em>big</em> (grande, MSB) sta all'indirizzo più basso (viene prima).</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 6 ══════════════ -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2>Chiamata di <span class="accent">funzione</span></h2>
+    </div>
+
+    <p class="lead">Ogni chiamata a funzione costruisce uno "stack frame" in RAM. Lo stack cresce verso indirizzi bassi: SP diminuisce quando si aggiunge roba, aumenta quando si libera.</p>
+
+    <style>
+      #stk-wrap { font-family:'DM Sans',sans-serif; }
+      #stk-wrap * { box-sizing:border-box; }
+      .stk-layout { display:flex; gap:24px; flex-wrap:wrap; align-items:flex-start; }
+      /* ── STACK COLUMN ── */
+      .stk-col { flex:0 0 200px; }
+      .stk-col-title { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin-bottom:6px; text-align:center; }
+      .stk-addr-hi { font-size:10px; font-family:'DM Mono',monospace; color:var(--dim); text-align:center; margin-bottom:4px; }
+      .stk-cells { display:flex; flex-direction:column; gap:3px; min-height:320px; position:relative; }
+      .stk-cell {
+        border-radius:6px; border:1px solid var(--color-border-secondary);
+        background:var(--color-background-secondary);
+        padding:7px 10px; font-size:12px;
+        display:flex; justify-content:space-between; align-items:center;
+        transition:all 0.35s ease; opacity:1; transform:translateY(0);
+        position:relative;
+      }
+      .stk-cell.entering { animation:stk-drop .35s ease forwards; }
+      .stk-cell.leaving  { animation:stk-pop  .3s  ease forwards; }
+      @keyframes stk-drop { from{opacity:0;transform:translateY(-12px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes stk-pop  { from{opacity:1;transform:scaleY(1)} to{opacity:0;transform:scaleY(0)} }
+      .stk-cell .sc-name { font-weight:600; }
+      .stk-cell .sc-addr { font-family:'DM Mono',monospace; font-size:10px; color:var(--dim); }
+      .stk-cell.caller-frame { background:var(--surface3); border-color:var(--border2); }
+      .stk-cell.c-ra   { background:rgba(245,166,35,.15);  border-color:rgba(245,166,35,.4);  }
+      .stk-cell.c-ra   .sc-name { color:var(--amber); }
+      .stk-cell.c-s0   { background:rgba(167,139,250,.13); border-color:rgba(167,139,250,.35); }
+      .stk-cell.c-s0   .sc-name { color:var(--purple); }
+      .stk-cell.c-local{ background:rgba(91,156,246,.13);  border-color:rgba(91,156,246,.35);  }
+      .stk-cell.c-local .sc-name { color:var(--blue); }
+      .stk-addr-lo { font-size:10px; font-family:'DM Mono',monospace; color:var(--dim); text-align:center; margin-top:4px; }
+      /* pointer row */
+      .stk-ptrs { display:flex; flex-direction:column; gap:3px; margin-top:6px; }
+      .stk-ptr { display:flex; align-items:center; gap:6px; font-size:12px; font-family:'DM Mono',monospace; padding:4px 8px; border-radius:5px; border:1px solid; transition:all .3s; }
+      .stk-ptr.p-sp { background:rgba(91,156,246,.12); border-color:rgba(91,156,246,.35); color:var(--blue); }
+      .stk-ptr.p-fp { background:rgba(240,107,107,.12); border-color:rgba(240,107,107,.35); color:var(--red); }
+      .stk-ptr b { color:var(--text); font-weight:700; }
+      /* ── INFO COLUMN ── */
+      .info-col { flex:1; min-width:240px; }
+      .step-badge { display:inline-block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; padding:3px 10px; border-radius:20px; margin-bottom:10px; }
+      .step-title { font-size:18px; font-weight:500; color:var(--text); margin-bottom:8px; line-height:1.3; }
+      .step-body { font-size:14px; color:var(--muted); line-height:1.75; margin-bottom:14px; }
+      .step-body code { font-size:12px; }
+      .step-body strong { color:var(--text); }
+      .stk-asm { background:var(--surface3); border:1px solid var(--border); border-radius:8px; padding:10px 14px; font-family:'DM Mono',monospace; font-size:12px; line-height:1.9; margin-bottom:14px; }
+      .stk-asm .hl { background:rgba(245,166,35,.2); border-radius:3px; padding:0 3px; color:var(--amber); }
+      /* controls */
+      .stk-ctrls { display:flex; gap:8px; flex-wrap:wrap; }
+      .stk-btn { padding:7px 18px; border-radius:7px; border:1px solid var(--color-border-secondary); background:var(--color-background-secondary); color:var(--text); font-size:13px; cursor:pointer; transition:background .12s; font-family:'DM Sans',sans-serif; }
+      .stk-btn:hover { background:var(--color-background-tertiary); }
+      .stk-btn.s-primary { background:#185FA5; color:#E6F1FB; border-color:#185FA5; }
+      .stk-btn.s-primary:hover { background:#0C447C; }
+      .stk-btn:disabled { opacity:.4; cursor:default; }
+      /* progress dots */
+      .stk-dots { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+      .stk-dot { width:8px; height:8px; border-radius:50%; background:var(--surface3); border:1px solid var(--border2); transition:all .2s; cursor:pointer; }
+      .stk-dot.d-done { background:var(--dim); border-color:var(--dim); }
+      .stk-dot.d-active { background:#185FA5; border-color:#185FA5; transform:scale(1.4); }
+      /* legend */
+      .stk-legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+      .stk-leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+      .stk-lbox { width:12px; height:12px; border-radius:3px; border:1px solid; }
+    </style>
+
+    <div id="stk-wrap">
+      <div class="stk-layout">
+        <!-- Stack visual -->
+        <div class="stk-col">
+          <div class="stk-col-title">Stack (RAM)</div>
+          <div class="stk-addr-hi">0x1018 ↑ indirizzi alti</div>
+          <div class="stk-cells" id="stk-cells"></div>
+          <div class="stk-addr-lo">↓ indirizzi bassi</div>
+          <div class="stk-ptrs" id="stk-ptrs"></div>
+        </div>
+        <!-- Info panel -->
+        <div class="info-col">
+          <div class="stk-dots" id="stk-dots"></div>
+          <div class="step-badge" id="stk-badge"></div>
+          <div class="step-title" id="stk-title"></div>
+          <div class="step-body" id="stk-body"></div>
+          <div class="stk-asm" id="stk-asm"></div>
+          <div class="stk-ctrls">
+            <button class="stk-btn" id="stk-prev" onclick="stkPrev()">← Indietro</button>
+            <button class="stk-btn s-primary" id="stk-next" onclick="stkNext()">Avanti →</button>
+            <button class="stk-btn" onclick="stkGoto(0)">Ricomincia</button>
+          </div>
+          <div class="stk-legend">
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(245,166,35,.15);border-color:rgba(245,166,35,.4)"></div>ra salvato</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(167,139,250,.13);border-color:rgba(167,139,250,.35)"></div>s0 salvato</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(91,156,246,.13);border-color:rgba(91,156,246,.35)"></div>variabile locale</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:var(--surface3);border-color:var(--border2)"></div>frame chiamante</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      var STEPS = [
+        {
+          badge:'Situazione iniziale', badgeColor:'#888',
+          title:'Lo stack prima della chiamata',
+          body:'Il programma <strong>chiamante</strong> (es. main) sta girando normalmente. Lo stack contiene il suo frame. SP punta alla cima. FP punta alla base del frame corrente.<br><br>Tra poco chiamerà la funzione <code>somma(a0, a1)</code>.',
+          asm:'<span style="color:var(--dim)"># main sta girando...</span>\n<span style="color:var(--dim)"># SP = 0x1000, FP = 0x1000</span>\n<span style="color:var(--dim)"># a0 = 5,  a1 = 3  (argomenti pronti)</span>',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame', sp:false, fp:false}
+          ],
+          sp:'0x1000', fp:'0x1000'
+        },
+        {
+          badge:'Passo 1 · Prologo', badgeColor:'#185FA5',
+          title:'addi sp, sp, -16 — alloca il frame',
+          body:'La prima cosa che fa <code>somma</code> è <strong>decrementare SP di 16</strong> (4 word × 4 byte). Questo "prenota" spazio in RAM per salvare i registri. I byte ci sono già ma non hanno ancora un valore significativo — li riempiremo nei passi successivi.',
+          asm:'<span class="hl">addi sp, sp, -16</span>   <span style="color:var(--dim)"># SP: 0x1000 → 0x0FF0</span>\nsw   ra, 12(sp)\nsw   s0,  8(sp)\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'(vuoto)',        addr:'0x0FF0', cls:'c-ra',    dim:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 2 · Prologo', badgeColor:'#185FA5',
+          title:'sw ra, 12(sp) — salva il return address',
+          body:'<code>ra</code> contiene l\'indirizzo a cui tornare nel main dopo che <code>somma</code> finisce. <strong>Dobbiamo salvarlo</strong> perché se somma chiama un\'altra funzione con <code>jal</code>, <code>ra</code> verrebbe sovrascritto e perderemmo il filo per tornare al main.',
+          asm:'addi sp, sp, -16\n<span class="hl">sw   ra, 12(sp)</span>   <span style="color:var(--dim)"># Mem[0x0FF0+12] = ra = 0x80</span>\nsw   s0,  8(sp)\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra',    new:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 3 · Prologo', badgeColor:'#185FA5',
+          title:'sw s0, 8(sp) — salva il registro s0',
+          body:'<code>s0</code> è un registro "saved" — il chiamante (main) si aspetta di trovarlo intatto dopo il ritorno. Se <code>somma</code> lo usa, deve salvarlo prima e ripristinarlo dopo. Lo scriviamo in RAM all\'indirizzo <code>sp+8 = 0x0FF8</code>.',
+          asm:'addi sp, sp, -16\nsw   ra, 12(sp)\n<span class="hl">sw   s0,  8(sp)</span>   <span style="color:var(--dim)"># Mem[0x0FF0+8] = s0</span>\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'s0 salvato',    addr:'0x0FF4', cls:'c-s0',    new:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 4 · Corpo', badgeColor:'#3B6D11',
+          title:'Corpo della funzione — usa i registri liberamente',
+          body:'Ora <code>somma</code> fa il suo lavoro: usa <code>a0</code>, <code>a1</code>, <code>s0</code>, ecc. Può anche allocare variabili locali ulteriori decrementando ancora SP. Il frame è "congelato" — FP resta a 0x1000, SP può muoversi.',
+          asm:'...\nadd  s0, a0, a1   <span style="color:var(--dim)"># s0 = a + b</span>\n<span class="hl">addi s0, s0, 2    <span style="color:var(--dim)"># s0 = a+b+2  (corpo)</span></span>\naddi a0, s0, 0   <span style="color:var(--dim)"># a0 = risultato</span>\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'locale rst',    addr:'0x0FFC', cls:'c-local', new:true},
+            {label:'locale tmp',    addr:'0x0FF8', cls:'c-local', new:true},
+            {label:'s0 salvato',    addr:'0x0FF4', cls:'c-s0'},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FE8', fp:'0x1000'
+        },
+        {
+          badge:'Passo 5 · Epilogo', badgeColor:'#BA7517',
+          title:'lw s0, 8(sp) — ripristina s0',
+          body:'La funzione ha finito. Ora deve <strong>ripristinare tutto</strong> com\'era. Prima ricarica <code>s0</code> dal suo posto nello stack. Il main ritroverà s0 esattamente con il valore che aveva prima della chiamata — come promesso dalla convenzione.',
+          asm:'...\n<span class="hl">lw   s0,  8(sp)</span>   <span style="color:var(--dim)"># s0 ← Mem[0x0FF4]</span>\nlw   ra, 12(sp)\naddi sp, sp, 16\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(liberato)',     addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(liberato)',     addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'s0 ← riprist.', addr:'0x0FF4', cls:'c-s0',    new:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 6 · Epilogo', badgeColor:'#BA7517',
+          title:'lw ra, 12(sp) — ripristina ra',
+          body:'Ricarica il return address originale del main. Ora <code>ra</code> punta di nuovo all\'istruzione del main da eseguire dopo la call. Senza questo passo, <code>ret</code> salterebbe all\'indirizzo sbagliato.',
+          asm:'...\nlw   s0,  8(sp)\n<span class="hl">lw   ra, 12(sp)</span>   <span style="color:var(--dim)"># ra ← 0x80 (main)</span>\naddi sp, sp, 16\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(liberato)',     addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(liberato)',     addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(letto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'ra ← riprist.', addr:'0x0FF0', cls:'c-ra',    new:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 7 · Epilogo', badgeColor:'#BA7517',
+          title:'addi sp, sp, 16 — dealloca il frame',
+          body:'SP torna a 0x1000: il frame di <code>somma</code> è "deallocato". I dati fisici in RAM ci sono ancora, ma non appartengono più a nessuno — verranno sovrascritti dalle prossime chiamate. Basta spostare SP.',
+          asm:'...\nlw   ra, 12(sp)\n<span class="hl">addi sp, sp, 16</span>   <span style="color:var(--dim)"># SP: 0x0FF0 → 0x1000</span>\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+          ],
+          sp:'0x1000', fp:'0x1000'
+        },
+        {
+          badge:'Passo 8 · Ritorno', badgeColor:'#A32D2D',
+          title:'ret — torna al chiamante',
+          body:'<code>ret</code> è la pseudoistruzione per <code>jalr x0, 0(ra)</code>: salta all\'indirizzo in <code>ra</code>. Il main riprende dall\'istruzione successiva alla <code>jal somma</code>, e trova <code>a0</code> con il risultato e <code>s0</code> intatto. <strong>Lo stack è esattamente come prima!</strong>',
+          asm:'...\naddi sp, sp, 16\n<span class="hl">ret</span>   <span style="color:var(--dim)"># jalr x0, 0(ra) → salta a 0x80 (main)</span>',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+          ],
+          sp:'0x1000', fp:'0x1000'
+        }
+      ];
+
+      var cur = 0;
+
+      function render(idx, direction) {
+        var s = STEPS[idx];
+        // dots
+        var dd = document.getElementById('stk-dots');
+        dd.innerHTML = '';
+        STEPS.forEach(function(_, i) {
+          var d = document.createElement('div');
+          d.className = 'stk-dot' + (i < idx ? ' d-done' : i === idx ? ' d-active' : '');
+          d.onclick = (function(ii){ return function(){ stkGoto(ii); }; })(i);
+          dd.appendChild(d);
+        });
+        // badge
+        var b = document.getElementById('stk-badge');
+        b.textContent = s.badge;
+        b.style.background = s.badgeColor + '22';
+        b.style.color = s.badgeColor;
+        b.style.border = '1px solid ' + s.badgeColor + '55';
+        // title / body / asm
+        document.getElementById('stk-title').innerHTML = s.title;
+        document.getElementById('stk-body').innerHTML  = s.body;
+        document.getElementById('stk-asm').innerHTML   = s.asm;
+        // cells
+        var cc = document.getElementById('stk-cells');
+        cc.innerHTML = '';
+        s.cells.forEach(function(c) {
+          var el = document.createElement('div');
+          el.className = 'stk-cell ' + (c.cls||'') + (c.new?' entering':'') + (c.dim?' ':'');
+          if (c.dim) el.style.opacity = '.4';
+          el.innerHTML = '<span class="sc-name">' + c.label + '</span><span class="sc-addr">' + c.addr + '</span>';
+          cc.appendChild(el);
+        });
+        // pointers
+        var pp = document.getElementById('stk-ptrs');
+        pp.innerHTML =
+          '<div class="stk-ptr p-sp"><span>SP</span><b>' + s.sp + '</b></div>' +
+          '<div class="stk-ptr p-fp"><span>FP</span><b>' + s.fp + '</b></div>';
+        // buttons
+        document.getElementById('stk-prev').disabled = idx === 0;
+        var nb = document.getElementById('stk-next');
+        nb.disabled = idx === STEPS.length - 1;
+        nb.textContent = idx === STEPS.length - 1 ? 'Fine ✓' : 'Avanti →';
+      }
+
+      window.stkNext = function() { if (cur < STEPS.length-1) { cur++; render(cur,'fwd'); } };
+      window.stkPrev = function() { if (cur > 0)              { cur--; render(cur,'bck'); } };
+      window.stkGoto = function(i) { cur = i; render(cur,'fwd'); };
+
+      render(0);
+    })();
+    </script>
+
+    <div class="callout red" style="margin-top:20px">
+      <strong>Funzione leaf (foglia):</strong> se una funzione non chiama nessun'altra funzione, non sovrascrive mai <code>ra</code> da sola. Quindi non deve salvarlo. Se usa solo registri <code>t</code>, non salva nulla in RAM — zero accessi, massima velocità.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 7 ══════════════ -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <h2>Le tab del <span class="accent">simulatore</span></h2>
+    </div>
+
+    <p class="lead">Il simulatore (Ripes) mostra la stessa RAM da 5 angolazioni diverse. Non sono zone separate: sono finestre diverse sugli stessi indirizzi.</p>
+
+    <div class="tabs-demo">
+      <div class="tabs-header">
+        <button class="tabs-btn on" onclick="switchTab('text',this)">.text</button>
+        <button class="tabs-btn" onclick="switchTab('disasm',this)">disasm</button>
+        <button class="tabs-btn" onclick="switchTab('data',this)">.data</button>
+        <button class="tabs-btn" onclick="switchTab('stack',this)">stack</button>
+        <button class="tabs-btn" onclick="switchTab('frames',this)">frames</button>
+      </div>
+      <div class="tabs-body">
+        <div class="tabs-panel on" id="tab-text">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Byte grezzi del segmento codice in esadecimale. È esattamente quello che c'è in RAM — nessuna interpretazione.</div>
+          <div class="tab-row-mem"><span class="taddr">00400000</span><span class="tval">13052000</span><span class="tval">ef00c000</span><span class="tval">9308a000</span><span class="tval">73000000</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400010</span><span class="tval">130181ff</span><span class="tval">23208100</span><span class="tval">23201100</span><span class="tval">13044100</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400020</span><span class="tval">3305a502</span><span class="tval">03244100</span><span class="tval">83200100</span><span class="tval">13018100</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← ogni gruppo di 8 cifre hex = 4 byte = 1 istruzione RISC-V</div>
+        </div>
+        <div class="tabs-panel" id="tab-disasm">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Stessi byte di .text, ma il simulatore li "traduce al contrario" in mnemonici assembly leggibili (disassembling).</div>
+          <div class="tab-row-mem"><span class="taddr">00400000</span><span class="tasm">addi</span><span style="color:var(--text)">  sp, sp, -16</span><span class="tcmt">  # 13052000</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400004</span><span class="tasm">jal</span><span style="color:var(--text)">   ra, main</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400008</span><span class="tasm">sw</span><span style="color:var(--text)">    ra, 12(sp)</span></div>
+          <div class="tab-row-mem"><span class="taddr">0040000c</span><span class="tasm">sw</span><span style="color:var(--text)">    s0, 8(sp)</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← 13052000 in hex = addi sp, sp, -16 in assembly. Identici.</div>
+        </div>
+        <div class="tabs-panel" id="tab-data">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Zona RAM dove vivono le variabili globali e le stringhe dichiarate nella sezione .data del tuo codice.</div>
+          <div class="tab-row-mem"><span class="taddr">10010000</span><span class="tval">48656c6c</span><span class="tcmt">  # "Hell"</span></div>
+          <div class="tab-row-mem"><span class="taddr">10010004</span><span class="tval">6f20576f</span><span class="tcmt">  # "o Wo"</span></div>
+          <div class="tab-row-mem"><span class="taddr">10010008</span><span class="tval">726c6400</span><span class="tcmt">  # "rld\0"</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← se nel codice scrivi <span style="color:var(--green)">.string "Hello World"</span>, appare qui come byte ASCII</div>
+        </div>
+        <div class="tabs-panel" id="tab-stack">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Mostra la zona RAM puntata da SP — cioè lo stack attuale con i registri salvati e le variabili locali delle funzioni in esecuzione.</div>
+          <div class="tab-row-mem"><span class="taddr">7fffff0c</span><span class="tval">00000080</span><span class="tcmt">  # ra salvato = 0x80</span></div>
+          <div class="tab-row-mem"><span class="taddr">7fffff08</span><span class="tval">00000005</span><span class="tcmt">  # s0 salvato = 5</span></div>
+          <div class="tab-row-mem"><span class="taddr">7fffff04</span><span class="tval">00000000</span><span class="tcmt">  # locale 1</span></div>
+          <div class="tab-row-mem" style="background:var(--blue-bg);border-radius:4px;padding:2px 4px"><span class="taddr">7fffff00</span><span class="tval">00000000</span><span class="tcmt">  # ← SP qui</span></div>
+        </div>
+        <div class="tabs-panel" id="tab-frames">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Vista logica della catena di chiamate attiva. Non mostra indirizzi grezzi, ma chi ha chiamato chi — utile per debuggare.</div>
+          <div style="margin: 8px 0; font-size:13px;">
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+              <div style="background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">main</div>
+              <span style="color:var(--dim)">→ chiamante originale</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0;padding-left:20px">
+              <span style="color:var(--dim)">└→</span>
+              <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--green)">somma</div>
+              <span style="color:var(--dim)">→ chiamata da main</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0;padding-left:40px">
+              <span style="color:var(--dim)">└→</span>
+              <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">moltiplica</div>
+              <span style="color:var(--dim)">← esecuzione corrente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:16px">Il fatto cruciale: <code>.text</code> e <code>disasm</code> mostrano lo stesso indirizzo <code>00400000</code>. <code>13052000</code> in hex <em>è</em> <code>addi sp, sp, -16</code> — non sono due cose diverse, è la stessa istruzione vista in due formati.</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 9 ══════════════ -->
+  <section class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <h2>Cos'è <span class="accent">RISC-V</span></h2>
+    </div>
+
+    <p class="lead">RISC-V è un ISA (Instruction Set Architecture) open source e royalty-free, nato nel 2010 all'Università di Berkeley. Non è un'azienda né una CPU specifica: è uno standard aperto.</p>
+
+    <p>L'acronimo <strong>RISC</strong> sta per <em>Reduced Instruction Set Computer</em>. I principi di progettazione sono tre:</p>
+
+    <div class="card-grid cols3" style="margin:16px 0">
+      <div class="card blue">
+        <div class="card-title">Principio 1</div>
+        <p style="font-size:13px;margin:0"><strong>La semplicità favorisce la regolarità</strong> — istruzioni uniformi, formato fisso a 32 bit, sempre 3 operandi</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Principio 2</div>
+        <p style="font-size:13px;margin:0"><strong>Minori dimensioni = maggiore velocità</strong> — pochi registri, istruzioni semplici, hardware più piccolo e veloce</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Principio 3</div>
+        <p style="font-size:13px;margin:0"><strong>Un buon progetto richiede compromessi</strong> — es. il campo immediato è limitato a 12 bit, ma garantisce formati regolari</p>
+      </div>
+    </div>
+
+    <p>RISC-V è modulare: esiste un <strong>base integer ISA</strong> a cui si aggiungono estensioni opzionali:</p>
+
+    <table>
+      <tr><th>Variante</th><th>Descrizione</th></tr>
+      <tr><td><code class="t-blue">RV32I</code></td><td>Base integer a 32 bit — la versione che studiate a corso</td></tr>
+      <tr><td><code class="t-blue">RV64I</code></td><td>Base integer a 64 bit — registri e indirizzi da 64 bit, aggiunge <code>ld</code>/<code>sd</code></td></tr>
+      <tr><td><code class="t-green">RV64M</code></td><td>Aggiunge moltiplicazione e divisione intera (<code>mul</code>, <code>div</code>, <code>rem</code>)</td></tr>
+      <tr><td><code class="t-amber">RV64F / RV64D</code></td><td>Aggiunge 32 registri floating point (f0–f31) a 32/64 bit</td></tr>
+      <tr><td><code class="t-purple">RV32E / RV64E</code></td><td>Versione embedded: solo 16 registri invece di 32</td></tr>
+    </table>
+
+    <div class="callout">
+      <strong>Importante:</strong> ogni istruzione RISC-V occupa esattamente <strong>32 bit</strong> in memoria, sia in RV32I che in RV64I. Questo garantisce semplicità e regolarità nel fetch e nella decodifica delle istruzioni.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 10 ══════════════ -->
+  <section class="section" id="s10">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <h2>Istruzioni <span class="accent">aritmetiche</span></h2>
+    </div>
+
+    <p class="lead">Le istruzioni aritmetiche hanno sempre esattamente 3 operandi, tutti registri. L'ordine è fisso: prima la destinazione, poi i due sorgenti.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Operazioni base</h3>
+
+    <table>
+      <tr><th>Assembly</th><th>Operazione</th><th>Note</th></tr>
+      <tr><td><code class="t-green">add x5, x9, x10</code></td><td>x5 = x9 + x10</td><td>Somma tra registri</td></tr>
+      <tr><td><code class="t-green">sub x5, x9, x10</code></td><td>x5 = x9 − x10</td><td>Sottrazione tra registri</td></tr>
+      <tr><td><code class="t-green">addi x5, x9, 5</code></td><td>x5 = x9 + 5</td><td>Somma immediata (costante −2048÷+2047)</td></tr>
+      <tr><td><code class="t-green">sub x19, x0, x19</code></td><td>x19 = −x19</td><td>Cambio segno: si usa x0 (sempre 0)</td></tr>
+      <tr><td><code class="t-green">add x19, x0, x18</code></td><td>x19 = x18</td><td>Copia registro (pseudoistr.: <code>mv x19, x18</code>)</td></tr>
+    </table>
+
+    <div class="callout green">
+      <strong>La sottrazione immediata non esiste:</strong> si usa <code>addi</code> con costante negativa. Es: <code>addi x5, x5, -3</code> equivale a x5 = x5 − 3.
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Operandi immediati e costanti</h3>
+
+    <p>In più della metà delle operazioni aritmetiche un operando è una costante. Invece di caricarla dalla RAM (lento!), RISC-V offre istruzioni immediate che incorporano la costante direttamente nell'istruzione:</p>
+
+    <pre><span class="cmt"># Senza immediato: 2 istruzioni e 1 accesso in RAM</span>
+<span class="kw">lw</span>  <span class="reg">x9</span>, indirizzoConst5(<span class="reg">x3</span>)
+<span class="kw">add</span> <span class="reg">x5</span>, <span class="reg">x5</span>, <span class="reg">x9</span>
+
+<span class="cmt"># Con immediato: 1 sola istruzione, nessun accesso in RAM</span>
+<span class="kw">addi</span> <span class="reg">x5</span>, <span class="reg">x5</span>, <span class="imm">5</span></pre>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Moltiplicazione, divisione e resto (estensione M)</h3>
+
+    <table>
+      <tr><th>Assembly</th><th>Operazione</th><th>Note</th></tr>
+      <tr><td><code class="t-blue">mul a, b, c</code></td><td>a = b × c (32 bit bassi)</td><td>Usa registro interno nascosto per i 64 bit totali</td></tr>
+      <tr><td><code class="t-blue">mulh a, b, c</code></td><td>a = parte alta di b × c</td><td>32 bit più significativi del risultato</td></tr>
+      <tr><td><code class="t-blue">div a, b, c</code></td><td>a = b / c</td><td>Divisione intera, versione <code>divu</code> per unsigned</td></tr>
+      <tr><td><code class="t-blue">rem a, b, c</code></td><td>a = b % c</td><td>Resto della divisione, versione <code>remu</code> per unsigned</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Esempio: compilazione di espressioni C</h3>
+
+    <pre><span class="cmt"># C: f = (g + h) - (i + j)</span>
+<span class="cmt"># f→x19, g→x20, h→x21, i→x22, j→x23</span>
+
+<span class="kw">add</span>  <span class="reg">x5</span>,  <span class="reg">x20</span>, <span class="reg">x21</span>   <span class="cmt"># x5  = g + h</span>
+<span class="kw">add</span>  <span class="reg">x6</span>,  <span class="reg">x22</span>, <span class="reg">x23</span>   <span class="cmt"># x6  = i + j</span>
+<span class="kw">sub</span>  <span class="reg">x19</span>, <span class="reg">x5</span>,  <span class="reg">x6</span>    <span class="cmt"># x19 = (g+h) - (i+j) = f</span></pre>
+  </section>
+
+  <!-- ══════════════ SEZIONE 11 ══════════════ -->
+  <section class="section" id="s11">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <h2>Accesso alla <span class="accent">memoria</span></h2>
+    </div>
+
+    <p class="lead">La ALU legge e scrive solo dai registri. Per lavorare con dati in RAM servono istruzioni di load (memoria → registro) e store (registro → memoria). L'indirizzo si specifica come: <strong>offset(registro_base)</strong>.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Tutte le istruzioni di accesso (RV32I)</h3>
+
+    <table>
+      <tr><th>Istruzione</th><th>Dimensione</th><th>Operazione</th><th>Estensione segno</th></tr>
+      <tr><td><code class="t-green">lw rd, off(rs1)</code></td><td>word (32 bit)</td><td>rd = Mem[rs1 + off]</td><td>—</td></tr>
+      <tr><td><code class="t-green">sw rs2, off(rs1)</code></td><td>word (32 bit)</td><td>Mem[rs1 + off] = rs2</td><td>—</td></tr>
+      <tr><td><code class="t-amber">lh rd, off(rs1)</code></td><td>halfword (16 bit)</td><td>rd = Mem[rs1 + off] (16 bit)</td><td>Sì (con segno)</td></tr>
+      <tr><td><code class="t-amber">lhu rd, off(rs1)</code></td><td>halfword (16 bit)</td><td>rd = Mem[rs1 + off] (16 bit)</td><td>No (unsigned)</td></tr>
+      <tr><td><code class="t-amber">sh rs2, off(rs1)</code></td><td>halfword (16 bit)</td><td>Mem[rs1 + off] = rs2 (16 bit)</td><td>—</td></tr>
+      <tr><td><code class="t-purple">lb rd, off(rs1)</code></td><td>byte (8 bit)</td><td>rd = Mem[rs1 + off] (8 bit)</td><td>Sì (con segno)</td></tr>
+      <tr><td><code class="t-purple">lbu rd, off(rs1)</code></td><td>byte (8 bit)</td><td>rd = Mem[rs1 + off] (8 bit)</td><td>No (unsigned)</td></tr>
+      <tr><td><code class="t-purple">sb rs2, off(rs1)</code></td><td>byte (8 bit)</td><td>Mem[rs1 + off] = rs2 (8 bit)</td><td>—</td></tr>
+    </table>
+
+    <p>In RV64I si aggiungono <code>ld</code> / <code>sd</code> per doubleword (64 bit). L'offset può valere da −2048 a +2047.</p>
+
+    <div class="callout amber">
+      <strong>Estensione del segno:</strong> quando carichi 8 o 16 bit in un registro da 32 bit, i bit mancanti vengono riempiti. Con <code>lb</code>/<code>lh</code> si copia il bit più significativo (estensione con segno). Con <code>lbu</code>/<code>lhu</code> si mettono tutti 0 (estensione senza segno, per valori positivi come caratteri ASCII).
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Accesso agli array</h3>
+
+    <p>Per accedere a <code>v[i]</code> devi calcolare l'indirizzo: <strong>base + i × dimensione_elemento</strong>. Per array di int (4 byte) si usa <code>slli</code> (shift a sinistra di 2 = × 4):</p>
+
+    <pre><span class="cmt"># C: a = v[3]  →  a → x5, v → x21 (indirizzo base)</span>
+<span class="kw">lw</span> <span class="reg">x5</span>, <span class="imm">12</span>(<span class="reg">x21</span>)    <span class="cmt"># offset = 3 × 4 = 12 byte</span>
+
+<span class="cmt"># C: v[i] = v[j]  →  i→x9, j→x21, v→x19</span>
+<span class="kw">slli</span> <span class="reg">x6</span>, <span class="reg">x21</span>, <span class="imm">2</span>   <span class="cmt"># x6 = j × 4</span>
+<span class="kw">add</span>  <span class="reg">x6</span>, <span class="reg">x6</span>,  <span class="reg">x19</span>  <span class="cmt"># x6 = &amp;v[j]</span>
+<span class="kw">lw</span>   <span class="reg">x6</span>, <span class="imm">0</span>(<span class="reg">x6</span>)     <span class="cmt"># x6 = v[j]</span>
+<span class="kw">slli</span> <span class="reg">x7</span>, <span class="reg">x9</span>,  <span class="imm">2</span>   <span class="cmt"># x7 = i × 4</span>
+<span class="kw">add</span>  <span class="reg">x7</span>, <span class="reg">x7</span>,  <span class="reg">x19</span>  <span class="cmt"># x7 = &amp;v[i]</span>
+<span class="kw">sw</span>   <span class="reg">x6</span>, <span class="imm">0</span>(<span class="reg">x7</span>)     <span class="cmt"># v[i] = v[j]</span></pre>
+
+    <div class="callout green">
+      <strong>Perché shift e non moltiplicazione?</strong> <code>slli x6, x9, 2</code> equivale a x6 = x9 × 4, ma è più veloce: uno shift è un'operazione elementare in 1 ciclo, la moltiplicazione ne richiede molti di più.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 12 ══════════════ -->
+  <section class="section" id="s12">
+    <div class="section-header">
+      <div class="section-num">12</div>
+      <h2>Operazioni <span class="accent">logiche e shift</span></h2>
+    </div>
+
+    <p class="lead">RISC-V offre le operazioni logiche bit a bit classiche (AND, OR, XOR, NOT) e tre tipi di shift. Tutte esistono in versione registro-registro e in versione immediata.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Operazioni logiche</h3>
+
+    <table>
+      <tr><th>Assembly</th><th>Operazione</th><th>Uso tipico</th></tr>
+      <tr><td><code class="t-green">and x9, x22, x19</code> / <code class="t-green">andi x9, x22, 5</code></td><td>x9 = x22 &amp; x19</td><td>Mascherare bit (isolare campi)</td></tr>
+      <tr><td><code class="t-blue">or  x9, x22, x19</code> / <code class="t-blue">ori  x9, x22, 5</code></td><td>x9 = x22 | x19</td><td>Settare bit a 1</td></tr>
+      <tr><td><code class="t-amber">xor x9, x22, x19</code> / <code class="t-amber">xori x9, x22, 5</code></td><td>x9 = x22 ^ x19</td><td>Invertire bit selezionati</td></tr>
+      <tr><td><code class="t-purple">not x5, x6</code></td><td>x5 = ~x6</td><td>Pseudoistruzione: <code>xori x5, x6, -1</code></td></tr>
+    </table>
+
+    <p style="margin-top:12px"><strong>AND con maschera</strong> — esempio: isolare i bit 0 e 1 di x6:</p>
+    <pre><span class="cmt"># x6 = 00100100 00010101 00001011 10100110</span>
+<span class="cmt"># x7 = 00000100 00000110 00000010 00010010  ← maschera</span>
+<span class="kw">and</span> <span class="reg">x5</span>, <span class="reg">x6</span>, <span class="reg">x7</span>
+<span class="cmt"># x5 = 00000100 00000100 00000010 00000010  ← solo i bit della maschera</span></pre>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Shift — simulatore interattivo</h3>
+
+    <style>
+      .sh-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+      .sh-tab{padding:6px 15px;border-radius:7px;border:1px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif}
+      .sh-tab:hover{color:var(--text)}
+      .sh-tab.sh-on{background:#185FA5;color:#E6F1FB;border-color:#185FA5}
+      .sh-panel{display:none}.sh-panel.sh-on{display:block}
+      .sh-desc{font-size:13px;color:var(--muted);margin-bottom:14px;padding:10px 14px;background:var(--color-background-secondary);border-radius:8px;border-left:3px solid #185FA5;line-height:1.7}
+      .sh-desc.sh-green{border-color:#3B6D11}
+      .sh-desc.sh-amber{border-color:#BA7517}
+      .sh-brow{display:flex;justify-content:center;gap:0;margin:10px 0 2px;position:relative}
+      .sh-lrow{display:flex;justify-content:center;gap:0;margin-bottom:10px}
+      .sh-b{width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:15px;font-weight:600;border:1px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--text);transition:background .3s,color .3s,transform .2s}
+      .sh-b:first-child{border-radius:6px 0 0 6px}.sh-b:last-child{border-radius:0 6px 6px 0}
+      .sh-lbl{width:38px;font-size:10px;color:var(--dim);text-align:center;font-family:'DM Mono',monospace}
+      .sh-b.sh-lost{background:#F7C1C1;color:#501313;border-color:#E24B4A;transform:scale(1.1)}
+      .sh-b.sh-filled{background:#C0DD97;color:#173404;border-color:#3B6D11;transform:scale(1.1)}
+      .sh-b.sh-sign{background:#B5D4F4;color:#042C53;border-color:#185FA5}
+      .sh-b.sh-sign-fill{background:#B5D4F4;color:#042C53;border-color:#185FA5;transform:scale(1.1)}
+      .sh-vals{display:flex;justify-content:center;gap:24px;font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);margin:4px 0 8px}
+      .sh-vals b{color:var(--text)}
+      .sh-info{text-align:center;font-size:12px;color:var(--muted);min-height:18px;margin-bottom:8px}
+      .sh-ctrls{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+      .sh-btn{padding:6px 16px;border-radius:7px;border:1px solid var(--color-border-secondary);background:var(--color-background-secondary);color:var(--text);font-size:13px;cursor:pointer;transition:background .12s;font-family:'DM Sans',sans-serif}
+      .sh-btn:hover{background:var(--color-background-tertiary)}
+      .sh-btn.sh-primary{background:#185FA5;color:#E6F1FB;border-color:#185FA5}
+      .sh-btn.sh-primary:hover{background:#0C447C}
+      .sh-legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:11px;margin:6px 0 4px}
+      .sh-leg{display:flex;align-items:center;gap:5px}
+      .sh-lbox{width:13px;height:13px;border-radius:3px;border:1px solid}
+      .sh-side{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+      .sh-half{flex:1;min-width:240px}
+      .sh-htitle{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:center;margin-bottom:6px}
+    </style>
+
+    <div>
+      <div class="sh-tabs">
+        <button class="sh-tab sh-on" onclick="shTab('sll',this)">sll — shift left logico</button>
+        <button class="sh-tab" onclick="shTab('srl',this)">srl — shift right logico</button>
+        <button class="sh-tab" onclick="shTab('sra',this)">sra — shift right aritmetico</button>
+      </div>
+
+      <!-- SLL -->
+      <div class="sh-panel sh-on" id="sh-sll">
+        <div class="sh-desc sh-green"><b>Shift Left Logical (sll / slli)</b> — sposta tutti i bit verso sinistra di k posizioni. I bit che escono a sinistra vengono <b style="color:#A32D2D">persi</b>. Quelli che entrano a destra sono sempre <b style="color:#3B6D11">0</b>.<br><b>Effetto matematico:</b> moltiplica per 2ᵏ (finché non c'è overflow). <code>slli x9, x22, 2</code> → x9 = x22 × 4</div>
+        <div class="sh-brow" id="sh-sll-bits"></div>
+        <div class="sh-lrow" id="sh-sll-lbls"></div>
+        <div class="sh-vals" id="sh-sll-vals"></div>
+        <div class="sh-info" id="sh-sll-info"></div>
+        <div class="sh-ctrls">
+          <button class="sh-btn" onclick="shSllReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSllStep()">Shift ← 1 bit</button>
+          <button class="sh-btn" onclick="shSllAuto()">Auto ×4</button>
+        </div>
+        <div class="sh-legend">
+          <div class="sh-leg"><div class="sh-lbox" style="background:#F7C1C1;border-color:#E24B4A"></div><span style="color:#A32D2D">bit perso (esce a sinistra)</span></div>
+          <div class="sh-leg"><div class="sh-lbox" style="background:#C0DD97;border-color:#3B6D11"></div><span style="color:#3B6D11">0 inserito a destra</span></div>
+        </div>
+      </div>
+
+      <!-- SRL -->
+      <div class="sh-panel" id="sh-srl">
+        <div class="sh-desc"><b>Shift Right Logical (srl / srli)</b> — sposta tutti i bit verso destra di k posizioni. I bit che escono a destra vengono <b style="color:#A32D2D">persi</b>. Quelli che entrano a sinistra sono sempre <b style="color:#3B6D11">0</b> (ignora il segno).<br><b>Effetto matematico:</b> divide per 2ᵏ solo per numeri senza segno.</div>
+        <div class="sh-brow" id="sh-srl-bits"></div>
+        <div class="sh-lrow" id="sh-srl-lbls"></div>
+        <div class="sh-vals" id="sh-srl-vals"></div>
+        <div class="sh-info" id="sh-srl-info"></div>
+        <div class="sh-ctrls">
+          <button class="sh-btn" onclick="shSrlReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSrlStep()">Shift → 1 bit</button>
+          <button class="sh-btn" onclick="shSrlAuto()">Auto ×4</button>
+        </div>
+        <div class="sh-legend">
+          <div class="sh-leg"><div class="sh-lbox" style="background:#F7C1C1;border-color:#E24B4A"></div><span style="color:#A32D2D">bit perso (esce a destra)</span></div>
+          <div class="sh-leg"><div class="sh-lbox" style="background:#C0DD97;border-color:#3B6D11"></div><span style="color:#3B6D11">0 inserito a sinistra</span></div>
+        </div>
+      </div>
+
+      <!-- SRA -->
+      <div class="sh-panel" id="sh-sra">
+        <div class="sh-desc sh-amber"><b>Shift Right Arithmetic (sra / srai)</b> — come srl, ma il bit inserito a sinistra è una copia del <b style="color:#185FA5">bit di segno (MSB)</b>. Così i negativi restano negativi.<br><b>Effetto matematico:</b> divide per 2ᵏ preservando il segno anche per numeri negativi in complemento a 2.<br><b>Shift left aritmetico non esiste</b> — sarebbe identico a sll, zero da destra in ogni caso.</div>
+        <div class="sh-side">
+          <div class="sh-half">
+            <div class="sh-htitle" style="color:#3B6D11">Positivo — MSB = 0</div>
+            <div class="sh-brow" id="sh-pos-bits"></div>
+            <div class="sh-lrow" id="sh-pos-lbls"></div>
+            <div class="sh-vals" id="sh-pos-vals"></div>
+            <div class="sh-info" id="sh-pos-info"></div>
+          </div>
+          <div class="sh-half">
+            <div class="sh-htitle" style="color:#A32D2D">Negativo — MSB = 1</div>
+            <div class="sh-brow" id="sh-neg-bits"></div>
+            <div class="sh-lrow" id="sh-neg-lbls"></div>
+            <div class="sh-vals" id="sh-neg-vals"></div>
+            <div class="sh-info" id="sh-neg-info"></div>
+          </div>
+        </div>
+        <div class="sh-ctrls" style="margin-top:10px">
+          <button class="sh-btn" onclick="shSraReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSraStep()">Shift → 1 bit (entrambi)</button>
+          <button class="sh-btn" onclick="shSraAuto()">Auto ×4</button>
+        </div>
+        <div class="sh-legend">
+          <div class="sh-leg"><div class="sh-lbox" style="background:#B5D4F4;border-color:#185FA5"></div><span style="color:#185FA5">bit di segno replicato (MSB)</span></div>
+          <div class="sh-leg"><div class="sh-lbox" style="background:#F7C1C1;border-color:#E24B4A"></div><span style="color:#A32D2D">bit perso (esce a destra)</span></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      function toS8(v){return v>=128?v-256:v}
+      function gv(b){return parseInt(b.join(''),2)}
+
+      function renderBits(rowId, lblId, bits, marks){
+        var rc=document.getElementById(rowId), lc=document.getElementById(lblId);
+        if(!rc||!lc)return;
+        rc.innerHTML=''; lc.innerHTML='';
+        var n=bits.length;
+        bits.forEach(function(b,i){
+          var d=document.createElement('div');
+          d.className='sh-b'+(marks&&marks[i]?' '+marks[i]:'');
+          d.textContent=b;
+          rc.appendChild(d);
+          var l=document.createElement('div');
+          l.className='sh-lbl'; l.textContent=n-1-i;
+          lc.appendChild(l);
+        });
+      }
+
+      function setVals(id, bits, prev){
+        var el=document.getElementById(id); if(!el)return;
+        var v=gv(bits), s=toS8(v);
+        el.innerHTML='<span>unsigned: <b>'+v+'</b></span><span>signed: <b>'+s+'</b></span>'+(prev!==undefined?'<span style="color:var(--dim)">(era '+prev+')</span>':'');
+      }
+
+      /* ── SLL ── */
+      var sllB=[0,1,0,1,1,0,1,0], sllPrev=null, sllTimer=null;
+      function shSllReset(){
+        clearTimeout(sllTimer);
+        sllB=[0,1,0,1,1,0,1,0]; sllPrev=null;
+        renderBits('sh-sll-bits','sh-sll-lbls',sllB,null);
+        setVals('sh-sll-vals',sllB);
+        document.getElementById('sh-sll-info').textContent='Valore iniziale: 0b01011010 = 90';
+      }
+      window.shSllStep=function(){
+        clearTimeout(sllTimer);
+        var lost=sllB[0];
+        var marks={}; marks[0]='sh-lost'; marks[sllB.length-1]='sh-filled';
+        renderBits('sh-sll-bits','sh-sll-lbls',sllB,marks);
+        var prev=gv(sllB);
+        setTimeout(function(){
+          sllPrev=prev;
+          sllB=sllB.slice(1).concat([0]);
+          renderBits('sh-sll-bits','sh-sll-lbls',sllB,null);
+          setVals('sh-sll-vals',sllB,sllPrev);
+          document.getElementById('sh-sll-info').textContent='Bit '+lost+' uscito a sinistra — 0 inserito a destra — valore × 2';
+        },260);
+      };
+      window.shSllAuto=function(){
+        clearTimeout(sllTimer);
+        var i=0;
+        function step(){if(i++<4){shSllStep();sllTimer=setTimeout(step,620);}}
+        step();
+      };
+      window.shSllReset=shSllReset;
+      shSllReset();
+
+      /* ── SRL ── */
+      var srlB=[1,0,1,1,0,1,0,0], srlPrev=null, srlTimer=null;
+      function shSrlReset(){
+        clearTimeout(srlTimer);
+        srlB=[1,0,1,1,0,1,0,0]; srlPrev=null;
+        renderBits('sh-srl-bits','sh-srl-lbls',srlB,null);
+        setVals('sh-srl-vals',srlB);
+        document.getElementById('sh-srl-info').textContent='Valore iniziale: 0b10110100 = 180';
+      }
+      window.shSrlStep=function(){
+        clearTimeout(srlTimer);
+        var lost=srlB[srlB.length-1];
+        var marks={}; marks[srlB.length-1]='sh-lost'; marks[0]='sh-filled';
+        renderBits('sh-srl-bits','sh-srl-lbls',srlB,marks);
+        var prev=gv(srlB);
+        setTimeout(function(){
+          srlPrev=prev;
+          srlB=[0].concat(srlB.slice(0,-1));
+          renderBits('sh-srl-bits','sh-srl-lbls',srlB,null);
+          setVals('sh-srl-vals',srlB,srlPrev);
+          document.getElementById('sh-srl-info').textContent='Bit '+lost+' uscito a destra — 0 inserito a sinistra — valore ÷ 2 (unsigned)';
+        },260);
+      };
+      window.shSrlAuto=function(){
+        clearTimeout(srlTimer);
+        var i=0;
+        function step(){if(i++<4){shSrlStep();srlTimer=setTimeout(step,620);}}
+        step();
+      };
+      window.shSrlReset=shSrlReset;
+      shSrlReset();
+
+      /* ── SRA ── */
+      var posB=[0,1,1,0,1,0,0,0], negB=[1,0,1,1,0,0,0,0], sraTimer=null;
+      function shSraReset(){
+        clearTimeout(sraTimer);
+        posB=[0,1,1,0,1,0,0,0]; negB=[1,0,1,1,0,0,0,0];
+        renderBits('sh-pos-bits','sh-pos-lbls',posB,null);
+        renderBits('sh-neg-bits','sh-neg-lbls',negB,null);
+        setVals('sh-pos-vals',posB); setVals('sh-neg-vals',negB);
+        document.getElementById('sh-pos-info').textContent='MSB=0 → positivo ('+toS8(gv(posB))+')';
+        document.getElementById('sh-neg-info').textContent='MSB=1 → negativo ('+toS8(gv(negB))+')';
+      }
+      window.shSraStep=function(){
+        clearTimeout(sraTimer);
+        /* show highlights */
+        var pm={}; pm[posB.length-1]='sh-lost'; pm[0]='sh-sign';
+        var nm={}; nm[negB.length-1]='sh-lost'; nm[0]='sh-sign';
+        renderBits('sh-pos-bits','sh-pos-lbls',posB,pm);
+        renderBits('sh-neg-bits','sh-neg-lbls',negB,nm);
+        var pp=gv(posB), np=gv(negB);
+        setTimeout(function(){
+          var psign=posB[0], nsign=negB[0];
+          var plost=posB[posB.length-1], nlost=negB[negB.length-1];
+          posB=[psign].concat(posB.slice(0,-1));
+          negB=[nsign].concat(negB.slice(0,-1));
+          /* mark new sign fill */
+          var pm2={}, nm2={};
+          pm2[0]='sh-sign-fill'; nm2[0]='sh-sign-fill';
+          renderBits('sh-pos-bits','sh-pos-lbls',posB,pm2);
+          renderBits('sh-neg-bits','sh-neg-lbls',negB,nm2);
+          setVals('sh-pos-vals',posB,toS8(pp));
+          setVals('sh-neg-vals',negB,toS8(np));
+          document.getElementById('sh-pos-info').textContent='MSB era 0 → 0 replicato (rimane positivo)';
+          document.getElementById('sh-neg-info').textContent='MSB era 1 → 1 replicato (rimane negativo)';
+        },260);
+      };
+      window.shSraAuto=function(){
+        clearTimeout(sraTimer);
+        var i=0;
+        function step(){if(i++<4){shSraStep();sraTimer=setTimeout(step,620);}}
+        step();
+      };
+      window.shSraReset=shSraReset;
+      shSraReset();
+
+      window.shTab=function(id,btn){
+        document.querySelectorAll('.sh-panel').forEach(function(p){p.classList.remove('sh-on')});
+        document.querySelectorAll('.sh-tab').forEach(function(b){b.classList.remove('sh-on')});
+        document.getElementById('sh-'+id).classList.add('sh-on');
+        btn.classList.add('sh-on');
+      };
+    })();
+    </script>
+
+    <p style="margin-top:16px">Le versioni registro-registro (<code>sll</code>, <code>srl</code>, <code>sra</code>) usano il formato R. Le versioni immediate (<code>slli</code>, <code>srli</code>, <code>srai</code>) usano il formato I con i bit meno significativi del campo immediato per la costante di shift.</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 13 ══════════════ -->
+  <section class="section" id="s13">
+    <div class="section-header">
+      <div class="section-num">13</div>
+      <h2>Il linguaggio <span class="accent">macchina</span></h2>
+    </div>
+
+    <p class="lead">Ogni istruzione assembly viene tradotta in esattamente 32 bit. RISC-V usa 5 formati, ognuno con campi a posizioni fisse — così la CPU sa sempre dove tagliare i 32 bit senza ambiguità.</p>
+
+    <style>
+      #fmt-wrap * { box-sizing:border-box; }
+      .fmt-tabs { display:flex; gap:0; margin-bottom:0; flex-wrap:wrap; }
+      .fmt-tab {
+        padding:8px 18px; border:1px solid var(--color-border-secondary);
+        border-bottom:none; background:var(--color-background-secondary);
+        color:var(--muted); font-size:13px; font-weight:600; cursor:pointer;
+        transition:all .15s; font-family:'DM Sans',sans-serif;
+        border-radius:8px 8px 0 0; margin-right:3px;
+      }
+      .fmt-tab:hover { color:var(--text); }
+      .fmt-tab.ft-on { color:var(--text); border-bottom:1px solid var(--surface2); }
+      .fmt-tab[data-fmt="R"].ft-on  { background:#E6F1FB; border-color:#185FA5; color:#0C447C; }
+      .fmt-tab[data-fmt="I"].ft-on  { background:#EAF3DE; border-color:#3B6D11; color:#173404; }
+      .fmt-tab[data-fmt="S"].ft-on  { background:#FAEEDA; border-color:#BA7517; color:#412402; }
+      .fmt-tab[data-fmt="B"].ft-on  { background:#EEEDFE; border-color:#534AB7; color:#26215C; }
+      .fmt-tab[data-fmt="J"].ft-on  { background:#FCEBEB; border-color:#A32D2D; color:#501313; }
+      .fmt-body {
+        border:1px solid var(--color-border-secondary);
+        border-radius:0 8px 8px 8px; padding:20px;
+        background:var(--color-background-secondary);
+      }
+      .fmt-panel { display:none; }
+      .fmt-panel.ft-on { display:block; }
+      /* bit layout */
+      .fmt-row { display:flex; gap:0; margin:14px 0 4px; overflow-x:auto; }
+      .fmt-field {
+        display:flex; flex-direction:column; align-items:center; justify-content:center;
+        min-height:44px; padding:4px 6px; border:1px solid rgba(0,0,0,.08);
+        font-family:'DM Mono',monospace; font-size:11px; font-weight:600;
+        text-align:center; line-height:1.3; position:relative; flex-shrink:0;
+      }
+      .fmt-field .ff-name { font-size:10px; font-weight:700; }
+      .fmt-field .ff-bits { font-size:9px; opacity:.7; margin-top:1px; }
+      .fmt-field .ff-val  { font-size:11px; margin-top:3px; font-family:'DM Mono',monospace; }
+      /* colors per field type */
+      .ff-opcode { background:#E6F1FB; color:#0C447C; border-color:#85B7EB; }
+      .ff-rd     { background:#EAF3DE; color:#173404; border-color:#97C459; }
+      .ff-f3     { background:#EEEDFE; color:#26215C; border-color:#AFA9EC; }
+      .ff-rs1    { background:#FAEEDA; color:#412402; border-color:#EF9F27; }
+      .ff-rs2    { background:#F5C4B3; color:#4A1B0C; border-color:#D85A30; }
+      .ff-f7     { background:#F4C0D1; color:#4B1528; border-color:#D4537E; }
+      .ff-imm    { background:#FCEBEB; color:#501313; border-color:#E24B4A; }
+      .ff-imm2   { background:#F7C1C1; color:#501313; border-color:#E24B4A; }
+      /* width proportional to bit count */
+      .fw-7  { width:68px; }
+      .fw-5  { width:50px; }
+      .fw-3  { width:32px; }
+      .fw-12 { width:112px; }
+      .fw-1  { width:16px; }
+      .fw-6  { width:58px; }
+      .fw-4  { width:40px; }
+      .fw-8  { width:76px; }
+      .fw-10 { width:94px; }
+      .fw-20 { width:185px; }
+      /* bit scale label row */
+      .fmt-bit-scale { display:flex; gap:0; margin-bottom:12px; }
+      .fmt-bsc { font-size:9px; font-family:'DM Mono',monospace; color:var(--dim); text-align:center; flex-shrink:0; }
+      /* desc + example */
+      .fmt-desc { font-size:13px; color:var(--muted); line-height:1.75; margin-bottom:14px; }
+      .fmt-desc strong { color:var(--text); }
+      .fmt-instrs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+      .fmt-instr-chip {
+        font-family:'DM Mono',monospace; font-size:12px; padding:3px 9px;
+        border-radius:5px; border:1px solid var(--color-border-secondary);
+        background:var(--color-background-primary); color:var(--text);
+      }
+      .fmt-example { background:var(--surface3); border:1px solid var(--border); border-radius:8px; padding:12px 16px; font-family:'DM Mono',monospace; font-size:12px; line-height:1.9; }
+      .fmt-example .fe-asm  { color:#6bcb8b; font-weight:600; }
+      .fmt-example .fe-cmt  { color:var(--dim); }
+      .fmt-example .fe-note { color:#f5a623; }
+      .fmt-legend { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+      .fmt-leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); }
+      .fmt-lbox { width:12px; height:12px; border-radius:2px; border:1px solid; flex-shrink:0; }
+      .fmt-note { font-size:12px; color:var(--muted); margin-top:12px; padding:10px 14px; background:var(--color-background-secondary); border-radius:7px; border-left:3px solid var(--color-border-secondary); line-height:1.65; }
+      .fmt-note strong { color:var(--text); }
+      .fmt-bit-range { font-size:10px; color:var(--dim); font-family:'DM Mono',monospace; text-align:center; margin-bottom:6px; }
+    </style>
+
+    <div id="fmt-wrap">
+      <div class="fmt-tabs">
+        <button class="fmt-tab ft-on" data-fmt="R" onclick="fmtTab('R',this)">Tipo R</button>
+        <button class="fmt-tab" data-fmt="I" onclick="fmtTab('I',this)">Tipo I</button>
+        <button class="fmt-tab" data-fmt="S" onclick="fmtTab('S',this)">Tipo S</button>
+        <button class="fmt-tab" data-fmt="B" onclick="fmtTab('B',this)">Tipo B</button>
+        <button class="fmt-tab" data-fmt="J" onclick="fmtTab('J',this)">Tipo J</button>
+      </div>
+      <div class="fmt-body">
+
+        <!-- ── R ── -->
+        <div class="fmt-panel ft-on" id="fp-R">
+          <div class="fmt-desc">
+            <strong>Formato R — Register</strong> &nbsp;·&nbsp; tre registri, nessun immediato.<br>
+            Usato per operazioni aritmetiche e logiche che leggono due registri sorgente e scrivono in un registro destinazione. <code>funct7</code> + <code>funct3</code> + <code>opcode</code> insieme identificano l'operazione esatta.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">add</span><span class="fmt-instr-chip">sub</span>
+            <span class="fmt-instr-chip">and</span><span class="fmt-instr-chip">or</span>
+            <span class="fmt-instr-chip">xor</span><span class="fmt-instr-chip">sll</span>
+            <span class="fmt-instr-chip">srl</span><span class="fmt-instr-chip">sra</span>
+            <span class="fmt-instr-chip">mul</span><span class="fmt-instr-chip">div</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-f7  fw-7"><span class="ff-name">funct7</span><span class="ff-bits">31–25 · 7bit</span></div>
+            <div class="fmt-field ff-rs2 fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20 · 5bit</span></div>
+            <div class="fmt-field ff-rs1 fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3  fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># add x5, x9, x10   →   x5 = x9 + x10</span>
+<span class="fe-note">0000000</span> <span class="fe-note">01010</span> <span class="fe-note">01001</span> <span class="fe-note">000</span> <span class="fe-note">00101</span> <span class="fe-note">0110011</span>
+<span class="fe-cmt">  f7=0   rs2=x10 rs1=x9  f3  rd=x5   opcode</span>
+
+<span class="fe-cmt"># sub x18, x19, x5  →   x18 = x19 - x5</span>
+<span class="fe-note">0100000</span> <span class="fe-note">00101</span> <span class="fe-note">10011</span> <span class="fe-note">000</span> <span class="fe-note">10010</span> <span class="fe-note">0110011</span>
+<span class="fe-cmt">  f7=32  rs2=x5  rs1=x19 f3  rd=x18  opcode</span></div>
+          <div class="fmt-note"><strong>Nota:</strong> add e sub hanno lo stesso opcode e funct3 — si distinguono solo per il bit 30 di funct7 (0 = add, 1 = sub). Stessa logica per srl vs sra.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#F4C0D1;border-color:#D4537E"></div>funct7 — disambigua varianti (add/sub, srl/sra)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#F5C4B3;border-color:#D85A30"></div>rs2 — 2° operando sorgente</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FAEEDA;border-color:#EF9F27"></div>rs1 — 1° operando sorgente</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#EEEDFE;border-color:#AFA9EC"></div>funct3 — tipo operazione</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#EAF3DE;border-color:#97C459"></div>rd — registro destinazione</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#E6F1FB;border-color:#85B7EB"></div>opcode — identifica il formato</div>
+          </div>
+        </div>
+
+        <!-- ── I ── -->
+        <div class="fmt-panel" id="fp-I">
+          <div class="fmt-desc">
+            <strong>Formato I — Immediate</strong> &nbsp;·&nbsp; un registro sorgente + costante a 12 bit.<br>
+            Usato per operazioni con costante incorporata nell'istruzione, load dalla memoria, e <code>jalr</code>. La costante è rappresentata in complemento a 2: range da −2048 a +2047.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">addi</span><span class="fmt-instr-chip">andi</span>
+            <span class="fmt-instr-chip">ori</span><span class="fmt-instr-chip">xori</span>
+            <span class="fmt-instr-chip">lw</span><span class="fmt-instr-chip">lh</span>
+            <span class="fmt-instr-chip">lb</span><span class="fmt-instr-chip">lhu</span>
+            <span class="fmt-instr-chip">lbu</span><span class="fmt-instr-chip">slli</span>
+            <span class="fmt-instr-chip">srli</span><span class="fmt-instr-chip">srai</span>
+            <span class="fmt-instr-chip">jalr</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm fw-12"><span class="ff-name">imm[11:0]</span><span class="ff-bits">31–20 · 12bit</span></div>
+            <div class="fmt-field ff-rs1 fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3  fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># addi x7, x5, -6   →   x7 = x5 + (-6)</span>
+<span class="fe-note">111111111010</span> <span class="fe-note">00101</span> <span class="fe-note">000</span> <span class="fe-note">00111</span> <span class="fe-note">0010011</span>
+<span class="fe-cmt">  imm=-6        rs1=x5 f3  rd=x7   opcode</span>
+
+<span class="fe-cmt"># lw x9, 176(x22)   →   x9 = Mem[x22+176]</span>
+<span class="fe-note">000010110000</span> <span class="fe-note">10110</span> <span class="fe-note">010</span> <span class="fe-note">01001</span> <span class="fe-note">0000011</span>
+<span class="fe-cmt">  imm=176       rs1=x22 f3  rd=x9  opcode(load)</span></div>
+          <div class="fmt-note"><strong>Perché solo 12 bit per l'immediato?</strong> Con 12 bit si coprono offset da −2048 a +2047 — sufficiente per quasi tutti i casi pratici (accesso array, stack). Se serve una costante più grande si usano <code>lui</code> + <code>addi</code> in coppia.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FCEBEB;border-color:#E24B4A"></div>imm[11:0] — costante/offset in complemento a 2</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FAEEDA;border-color:#EF9F27"></div>rs1 — registro base (per load: indirizzo base)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#EEEDFE;border-color:#AFA9EC"></div>funct3 — tipo operazione / ampiezza del load</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#EAF3DE;border-color:#97C459"></div>rd — destinazione</div>
+          </div>
+        </div>
+
+        <!-- ── S ── -->
+        <div class="fmt-panel" id="fp-S">
+          <div class="fmt-desc">
+            <strong>Formato S — Store</strong> &nbsp;·&nbsp; due registri sorgente + offset a 12 bit <em>spezzato</em>.<br>
+            Usato per scrivere in memoria. L'offset è diviso in due pezzi (<code>imm[11:5]</code> e <code>imm[4:0]</code>) in modo che <code>rs1</code> e <code>rs2</code> stiano <em>esattamente nelle stesse posizioni bit</em> del formato R — così l'hardware di decodifica è più semplice e veloce.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">sw</span><span class="fmt-instr-chip">sh</span>
+            <span class="fmt-instr-chip">sb</span><span class="fmt-instr-chip">sd</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm  fw-7"><span class="ff-name">imm[11:5]</span><span class="ff-bits">31–25 · 7bit</span></div>
+            <div class="fmt-field ff-rs2  fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20 · 5bit</span></div>
+            <div class="fmt-field ff-rs1  fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3   fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-imm2 fw-5"><span class="ff-name">imm[4:0]</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># sw x9, 24(x22)   →   Mem[x22+24] = x9</span>
+<span class="fe-note">0000000</span>  <span class="fe-note">01001</span>  <span class="fe-note">10110</span>  <span class="fe-note">010</span>  <span class="fe-note">11000</span>  <span class="fe-note">0100011</span>
+<span class="fe-cmt">imm[11:5]=0 rs2=x9 rs1=x22 f3 imm[4:0]=24 op</span>
+
+<span class="fe-cmt"># Ricomponi offset: {imm[11:5], imm[4:0]} = 24</span>
+<span class="fe-cmt"># 0000000 ++ 11000 = 000000011000 = 24 ✓</span></div>
+          <div class="fmt-note"><strong>Perché non c'è rd?</strong> Store scrive in memoria, non in un registro — quindi non serve il campo destinazione. Quello spazio viene usato per la seconda metà dell'immediato.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FCEBEB;border-color:#E24B4A"></div>imm[11:5] — parte alta dell'offset (dove starebbe funct7 nel tipo R)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#F7C1C1;border-color:#E24B4A"></div>imm[4:0] — parte bassa dell'offset (dove starebbe rd nel tipo R)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#F5C4B3;border-color:#D85A30"></div>rs2 — registro da scrivere in memoria</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FAEEDA;border-color:#EF9F27"></div>rs1 — registro base indirizzo</div>
+          </div>
+        </div>
+
+        <!-- ── B ── -->
+        <div class="fmt-panel" id="fp-B">
+          <div class="fmt-desc">
+            <strong>Formato B — Branch</strong> &nbsp;·&nbsp; due registri da confrontare + offset a 13 bit (ma b0 è sempre 0).<br>
+            Usato per salti condizionati. L'offset è relativo al PC corrente. I bit dell'immediato sono riordinati in modo bizzarro — ma mantengono <code>rs1</code> e <code>rs2</code> nella stessa posizione del tipo R/S.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">beq</span><span class="fmt-instr-chip">bne</span>
+            <span class="fmt-instr-chip">blt</span><span class="fmt-instr-chip">bge</span>
+            <span class="fmt-instr-chip">bltu</span><span class="fmt-instr-chip">bgeu</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm  fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[12]</span><span class="ff-bits">31</span></div>
+            <div class="fmt-field ff-imm  fw-6"><span class="ff-name">im[10:5]</span><span class="ff-bits">30–25</span></div>
+            <div class="fmt-field ff-rs2  fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20</span></div>
+            <div class="fmt-field ff-rs1  fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15</span></div>
+            <div class="fmt-field ff-f3   fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-imm2 fw-4"><span class="ff-name">im[4:1]</span><span class="ff-bits">11–8</span></div>
+            <div class="fmt-field ff-imm2 fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[11]</span><span class="ff-bits">7</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># bne x9, x24, ENDLOOP  (offset = +12)</span>
+<span class="fe-cmt"># offset binario: 0 000000 01100 → bit riordinati nel formato B</span>
+<span class="fe-note">0</span> <span class="fe-note">000000</span> <span class="fe-note">11000</span> <span class="fe-note">01001</span> <span class="fe-note">001</span> <span class="fe-note">0110</span> <span class="fe-note">0</span> <span class="fe-note">1100011</span>
+<span class="fe-cmt">im12 im[10:5] rs2=x24 rs1=x9 f3 im[4:1] im11 op</span>
+
+<span class="fe-cmt"># Ricomponi offset: {im12,im11,im[10:5],im[4:1],0}</span>
+<span class="fe-cmt"># = 0 0 000000 0110 0 = 00000001100 = 12 ✓</span></div>
+          <div class="fmt-note"><strong>Perché l'offset salta il bit 0?</strong> Le istruzioni RISC-V sono sempre allineate a 2 byte (o 4), quindi b0 dell'offset è sempre 0 — inutile codificarlo. Si guadagna 1 bit di range: con 12 bit utili si arriva a ±4KB invece di ±2KB.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FCEBEB;border-color:#E24B4A"></div>imm — offset relativo al PC, bit riordinati per semplicità hardware</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#F5C4B3;border-color:#D85A30"></div>rs1 / rs2 — i due registri da confrontare (stessa posizione del tipo R)</div>
+          </div>
+        </div>
+
+        <!-- ── J ── -->
+        <div class="fmt-panel" id="fp-J">
+          <div class="fmt-desc">
+            <strong>Formato J — Jump</strong> &nbsp;·&nbsp; un registro destinazione + offset a 21 bit (b0 sempre 0).<br>
+            Usato esclusivamente da <code>jal</code>. L'offset enorme (±1MB) permette di saltare a qualsiasi funzione nel programma. Come il tipo B, i bit dell'immediato sono riordinati per mantenere l'opcode e rd nelle stesse posizioni di tutti gli altri formati.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">jal</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm fw-1" style="min-width:20px"><span class="ff-name" style="font-size:8px">im[20]</span><span class="ff-bits">31</span></div>
+            <div class="fmt-field ff-imm fw-10"><span class="ff-name">imm[10:1]</span><span class="ff-bits">30–21 · 10bit</span></div>
+            <div class="fmt-field ff-imm fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[11]</span><span class="ff-bits">20</span></div>
+            <div class="fmt-field ff-imm fw-8"><span class="ff-name">imm[19:12]</span><span class="ff-bits">19–12 · 8bit</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># jal ra, SOMMA   →   ra = PC+4;  PC = PC + offset</span>
+<span class="fe-cmt"># (offset = indirizzo SOMMA − indirizzo jal)</span>
+<span class="fe-note">0</span> <span class="fe-note">0000000001</span> <span class="fe-note">0</span> <span class="fe-note">00000001</span> <span class="fe-note">00001</span> <span class="fe-note">1101111</span>
+<span class="fe-cmt">im20  im[10:1]  im11 im[19:12] rd=ra   opcode</span>
+
+<span class="fe-cmt"># rd = x1 (ra) = salva PC+4 come return address</span>
+<span class="fe-cmt"># jal x0, LABEL  →  salto senza salvare ra (pseudo: j LABEL)</span></div>
+          <div class="fmt-note"><strong>Range ±1MB:</strong> con 20 bit utili di offset (b0 implicito = 0) si possono raggiungere indirizzi a ±2²⁰ byte = ±1.048.576 byte dal PC. Per salti più lontani si usa <code>jalr</code> con indirizzo caricato in un registro (<code>auipc</code> + <code>jalr</code>).</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#FCEBEB;border-color:#E24B4A"></div>imm[20:1] — offset relativo al PC (20 bit utili → ±1MB), b0 implicito = 0</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:#EAF3DE;border-color:#97C459"></div>rd — registro dove salvare PC+4 (return address); x0 per scartarlo</div>
+          </div>
+        </div>
+
+      </div><!-- /fmt-body -->
+    </div><!-- /fmt-wrap -->
+
+    <script>
+    window.fmtTab = function(id, btn) {
+      document.querySelectorAll('.fmt-panel').forEach(function(p){ p.classList.remove('ft-on'); });
+      document.querySelectorAll('.fmt-tab').forEach(function(b){ b.classList.remove('ft-on'); });
+      document.getElementById('fp-'+id).classList.add('ft-on');
+      btn.classList.add('ft-on');
+    };
+    </script>
+
+    <div class="callout amber" style="margin-top:20px">
+      <strong>Il principio unificante:</strong> in tutti e 5 i formati, <code>opcode</code> sta sempre nei bit 6–0, <code>rd</code> sempre in 11–7, <code>rs1</code> sempre in 19–15, <code>rs2</code> sempre in 24–20. La CPU può leggere questi campi <em>prima ancora di sapere</em> che tipo di istruzione è — questo è ciò che rende RISC-V semplice da implementare in hardware.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 14 ══════════════ -->
+  <section class="section" id="s14">
+    <div class="section-header">
+      <div class="section-num">14</div>
+      <h2>Salti e <span class="accent">controllo del flusso</span></h2>
+    </div>
+
+    <p class="lead">RISC-V controlla il flusso di esecuzione con salti condizionati (branch), salti incondizionati (jal/jalr) e pseudoistruzioni. Permettono di implementare if, for, while e chiamate di funzione.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Salti condizionati (branch)</h3>
+
+    <table>
+      <tr><th>Istruzione</th><th>Condizione</th><th>Note</th></tr>
+      <tr><td><code class="t-blue">beq rs1, rs2, L</code></td><td>salta se rs1 == rs2</td><td>Branch if Equal</td></tr>
+      <tr><td><code class="t-blue">bne rs1, rs2, L</code></td><td>salta se rs1 ≠ rs2</td><td>Branch if Not Equal</td></tr>
+      <tr><td><code class="t-green">blt rs1, rs2, L</code></td><td>salta se rs1 &lt; rs2 (con segno)</td><td>Branch if Less Than</td></tr>
+      <tr><td><code class="t-green">bge rs1, rs2, L</code></td><td>salta se rs1 ≥ rs2 (con segno)</td><td>Branch if Greater or Equal</td></tr>
+      <tr><td><code class="t-amber">bltu rs1, rs2, L</code></td><td>salta se rs1 &lt; rs2 (senza segno)</td><td>Unsigned</td></tr>
+      <tr><td><code class="t-amber">bgeu rs1, rs2, L</code></td><td>salta se rs1 ≥ rs2 (senza segno)</td><td>Unsigned</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">If-then-else</h3>
+    <pre><span class="cmt"># C: if (i==j) f=g+h; else f=g-h;</span>
+<span class="cmt"># f→x19, g→x20, h→x21, i→x22, j→x23</span>
+
+      <span class="kw">bne</span>  <span class="reg">x22</span>, <span class="reg">x23</span>, <span class="label">ELSE</span>   <span class="cmt"># if i≠j salta a ELSE</span>
+      <span class="kw">add</span>  <span class="reg">x19</span>, <span class="reg">x20</span>, <span class="reg">x21</span>   <span class="cmt"># f = g + h</span>
+      <span class="kw">beq</span>  <span class="reg">x0</span>,  <span class="reg">x0</span>,  <span class="label">ENDIF</span>  <span class="cmt"># salto incondizionato (x0==x0 sempre)</span>
+<span class="label">ELSE:</span> <span class="kw">sub</span>  <span class="reg">x19</span>, <span class="reg">x20</span>, <span class="reg">x21</span>   <span class="cmt"># f = g - h</span>
+<span class="label">ENDIF:</span></pre>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Ciclo for</h3>
+    <pre><span class="cmt"># C: for (i=0; i&lt;100; i++) { … }</span>
+      <span class="kw">add</span>   <span class="reg">x19</span>, <span class="reg">x0</span>, <span class="reg">x0</span>     <span class="cmt"># i = 0</span>
+      <span class="kw">addi</span>  <span class="reg">x20</span>, <span class="reg">x0</span>, <span class="imm">100</span>   <span class="cmt"># costante 100</span>
+<span class="label">FOR:</span>  <span class="kw">bge</span>   <span class="reg">x19</span>, <span class="reg">x20</span>, <span class="label">ENDFOR</span> <span class="cmt"># if i≥100 esci</span>
+      <span class="cmt"># ... corpo del ciclo ...</span>
+      <span class="kw">addi</span>  <span class="reg">x19</span>, <span class="reg">x19</span>, <span class="imm">1</span>    <span class="cmt"># i++</span>
+      <span class="kw">beq</span>   <span class="reg">x0</span>,  <span class="reg">x0</span>,  <span class="label">FOR</span>   <span class="cmt"># torna all'inizio</span>
+<span class="label">ENDFOR:</span></pre>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Salti incondizionati: JAL e JALR</h3>
+
+    <div class="card-grid cols2" style="margin:12px 0 16px">
+      <div class="card blue">
+        <div class="card-title">jal rd, etichetta</div>
+        <p style="font-size:13px;margin:0"><strong>Jump and Link</strong>: salta all'etichetta E salva l'indirizzo di ritorno (PC+4) in rd. Usato per le chiamate di funzione: <code>jal ra, FUNZIONE</code>. Formato J, offset fino a ±1MB.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">jalr rd, offset(rs1)</div>
+        <p style="font-size:13px;margin:0"><strong>Jump and Link Register</strong>: salta a rs1+offset (indirizzo calcolato a runtime). Usato per il ritorno: <code>jalr x0, 0(ra)</code> → pseudoistruzione <code>jr ra</code> o <code>ret</code>.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Pseudoistruzioni</h3>
+
+    <p>Le pseudoistruzioni esistono solo in assembly, non in linguaggio macchina. L'assemblatore le traduce in istruzioni reali:</p>
+
+    <table>
+      <tr><th>Pseudoistruzione</th><th>Si traduce in</th><th>Significato</th></tr>
+      <tr><td><code class="t-green">mv x5, x6</code></td><td><code>addi x5, x6, 0</code></td><td>Copia registro</td></tr>
+      <tr><td><code class="t-green">not x5, x6</code></td><td><code>xori x5, x6, -1</code></td><td>NOT bit a bit</td></tr>
+      <tr><td><code class="t-green">li x5, 42</code></td><td><code>addi x5, x0, 42</code></td><td>Carica immediato (load immediate)</td></tr>
+      <tr><td><code class="t-green">jr ra</code></td><td><code>jalr x0, 0(ra)</code></td><td>Ritorno dalla funzione</td></tr>
+      <tr><td><code class="t-green">ret</code></td><td><code>jalr x0, 0(ra)</code></td><td>Ritorno (alias di jr ra)</td></tr>
+      <tr><td><code class="t-green">j etichetta</code></td><td><code>jal x0, etichetta</code></td><td>Salto incondizionato (scarta ra)</td></tr>
+      <tr><td><code class="t-green">call func</code></td><td><code>jal ra, func</code></td><td>Chiama funzione</td></tr>
+      <tr><td><code class="t-green">la rd, etichetta</code></td><td>sequenza <code>auipc</code>+<code>addi</code></td><td>Carica indirizzo di un simbolo</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 15 ══════════════ -->
+  <section class="section" id="s15">
+    <div class="section-header">
+      <div class="section-num">15</div>
+      <h2>Procedure e <span class="accent">convenzioni</span></h2>
+    </div>
+
+    <p class="lead">Le procedure sono porzioni di codice riusabili con parametri di input e valore di ritorno. La chiamata funziona correttamente solo rispettando precise convenzioni sui registri.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Il problema: side effects</h3>
+
+    <p>Ogni funzione usa registri. Se la funzione A chiama la funzione B, B potrebbe sovrascrivere registri che A stava usando. Come si risolve? Con convenzioni condivise su chi salva cosa.</p>
+
+    <div class="card-grid cols2" style="margin:16px 0">
+      <div class="card amber">
+        <div class="card-title">Registri caller-saved (temporanei)</div>
+        <p style="font-size:13px;margin:4px 0 0"><code>a0–a7</code>, <code>t0–t6</code></p>
+        <p style="font-size:13px;margin:6px 0 0">Il <strong>chiamante</strong> deve salvarli prima della call se gli servono dopo. Il chiamato può sovrascriverli liberamente.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Registri callee-saved (da preservare)</div>
+        <p style="font-size:13px;margin:4px 0 0"><code>ra</code>, <code>sp</code>, <code>gp</code>, <code>tp</code>, <code>s0/fp</code>, <code>s1–s11</code></p>
+        <p style="font-size:13px;margin:6px 0 0">Il <strong>chiamato</strong> deve salvarli e ripristinarli se li usa. Il chiamante può fidarsi che siano intatti dopo il ritorno.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Perché questa convenzione è ottimale?</h3>
+
+    <p>Confronto tra strategie alternative (es.: chiamante ha bisogno di s1,s2,s3; chiamato userà t0,t1):</p>
+
+    <table>
+      <tr><th>#</th><th>Strategia</th><th>Salvataggi chiamante</th><th>Salvataggi chiamato</th><th>Totale</th></tr>
+      <tr><td>1</td><td>Nessuna convenzione — tutti salvano tutto</td><td>3 (s1,s2,s3)</td><td>2 (t0,t1)</td><td class="t-red">5</td></tr>
+      <tr><td>2</td><td>Solo il chiamante salva ciò che serve a lui</td><td>3 (s1,s2,s3)</td><td>0</td><td class="t-amber">3</td></tr>
+      <tr><td>3</td><td>Solo il chiamato salva ciò che modifica</td><td>0</td><td>2 (t0,t1)</td><td class="t-amber">2</td></tr>
+      <tr><td style="color:var(--green);font-weight:600">4</td><td><strong>Convenzione RISC-V</strong> (t=temporanei, s=saved)</td><td>0</td><td>0</td><td class="t-green">0 !</td></tr>
+    </table>
+
+    <p style="margin-top:8px">Con la convenzione RISC-V: il chiamante usa <code>s1-s3</code> (che il chiamato non toccherà), il chiamato usa <code>t0-t1</code> (che il chiamante non si aspetta preservati). Zero salvataggi inutili.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Procedura foglia vs non foglia</h3>
+
+    <div class="card-grid cols2">
+      <div class="card green">
+        <div class="card-title">Procedura foglia (leaf)</div>
+        <p style="font-size:13px;margin:0">Non chiama nessun'altra funzione. Non deve salvare <code>ra</code> (nessuna <code>jal</code> la sovrascriverà). Se usa solo registri <code>t</code>, non tocca lo stack. <strong>Massima efficienza.</strong></p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Procedura non foglia</div>
+        <p style="font-size:13px;margin:0">Chiama altre funzioni. <strong>Deve salvare ra</strong> nello stack (la <code>jal</code> interna lo sovrascriverà). Deve anche salvare i registri <code>s</code> che usa, perché il chiamante li si aspetta intatti.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Stack in RISC-V: le convenzioni</h3>
+
+    <div class="card-grid cols2">
+      <div class="card blue">
+        <div class="card-title">grow-down</div>
+        <p style="font-size:13px;margin:0">Lo stack cresce da indirizzi <strong>alti verso bassi</strong>: ogni PUSH decrementa SP (<code>addi sp, sp, -4</code>), ogni POP incrementa SP (<code>addi sp, sp, 4</code>).</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">last-full</div>
+        <p style="font-size:13px;margin:0">SP punta sempre all'<strong>ultima cella occupata</strong> dello stack. Prima si decrementa SP, poi si scrive; prima si legge, poi si incrementa SP.</p>
+      </div>
+    </div>
+
+    <pre style="margin-top:14px"><span class="cmt"># PUSH di x20 sullo stack (RV32I)</span>
+<span class="kw">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="imm">-4</span>    <span class="cmt"># decrementa SP di 4 byte (1 word)</span>
+<span class="kw">sw</span>   <span class="reg">x20</span>, <span class="imm">0</span>(<span class="reg">sp</span>)   <span class="cmt"># scrive x20 alla cima dello stack</span>
+
+<span class="cmt"># POP di x20 dallo stack</span>
+<span class="kw">lw</span>   <span class="reg">x20</span>, <span class="imm">0</span>(<span class="reg">sp</span>)   <span class="cmt"># legge dalla cima dello stack</span>
+<span class="kw">addi</span> <span class="reg">sp</span>, <span class="reg">sp</span>, <span class="imm">4</span>     <span class="cmt"># incrementa SP di 4 byte</span></pre>
+  </section>
+
+  <!-- ══════════════ SEZIONE 16 ══════════════ -->
+  <section class="section" id="s16">
+    <div class="section-header">
+      <div class="section-num">16</div>
+      <h2>Le 7 fasi di <span class="accent">invocazione</span></h2>
+    </div>
+
+    <p class="lead">Ogni chiamata di funzione segue sempre 7 fasi precise. Le prime 2 e l'ultima sono a carico del chiamante; le fasi 3–6 sono a carico del chiamato.</p>
+
+    <div class="card-grid cols2" style="margin:20px 0">
+      <div style="background:var(--surface2);border:1px solid var(--blue-border);border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:10px">Chiamante</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--blue-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--blue)">Fase 1 — Pre-chiamata</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)">Salva eventuali <code>a0–a7</code>, <code>t0–t6</code> se servono dopo. Mette i parametri in <code>a0–a7</code> (gli extra oltre l'8° vanno nello stack sopra il frame del chiamato).</p>
+          </div>
+          <div style="background:var(--blue-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--blue)">Fase 2 — Invocazione</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)"><code>jal ra, NOME_FUNZIONE</code> — salta e salva PC+4 in ra.</p>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--green-border);border-radius:10px;padding:16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:10px">Chiamato</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:var(--green-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--green)">Fase 3 — Prologo</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)">Alloca frame: decrementa SP. Salva nello stack: <code>ra</code> (se non foglia), <code>fp</code> (se usato), <code>s1–s11</code> usati. Imposta fp = SP (opzionale).</p>
+          </div>
+          <div style="background:var(--green-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--green)">Fase 4 — Corpo</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)">Istruzioni della funzione.</p>
+          </div>
+          <div style="background:var(--green-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--green)">Fase 5 — Epilogo</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)">Mette il valore di ritorno in <code>a0</code> (e <code>a1</code> se serve). Ripristina <code>s1–s11</code>, <code>fp</code>, <code>ra</code>. Incrementa SP dello stesso offset del prologo.</p>
+          </div>
+          <div style="background:var(--green-bg);border-radius:6px;padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--green)">Fase 6 — Ritorno</div>
+            <p style="font-size:12px;margin:4px 0 0;color:var(--text)"><code>jalr x0, 0(ra)</code> oppure pseudoistruzione <code>ret</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border:1px solid var(--blue-border);border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:8px">Chiamante — dopo il ritorno</div>
+      <div style="background:var(--blue-bg);border-radius:6px;padding:10px 12px">
+        <div style="font-size:12px;font-weight:600;color:var(--blue)">Fase 7 — Post-chiamata</div>
+        <p style="font-size:12px;margin:4px 0 0;color:var(--text)">Usa il risultato da <code>a0</code>/<code>a1</code>. Ripristina i vecchi valori di <code>a0–a7</code>, <code>t0–t6</code> eventualmente salvati nella fase 1.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Struttura del record di attivazione (stack frame)</h3>
+
+    <p>Ogni frame nello stack ha una struttura standard. FP punta alla base del frame corrente (non cambia durante l'esecuzione della funzione), SP punta alla cima (cambia con le operazioni di push/pop).</p>
+
+    <div class="stack-vis" style="max-width:500px">
+      <div style="font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;text-align:center;margin-bottom:4px">↑ indirizzi alti</div>
+      <div class="sf caller"><span class="sf-name" style="color:var(--muted)">... frame del chiamante ...</span><span class="sf-addr">sopra</span></div>
+      <div class="sf params"><span class="sf-name" style="color:var(--green)">Argomenti extra (oltre l'8°)</span><span class="sf-addr">EXTRA_ARGS</span></div>
+      <div class="sf local-new"><span class="sf-name" style="color:var(--blue)">Variabili locali (se presenti)</span><span class="sf-addr">[fp - N]</span></div>
+      <div class="sf next-pc"><span class="sf-name" style="color:var(--amber)">old ra (se procedura non foglia)</span></div>
+      <div class="sf fp-addr">
+        <span class="sf-name" style="color:var(--red)">old fp (se modificato)</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="sf-pointer sf-ptr-fp">FP →</span></span>
+      </div>
+      <div class="sf params"><span class="sf-name" style="color:var(--green)">s0–s11 (se utilizzati)</span></div>
+      <div class="sf retval"><span class="sf-name" style="color:var(--teal)">a0–a7 (se utili dopo una call annidata)</span></div>
+      <div class="sf next-pc">
+        <span class="sf-name" style="color:var(--amber)">old t0–t6 (se salvati dal chiamante)</span>
+        <span style="display:flex;gap:6px;align-items:center"><span class="sf-pointer sf-ptr-sp">SP →</span></span>
+      </div>
+      <div style="font-size:10px;color:var(--dim);font-family:'DM Mono',monospace;text-align:center;margin-top:4px">↓ indirizzi bassi</div>
+    </div>
+
+    <div class="callout green" style="margin-top:16px">
+      <strong>Procedura foglia — semplificazioni:</strong> non serve salvare <code>ra</code>, non serve salvare <code>a0–a7</code> e <code>t0–t6</code> (non ci sono chiamate annidate che li sovrascrivano). Se non usa registri <code>s</code> e non ha variabili locali, SP non viene nemmeno modificato — zero accessi in RAM!
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Esempio completo: funzione non foglia</h3>
+
+    <pre><span class="cmt"># C: int somma(int x, int y) { int rst = x+y+2; return rst; }</span>
+<span class="cmt"># x→a0 (x10), y→a1 (x11), rst→x20</span>
+
+<span class="label">SOMMA:</span>
+  <span class="kw">addi</span> <span class="reg">sp</span>,  <span class="reg">sp</span>,  <span class="imm">-8</span>   <span class="cmt"># PROLOGO: alloca 8 byte</span>
+  <span class="kw">sw</span>   <span class="reg">x5</span>,  <span class="imm">0</span>(<span class="reg">sp</span>)    <span class="cmt"># salva x5 (usato internamente)</span>
+  <span class="kw">sw</span>   <span class="reg">x20</span>, <span class="imm">4</span>(<span class="reg">sp</span>)    <span class="cmt"># salva x20</span>
+
+  <span class="kw">add</span>  <span class="reg">x5</span>,  <span class="reg">a0</span>, <span class="reg">a1</span>   <span class="cmt"># CORPO: x5 = x + y</span>
+  <span class="kw">addi</span> <span class="reg">x20</span>, <span class="reg">x5</span>, <span class="imm">2</span>    <span class="cmt"># x20 = x+y+2 = rst</span>
+  <span class="kw">addi</span> <span class="reg">a0</span>,  <span class="reg">x20</span>, <span class="imm">0</span>   <span class="cmt"># valore di ritorno in a0</span>
+
+  <span class="kw">lw</span>   <span class="reg">x5</span>,  <span class="imm">0</span>(<span class="reg">sp</span>)    <span class="cmt"># EPILOGO: ripristina x5</span>
+  <span class="kw">lw</span>   <span class="reg">x20</span>, <span class="imm">4</span>(<span class="reg">sp</span>)    <span class="cmt"># ripristina x20</span>
+  <span class="kw">addi</span> <span class="reg">sp</span>,  <span class="reg">sp</span>,  <span class="imm">8</span>    <span class="cmt"># dealloca frame</span>
+  <span class="kw">jalr</span> <span class="reg">x0</span>,  <span class="imm">0</span>(<span class="reg">ra</span>)   <span class="cmt"># RITORNO al chiamante</span></pre>
+  </section>
+
+  <!-- ══════════════ SEZIONE 18 ══════════════ -->
+  <section class="section" id="s18">
+    <div class="section-header">
+      <div class="section-num">18</div>
+      <h2>La catena di <span class="accent">traduzione</span></h2>
+    </div>
+
+    <p class="lead">Scrivere codice C e vederlo girare sulla CPU richiede 4 trasformazioni in sequenza. Ogni passo converte la rappresentazione in qualcosa di più vicino al linguaggio macchina.</p>
+
+    <style>
+      .chain-flow { display:flex; gap:0; align-items:stretch; flex-wrap:wrap; margin:20px 0; }
+      .chain-box { flex:1; min-width:120px; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 12px; text-align:center; }
+      .chain-arrow { display:flex; align-items:center; padding:0 6px; color:var(--muted); font-size:20px; flex-shrink:0; }
+      .chain-tool { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+      .chain-from { font-family:'DM Mono',monospace; font-size:12px; color:var(--text); font-weight:500; }
+      .chain-desc { font-size:11px; color:var(--muted); margin-top:4px; line-height:1.5; }
+    </style>
+
+    <div class="chain-flow">
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--blue)">Sorgente C</div>
+        <div class="chain-from">main.c</div>
+        <div class="chain-desc">Codice leggibile dall'uomo, alto livello</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--blue-bg);border-color:var(--blue-border)">
+        <div class="chain-tool" style="color:var(--blue)">Compilatore</div>
+        <div class="chain-from">gcc -S</div>
+        <div class="chain-desc">Traduce C in mnemonici assembly</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--green)">Assembly</div>
+        <div class="chain-from">main.s</div>
+        <div class="chain-desc">Istruzioni mnemoniche, etichette simboliche</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--green-bg);border-color:var(--green-border)">
+        <div class="chain-tool" style="color:var(--green)">Assemblatore</div>
+        <div class="chain-from">as / gcc -c</div>
+        <div class="chain-desc">Traduce mnemonici in bit → modulo oggetto</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--amber)">Oggetto</div>
+        <div class="chain-from">main.o</div>
+        <div class="chain-desc">Binario parziale, indirizzi non definitivi</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--amber-bg);border-color:var(--amber-border)">
+        <div class="chain-tool" style="color:var(--amber)">Linker</div>
+        <div class="chain-from">ld / gcc</div>
+        <div class="chain-desc">Unisce moduli, risolve indirizzi</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--red)">Eseguibile</div>
+        <div class="chain-from">a.out / ELF</div>
+        <div class="chain-desc">Binario completo pronto per il loader</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--red-bg);border-color:var(--red-border)">
+        <div class="chain-tool" style="color:var(--red)">Loader</div>
+        <div class="chain-from">OS</div>
+        <div class="chain-desc">Carica in RAM e avvia esecuzione</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Esempio concreto: la funzione scambia</h3>
+
+    <p>Il compilatore GCC traduce C in assembly (con la flag <code>-S</code>). Lo stesso codice può essere scritto a mano in modo leggermente diverso ma equivalente. Nota la differenza — GCC usa alias simbolici (<code>a0</code>, <code>a1</code>), la versione del testo usa i numeri di registro (<code>x10</code>, <code>x11</code>):</p>
+
+    <div class="card-grid cols2">
+      <div class="card blue">
+        <div class="card-title">Codice C sorgente</div>
+        <pre style="margin:8px 0 0;font-size:12px;background:none;border:none;padding:0;color:var(--text)">void scambia(size_t v[], size_t k) {
+  size_t temp;
+  temp   = v[k];
+  v[k]   = v[k+1];
+  v[k+1] = temp;
+}</pre>
+      </div>
+      <div class="card green">
+        <div class="card-title">Output GCC (RV32I)</div>
+        <pre style="margin:8px 0 0;font-size:12px;background:none;border:none;padding:0;color:var(--text)">scambia:
+  slli  a1, a1, 2
+  add   a5, a0, a1
+  lw    a4, 0(a5)
+  addi  a1, a1, 4
+  add   a0, a0, a1
+  lw    a3, 0(a0)
+  sw    a3, 0(a5)
+  sw    a4, 0(a0)
+  ret</pre>
+      </div>
+    </div>
+
+    <p style="margin-top:16px">L'assemblatore poi converte ogni istruzione mnemonica in 32 bit. Il GCC in questo esempio ha prodotto anche istruzioni <strong>compressed</strong> a 16 bit (estensione C di RISC-V): <code>c.slli</code>, <code>c.lw</code>, <code>c.sw</code> — sono versioni compatte di istruzioni comuni, riconoscibili dai byte hex più corti nel dump.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Traduzione per Java: JVM e JIT</h3>
+
+    <div class="card-grid cols2">
+      <div class="card purple">
+        <div class="card-title">Java Virtual Machine (JVM)</div>
+        <p style="font-size:13px;margin:0">Il compilatore Java produce <strong>bytecode</strong> (non codice macchina nativo). La JVM lo interpreta a runtime — portabile su qualsiasi piattaforma che abbia una JVM.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Just In Time (JIT)</div>
+        <p style="font-size:13px;margin:0">La JVM può invocare il compilatore JIT che <strong>compila i metodi hot in codice macchina nativo</strong> della CPU su cui gira. Risultato: velocità vicina al C, portabilità del bytecode.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>RISC-V vs MIPS — formati incompatibili:</strong> entrambi sono ISA RISC a 32 bit, ma la codifica binaria è completamente diversa. RISC-V usa 7 bit per l'opcode, MIPS ne usa 6. Un binario RISC-V non può girare su una CPU MIPS e viceversa — l'ISA è il contratto tra software e hardware.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 19 ══════════════ -->
+  <section class="section" id="s19">
+    <div class="section-header">
+      <div class="section-num">19</div>
+      <h2>L'assemblatore <span class="accent">a due passi</span></h2>
+    </div>
+
+    <p class="lead">L'assemblatore traduce mnemonici in bit e risolve le etichette simboliche in indirizzi numerici. Deve farlo in due passi perché un'etichetta può essere usata prima di essere definita.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Il problema: forward reference</h3>
+
+    <p>Nel codice assembly un salto può puntare a un'etichetta che appare <em>più avanti</em> nel file. Quando l'assemblatore incontra <code>bgt a2,a3,.L20</code>, non sa ancora dove si trova <code>.L20</code> — quella etichetta verrà definita solo decine di istruzioni dopo. Questo si chiama <strong>forward reference</strong>. Il contrario (puntare a un'etichetta già vista) si chiama <strong>backward reference</strong>.</p>
+
+    <div class="card-grid cols2" style="margin:16px 0">
+      <div class="card blue">
+        <div class="card-title">Passo 1 — Costruisce la Symbol Table</div>
+        <p style="font-size:13px;margin:0">L'assemblatore scorre tutto il file senza tradurre. Per ogni etichetta trovata registra nella <strong>Symbol Table</strong> il nome e il valore dell'ILC (Instruction Location Counter) — la posizione relativa dell'istruzione nel programma.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Passo 2 — Traduce le istruzioni</div>
+        <p style="font-size:13px;margin:0">Rescorre il file e traduce ogni istruzione in binario. Quando incontra un riferimento a un'etichetta consulta la Symbol Table costruita nel passo 1 — ora sa sempre dove si trova ogni etichetta, anche le forward reference.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Esempio: Symbol Table per is_sorted</h3>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:220px">
+        <pre style="font-size:12px"><span class="label">is_sorted:</span>
+  <span class="cmt">...        ← ILC = 0x420</span>
+  <span class="kw">add</span>   <span class="reg">a4</span>,<span class="reg">a4</span>,<span class="reg">a0</span>
+<span class="label">.L18:</span>      <span class="cmt">← ILC = 0x432</span>
+  <span class="kw">lw</span>    <span class="reg">a2</span>,<span class="imm">0</span>(<span class="reg">a5</span>)
+  <span class="kw">lw</span>    <span class="reg">a3</span>,<span class="imm">4</span>(<span class="reg">a5</span>)
+  bgt   <span class="reg">a2</span>,<span class="reg">a3</span>,<span class="label">.L20</span>  <span class="cmt">← forward ref!</span>
+  <span class="kw">addi</span>  <span class="reg">a5</span>,<span class="reg">a5</span>,<span class="imm">4</span>
+  <span class="kw">bne</span>   <span class="reg">a5</span>,<span class="reg">a4</span>,<span class="label">.L18</span>  <span class="cmt">← backward ref</span>
+  li    <span class="reg">a0</span>,<span class="imm">1</span>
+  ret
+  <span class="cmt">...</span>
+<span class="label">.L20:</span>      <span class="cmt">← ILC = 0x462</span>
+  li    <span class="reg">a0</span>,<span class="imm">0</span>
+  ret</pre>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Symbol Table (dopo passo 1)</div>
+        <table style="font-size:13px">
+          <tr><th>Simbolo</th><th>Valore ILC</th></tr>
+          <tr><td><code class="t-purple">is_sorted</code></td><td><code>0x420</code></td></tr>
+          <tr><td><code class="t-purple">.L18</code></td><td><code>0x432</code></td></tr>
+          <tr><td><code class="t-purple">.L20</code></td><td><code>0x462</code></td></tr>
+        </table>
+        <div class="callout" style="margin-top:14px;font-size:13px">
+          <strong>ILC = Instruction Location Counter</strong> — tiene traccia della posizione corrente durante la scansione. In RISC-V ogni istruzione è 4 byte, quindi l'ILC avanza di 4 ad ogni istruzione normale (2 per le compressed).
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Passo 2: calcolo degli offset di salto</h3>
+
+    <p>Nel passo 2 l'assemblatore sa che <code>.L20</code> sta a <code>0x462</code> e che l'istruzione <code>bgt a2,a3,.L20</code> sta a <code>0x43a</code>. L'offset del salto è relativo al PC: <code>0x462 − 0x43a = 0x28 = 40</code> byte. Questo valore viene codificato nel campo immediato dell'istruzione B in linguaggio macchina.</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 20 ══════════════ -->
+  <section class="section" id="s20">
+    <div class="section-header">
+      <div class="section-num">20</div>
+      <h2>Direttive, pseudoistruzioni <span class="accent">e macro</span></h2>
+    </div>
+
+    <p class="lead">Il linguaggio assembly offre strumenti aggiuntivi oltre alle istruzioni ISA: le <strong>direttive</strong> controllano l'assemblatore, le <strong>pseudoistruzioni</strong> sono alias comode, le <strong>macro</strong> sono template espandibili.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Assembly directives</h3>
+
+    <p>Le direttive iniziano con un punto e danno istruzioni all'assemblatore su come organizzare il programma — non producono istruzioni macchina da sole:</p>
+
+    <table>
+      <tr><th>Direttiva</th><th>Argomento</th><th>Cosa fa</th></tr>
+      <tr><td><code class="t-blue">.text</code></td><td>—</td><td>Inizia (o continua) la sezione codice — tutto ciò che segue va nel segmento .text</td></tr>
+      <tr><td><code class="t-blue">.data</code></td><td>—</td><td>Inizia la sezione dati — variabili globali e statiche</td></tr>
+      <tr><td><code class="t-blue">.bss</code></td><td>—</td><td>Sezione dati non inizializzati (Block Started by Symbol)</td></tr>
+      <tr><td><code class="t-green">.globl</code></td><td>simbolo</td><td>Rende il simbolo visibile agli altri moduli (scope GLOBAL)</td></tr>
+      <tr><td><code class="t-green">.local</code></td><td>simbolo</td><td>Simbolo visibile solo nel modulo corrente (scope LOCAL)</td></tr>
+      <tr><td><code class="t-amber">.string</code></td><td>"testo"</td><td>Alloca una stringa terminata da null</td></tr>
+      <tr><td><code class="t-amber">.byte</code></td><td>val,...</td><td>Alloca uno o più byte</td></tr>
+      <tr><td><code class="t-amber">.word</code></td><td>val,...</td><td>Alloca una o più word da 32 bit</td></tr>
+      <tr><td><code class="t-amber">.dword</code></td><td>val,...</td><td>Alloca una o più doubleword da 64 bit</td></tr>
+      <tr><td><code class="t-purple">.align</code></td><td>n</td><td>Allinea il prossimo dato a 2ⁿ byte</td></tr>
+      <tr><td><code class="t-purple">.macro / .endm</code></td><td>nome, args</td><td>Definisce una macro assembly</td></tr>
+      <tr><td><code class="t-purple">.section</code></td><td>.text/.data/...</td><td>Seleziona la sezione corrente esplicitamente</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Pseudoistruzioni estese</h3>
+
+    <p>Le pseudoistruzioni non esistono nell'ISA — l'assemblatore le espande in 1 o più istruzioni reali. Rendono il codice più leggibile senza aggiungere overhead:</p>
+
+    <table>
+      <tr><th>Pseudoistruzione</th><th>Si espande in</th><th>Significato</th></tr>
+      <tr><td><code class="t-green">nop</code></td><td><code>addi x0, x0, 0</code></td><td>No operation — non fa nulla</td></tr>
+      <tr><td><code class="t-green">mv rd, rs</code></td><td><code>addi rd, rs, 0</code></td><td>Copia registro</td></tr>
+      <tr><td><code class="t-green">li rd, imm</code></td><td>varie sequenze</td><td>Carica costante arbitraria (può servire lui+addi)</td></tr>
+      <tr><td><code class="t-green">la rd, simbolo</code></td><td><code>auipc</code> + <code>addi</code></td><td>Carica l'indirizzo di una variabile/etichetta</td></tr>
+      <tr><td><code class="t-green">neg rd, rs</code></td><td><code>sub rd, x0, rs</code></td><td>Complemento a due (cambia segno)</td></tr>
+      <tr><td><code class="t-green">not rd, rs</code></td><td><code>xori rd, rs, -1</code></td><td>NOT bit a bit</td></tr>
+      <tr><td><code class="t-blue">beqz rs, L</code></td><td><code>beq rs, x0, L</code></td><td>Salta se zero</td></tr>
+      <tr><td><code class="t-blue">bnez rs, L</code></td><td><code>bne rs, x0, L</code></td><td>Salta se non zero</td></tr>
+      <tr><td><code class="t-blue">bgt rs, rt, L</code></td><td><code>blt rt, rs, L</code></td><td>Salta se maggiore (scambia operandi)</td></tr>
+      <tr><td><code class="t-blue">ble rs, rt, L</code></td><td><code>bge rt, rs, L</code></td><td>Salta se minore o uguale</td></tr>
+      <tr><td><code class="t-amber">j offset</code></td><td><code>jal x0, offset</code></td><td>Salto incondizionato (scarta ra)</td></tr>
+      <tr><td><code class="t-amber">call offset</code></td><td><code>auipc x1, …</code> + <code>jalr x1, …</code></td><td>Chiama funzione anche lontana (>±1MB)</td></tr>
+      <tr><td><code class="t-amber">ret</code></td><td><code>jalr x0, 0(x1)</code></td><td>Ritorna dalla funzione</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Macro: template con parametri</h3>
+
+    <p>Una macro è un template che viene <strong>espanso testualmente</strong> dall'assemblatore ogni volta che viene invocata — non è una funzione, non c'è <code>jal</code>/<code>ret</code>. Il codice viene duplicato inline ad ogni uso:</p>
+
+    <pre><span class="cmt"># Definizione della macro "swap"</span>
+<span class="label">.macro</span> swap reg1, reg2, reg3
+    <span class="kw">add</span>  \reg3, \reg2, <span class="reg">zero</span>   <span class="cmt"># reg3 = reg2</span>
+    <span class="kw">add</span>  \reg2, \reg1, <span class="reg">zero</span>   <span class="cmt"># reg2 = reg1</span>
+    <span class="kw">add</span>  \reg1, \reg3, <span class="reg">zero</span>   <span class="cmt"># reg1 = reg3</span>
+<span class="label">.endm</span>
+
+<span class="cmt"># Utilizzo</span>
+li   <span class="reg">s1</span>, <span class="imm">10</span>
+li   <span class="reg">s2</span>, <span class="imm">20</span>
+swap <span class="reg">s1</span>, <span class="reg">s2</span>, <span class="reg">t0</span>    <span class="cmt"># ← viene espanso nelle 3 add qui sotto</span>
+
+<span class="cmt"># Dopo espansione diventa:</span>
+<span class="cmt"># add t0, s2, zero</span>
+<span class="cmt"># add s2, s1, zero</span>
+<span class="cmt"># add s1, t0, zero</span></pre>
+
+    <table style="margin-top:16px">
+      <tr><th>Caratteristica</th><th>Macro</th><th>Procedura (jal)</th></tr>
+      <tr><td>Quando viene "chiamata"?</td><td class="t-amber">Durante l'assemblaggio</td><td class="t-blue">Durante l'esecuzione</td></tr>
+      <tr><td>Il corpo viene inserito inline?</td><td class="t-green">Sì — ogni volta</td><td class="t-red">No — una sola copia</td></tr>
+      <tr><td>Serve jal + ret?</td><td class="t-red">No</td><td class="t-green">Sì</td></tr>
+      <tr><td>Quante copie nel binario?</td><td class="t-amber">Una per invocazione</td><td class="t-green">Una sola</td></tr>
+      <tr><td>Overhead di chiamata</td><td class="t-green">Zero</td><td class="t-amber">jal + ret + salvataggi</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 21 ══════════════ -->
+  <section class="section" id="s21">
+    <div class="section-header">
+      <div class="section-num">21</div>
+      <h2>Il <span class="accent">Linker</span></h2>
+    </div>
+
+    <p class="lead">Un programma reale è diviso in più file sorgente compilati separatamente. Ogni file diventa un modulo oggetto con il suo spazio di indirizzi locale. Il Linker fonde tutto in un unico eseguibile con indirizzi definitivi.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Perché serve il linker?</h3>
+
+    <p>Quando l'assemblatore traduce un file, molti indirizzi sono sconosciuti: la funzione <code>printf</code> è in un'altra libreria, la funzione <code>B</code> è in un altro file <code>.c</code>. L'assemblatore lascia questi indirizzi a zero e inserisce nel file oggetto le <strong>informazioni di rilocazione</strong> — una lista di "toppe" da applicare quando gli indirizzi saranno noti.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Struttura di un file oggetto ELF</h3>
+
+    <div class="card-grid cols2">
+      <div class="card blue">
+        <div class="card-title">Object file header</div>
+        <p style="font-size:13px;margin:0">Descrive la dimensione e posizione di tutti gli altri segmenti nel file.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Text segment</div>
+        <p style="font-size:13px;margin:0">Il codice in linguaggio macchina — le istruzioni da eseguire.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Static data segment</div>
+        <p style="font-size:13px;margin:0">Variabili globali e statiche, sia inizializzate che non.</p>
+      </div>
+      <div class="card red">
+        <div class="card-title">Relocation info</div>
+        <p style="font-size:13px;margin:0">Elenco di istruzioni e dati che dipendono da indirizzi assoluti ancora ignoti — da aggiornare dal linker.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Symbol table</div>
+        <p style="font-size:13px;margin:0">Etichette esportate (definite qui, usabili dagli altri) e importate (definite altrove). Le voci importate hanno indirizzo "–" (unknown).</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Debugging info</div>
+        <p style="font-size:13px;margin:0">Mappa tra istruzioni macchina e righe del sorgente C — usata dal debugger (gdb, LLDB).</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Cosa fa il linker: 4 operazioni</h3>
+
+    <table>
+      <tr><th>#</th><th>Operazione</th><th>Dettaglio</th></tr>
+      <tr><td>1</td><td>Inventario moduli</td><td>Raccoglie tutti i file <code>.o</code> e le librerie, registra le loro dimensioni (text + data)</td></tr>
+      <tr><td>2</td><td>Assegna indirizzi base</td><td>Decide dove inizia ogni modulo nello spazio lineare: es. Procedura A inizia a <code>0x400000</code>, B a <code>0x400100</code></td></tr>
+      <tr><td>3</td><td>Rilocazione</td><td>Aggiunge a ogni riferimento di memoria la <em>relocation constant</em> = indirizzo di partenza del suo modulo</td></tr>
+      <tr><td>4</td><td>Risolve simboli esterni</td><td>Aggiorna le istruzioni che chiamano funzioni di altri moduli con i loro indirizzi definitivi</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Esempio: linking di procedura A e B</h3>
+
+    <p>Procedura A chiama B con <code>jal x1, 0</code> (indirizzo ignoto) e legge la variabile X. Procedura B chiama A e scrive Y. Dopo il linking:</p>
+
+    <pre><span class="cmt"># File oggetto A — indirizzi locali (relativi)</span>
+  <span class="imm">0x00</span>:  lw  x10, <span class="imm">0</span>(x3)   <span class="cmt"># legge X — indirizzo ignoto</span>
+  <span class="imm">0x04</span>:  jal x1, <span class="imm">0</span>        <span class="cmt"># chiama B — indirizzo ignoto</span>
+
+<span class="cmt"># File oggetto B — indirizzi locali (relativi)</span>
+  <span class="imm">0x00</span>:  sw  x11, <span class="imm">0</span>(x3)   <span class="cmt"># scrive Y — indirizzo ignoto</span>
+  <span class="imm">0x04</span>:  jal x1, <span class="imm">0</span>        <span class="cmt"># chiama A — indirizzo ignoto</span>
+
+<span class="cmt"># File eseguibile finale — indirizzi definitivi</span>
+<span class="cmt"># A inizia a 0x400000, B inizia a 0x400100</span>
+<span class="cmt"># X sta a 0x10000000,  Y sta a 0x10000020</span>
+
+  <span class="imm">0x400000</span>: lw  x10, <span class="imm">0</span>(x3)      <span class="cmt"># x3=gp=0x10000000 → X</span>
+  <span class="imm">0x400004</span>: jal x1, <span class="imm">+252</span>       <span class="cmt"># 0x400100−0x400004=252</span>
+  <span class="imm">0x400100</span>: sw  x11, <span class="imm">32</span>(x3)     <span class="cmt"># gp+32 = 0x10000020 → Y</span>
+  <span class="imm">0x400104</span>: jal x1, <span class="imm">-260</span>       <span class="cmt"># 0x400000−0x400104=-260</span></pre>
+
+    <div class="callout green">
+      <strong>jal usa indirizzamento relativo al PC:</strong> l'offset nel binario è sempre la differenza tra l'indirizzo destinazione e l'indirizzo dell'istruzione <code>jal</code> stessa. Così il codice può essere spostato in memoria senza ricalcolare i salti interni al modulo.
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Linking statico vs dinamico</h3>
+
+    <div class="card-grid cols2">
+      <div class="card amber">
+        <div class="card-title">Collegamento statico</div>
+        <p style="font-size:13px;margin:0">Le librerie vengono incorporate nell'eseguibile al momento del linking. Vantaggio: eseguibile autosufficiente. Svantaggio: file grossi, aggiornare la libreria richiede ricompilare tutto.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Collegamento dinamico (DLL / .so)</div>
+        <p style="font-size:13px;margin:0">Le librerie vengono caricate solo a runtime, al primo utilizzo (<em>lazy binding</em>). La prima chiamata passa per un <strong>dummy stub</strong> che invoca il loader dinamico; le chiamate successive vanno direttamente alla funzione — un salto solo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 22 ══════════════ -->
+  <section class="section" id="s22">
+    <div class="section-header">
+      <div class="section-num">22</div>
+      <h2>Il Loader e il <span class="accent">binding dinamico</span></h2>
+    </div>
+
+    <p class="lead">Il Loader è un programma del sistema operativo che prende il file eseguibile dal disco e lo prepara per l'esecuzione in memoria centrale. È l'ultimo anello della catena prima che il codice giri davvero sulla CPU.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Le 6 operazioni del loader</h3>
+
+    <div class="card-grid cols2">
+      <div class="card blue" style="grid-column:span 2">
+        <div class="card-title" style="margin-bottom:10px">Sequenza di caricamento</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">1</div>
+            <p style="font-size:13px;margin:0">Legge l'intestazione del file ELF per determinare le dimensioni del segmento testo e dati.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">2</div>
+            <p style="font-size:13px;margin:0">Riserva uno spazio in RAM sufficiente a contenere codice, dati statici, heap e stack.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">3</div>
+            <p style="font-size:13px;margin:0">Copia il segmento testo (codice) dal disco alla RAM nello spazio riservato.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">4</div>
+            <p style="font-size:13px;margin:0">Copia nello stack i parametri passati al <code>main</code> (il famoso <code>argc</code> e <code>argv</code>).</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">5</div>
+            <p style="font-size:13px;margin:0">Inizializza tutti i registri: imposta SP (stack pointer), GP (global pointer), PC (program counter), e azzera i registri temporanei.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">6</div>
+            <p style="font-size:13px;margin:0">Salta a una procedura di startup che copia i parametri dallo stack ai registri <code>a0</code>/<code>a1</code> e poi invoca <code>main</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Binding: quando si assegnano gli indirizzi?</h3>
+
+    <p>Il <strong>binding</strong> è il momento in cui un nome simbolico (es. la variabile <code>x</code> o la funzione <code>printf</code>) viene associato a un indirizzo fisico di memoria. Esistono varie scelte:</p>
+
+    <table>
+      <tr><th>Momento del binding</th><th>Chi lo fa</th><th>Vantaggi / Svantaggi</th></tr>
+      <tr><td>Al momento della scrittura del codice</td><td>Programmatore</td><td class="t-red">Rigidissimo — indirizzi hardcoded nel sorgente</td></tr>
+      <tr><td>Al momento della compilazione</td><td>Compilatore</td><td class="t-amber">Più flessibile ma ancora statico</td></tr>
+      <tr><td>Al momento del linking</td><td>Linker</td><td class="t-amber">Statico — librerie incorporate nell'eseguibile</td></tr>
+      <tr><td>Al momento del caricamento</td><td>Loader</td><td class="t-green">Rilocazione al load time — programma spostabile</td></tr>
+      <tr><td>Al momento dell'esecuzione</td><td>OS + registro base</td><td class="t-green">Massima flessibilità — DLL, shared libraries</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Come funziona il linking dinamico lazy</h3>
+
+    <p>La prima volta che il programma chiama <code>printf</code>, invece di saltare direttamente alla funzione salta a uno <strong>stub dummy</strong> che invoca il loader dinamico del sistema operativo. Il loader trova <code>printf</code> nella libreria <code>libc.so</code>, la mappa in memoria e sovrascrive l'indirizzo nello stub. Dalla seconda chiamata in poi il salto va direttamente a <code>printf</code> — nessun overhead aggiuntivo:</p>
+
+    <div class="card-grid cols2">
+      <div class="card red">
+        <div class="card-title">Prima chiamata a printf</div>
+        <p style="font-size:13px;margin:0">
+          1. <code>jal ra, printf@plt</code> → stub<br>
+          2. Stub invoca il loader dinamico (OS)<br>
+          3. Loader mappa <code>printf</code> in memoria<br>
+          4. Aggiorna l'indirizzo nello stub<br>
+          5. Salta a <code>printf</code> — esegue normalmente
+        </p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Chiamate successive</div>
+        <p style="font-size:13px;margin:0">
+          1. <code>jal ra, printf@plt</code> → stub<br>
+          2. Stub ora punta direttamente a <code>printf</code><br>
+          3. Salta a <code>printf</code> — <strong>un salto solo</strong><br><br>
+          Overhead = 1 salto indiretto extra, trascurabile.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout amber" style="margin-top:16px">
+      <strong>PLT = Procedure Linkage Table:</strong> la tabella di stub usata per il lazy binding. Ogni funzione di libreria dinamica ha la sua voce nella PLT. Puoi vederla nel disassembly come <code>printf@plt</code> — è il "trampolino" verso la funzione reale.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 8 ══════════════ -->
+  <section class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num">23</div>
+      <h2>Riepilogo <span class="accent">finale</span></h2>
+    </div>
+
+    <p class="lead">Tutto collegato in un unico quadro mentale.</p>
+
+    <table>
+      <tr><th>Concetto</th><th>Dove</th><th>Velocità</th><th>Accesso in RISC-V</th></tr>
+      <tr>
+        <td><strong>Registri</strong> (x0–x31)</td>
+        <td class="t-blue">Dentro la CPU</td>
+        <td class="t-green">1 ciclo</td>
+        <td>Diretto: <code>add t0, t1, t2</code></td>
+      </tr>
+      <tr>
+        <td><strong>Stack</strong></td>
+        <td class="t-amber">RAM (zona alta)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con offset da SP/FP</td>
+      </tr>
+      <tr>
+        <td><strong>Heap</strong></td>
+        <td class="t-amber">RAM (zona media)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con puntatori</td>
+      </tr>
+      <tr>
+        <td><strong>Dati globali</strong></td>
+        <td class="t-amber">RAM (sezione .data)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con offset da GP</td>
+      </tr>
+      <tr>
+        <td><strong>Codice</strong></td>
+        <td class="t-amber">RAM (sezione .text)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td>Letto automaticamente da PC</td>
+      </tr>
+    </table>
+
+    <div class="card-grid cols2" style="margin-top:24px">
+      <div class="card blue">
+        <div class="card-title">La regola d'oro</div>
+        <p style="font-size:13px;margin:0">Tieni i dati nei <strong>registri</strong> il più a lungo possibile. Vai in RAM solo quando sei costretto: quando hai più variabili dei registri disponibili, o quando devi salvare lo stato per una chiamata di funzione.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Quando vai in RAM</div>
+        <p style="font-size:13px;margin:0">1. Chiami una funzione → devi salvare <code>ra</code> e i registri <code>s</code> che usi. <br>2. Hai più di ~30 variabili locali. <br>3. Lavori con array o strutture dati grandi.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Endianness in pratica</div>
+        <p style="font-size:13px;margin:0">RISC-V è <strong>little endian</strong>. Non te ne accorgi con <code>lw</code>/<code>sw</code>. Diventa rilevante solo leggendo byte per byte con <code>lb</code>, o comunicando in rete (big endian).</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Le tab del simulatore</div>
+        <p style="font-size:13px;margin:0"><code>.text</code> = byte grezzi del codice. <code>disasm</code> = stessi byte tradotti. <code>.data</code> = globali. <code>stack</code> = zona RAM puntata da SP. <code>frames</code> = catena di chiamate.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Formati istruzione</div>
+        <p style="font-size:13px;margin:0">R (registro-registro), I (immediato/load), S (store), B (branch condizionato), J (jal). Ogni istruzione è sempre 32 bit. Il campo <code>opcode</code> da 7 bit identifica il formato.</p>
+      </div>
+      <div class="card red">
+        <div class="card-title">Le 7 fasi</div>
+        <p style="font-size:13px;margin:0">Pre-chiamata → Invocazione (jal) → Prologo (salva ra/s/fp) → Corpo → Epilogo (ripristina) → Ritorno (ret) → Post-chiamata. Foglia = salta fasi 3 e 5 se non usa s-registri.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Catena di traduzione</div>
+        <p style="font-size:13px;margin:0">C → <strong>Compilatore</strong> → Assembly (.s) → <strong>Assemblatore</strong> → Oggetto (.o) → <strong>Linker</strong> → Eseguibile (ELF) → <strong>Loader</strong> → RAM in esecuzione.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Assemblatore a due passi</div>
+        <p style="font-size:13px;margin:0">Passo 1: scansiona tutto e costruisce la Symbol Table (etichetta → valore ILC). Passo 2: traduce in binario consultando la tabella — risolve anche le forward reference.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Linker</div>
+        <p style="font-size:13px;margin:0">Fonde i moduli oggetto, assegna indirizzi definitivi, applica la rilocazione e risolve simboli esterni. Produce il file ELF eseguibile con sezioni .text, .data, reloc info e symbol table.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Loader e binding</div>
+        <p style="font-size:13px;margin:0">L'OS carica l'eseguibile in RAM, inizializza registri e stack, salta al main. Le DLL usano lazy binding: il loader dinamico risolve la funzione al primo utilizzo e aggiorna lo stub PLT.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:40px;padding:28px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px">
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:14px">Il quadro completo in una frase</div>
+      <p style="font-size:15px;color:var(--muted);line-height:1.9;margin:0">
+        <strong style="color:var(--text)">RISC-V</strong> è un ISA open, modulare, con istruzioni fisse a 32 bit e 5 formati (R/I/S/B/J).
+        La <strong style="color:var(--text)">CPU</strong> ha 32 registri da 32 bit — veloci e interni. La <strong style="color:var(--text)">RAM</strong> è esterna, lenta, indirizzata byte per byte in <strong style="color:var(--green)">little endian</strong>.
+        Le istruzioni aritmetiche usano 3 operandi; la memoria si accede con base+offset; shift e logica operano bit a bit.
+        I salti condizionati e <code>jal</code>/<code>jalr</code> controllano il flusso; ogni chiamata segue 7 fasi con convenzioni precise sui registri.
+        Il codice C percorre la catena <strong style="color:var(--text)">compilatore → assemblatore a due passi → linker → loader</strong> prima di girare sulla CPU: l'assemblatore risolve le etichette con la symbol table, il linker fonde i moduli oggetto e risolve i simboli esterni, il loader copia in RAM e avvia l'esecuzione.
+      </p>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script>
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function switchTab(name, btn) {
+  document.querySelectorAll('.tabs-panel').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tabs-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('tab-' + name).classList.add('on');
+  btn.classList.add('on');
+}
+
+// update sidebar active on scroll
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.nav-item');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => {
+    if (window.scrollY >= s.offsetTop - 120) current = s.id;
+  });
+  navItems.forEach(n => {
+    n.classList.toggle('active', n.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>

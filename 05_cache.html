@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Memoria Cache - Architettura dei Calcolatori</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="04_bus.html#s33">
+    <div class="nav-dot"></div> Il Bus di Sistema
+    <span class="nav-num">08</span>
+  </a>
+  <a class="nav-item active" href="05_cache.html#s34">
+    <div class="nav-dot"></div> La Memoria Cache
+    <span class="nav-num">09</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 09</div>
+    <h1>La Memoria Cache<br><em>L'Illusione della Memoria Infinita</em></h1>
+    <p>Il principio di località, la gerarchia della memoria e come la CPU nasconde la lentezza estrema della RAM.</p>
+  </div>
+
+  <!-- ══════════════ MACRO SEZIONE 1 ══════════════ -->
+  <section class="section" id="s34">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">I. Cos'è la <span class="accent">Cache</span></h2>
+    </div>
+
+    <p class="lead" style="margin-bottom: 32px;">Come fa un computer a elaborare dati a velocità fulminea se la memoria principale è in realtà molto lenta? Il segreto risiede in un capolavoro di illusionismo ingegneristico: la gerarchia della memoria.</p>
+
+    <!-- 1. IL PROBLEMA E LA GERARCHIA -->
+    <h3 style="font-size:22px; color:var(--text); margin-bottom:16px;">Il Problema: Il "Memory Wall"</h3>
+    <div class="card" style="border-left: 4px solid var(--red); background:var(--surface2); margin-bottom: 32px;">
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">Negli ultimi decenni, la velocità dei processori è esplosa, mentre le memorie RAM sono migliorate molto più lentamente. Se la CPU dovesse aspettare la RAM a ogni operazione, passerebbe il 90% del tempo ferma. Questo collo di bottiglia è chiamato <strong>Memory Wall</strong>.</p>
+    </div>
+
+    <h3 style="font-size:22px; color:var(--text); margin-bottom:16px;">La Soluzione: La Piramide della Gerarchia</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom: 24px;">Per superare il problema senza far esplodere i costi, i computer non usano una sola memoria, ma <strong>più memorie disposte a piramide</strong>. Regola d'oro: man mano che si sale verso la CPU, la memoria diventa più veloce, più piccola e più costosa.</p>
+
+    <!-- SCHEMA PIRAMIDE -->
+    <div style="display:flex; flex-direction:column; align-items:center; gap:6px; margin-bottom:48px;">
+      <!-- Livello 1: Registri -->
+      <div style="width: 30%; min-width: 200px; background:var(--red); color:white; padding:12px; text-align:center; border-radius:6px 6px 0 0; font-weight:600; font-size:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        Registri (CPU)<br><span style="font-size:12px; font-weight:400;">Velocissimi (1 ciclo) • Pochi Byte</span>
+      </div>
+      <!-- Livello 2: Cache -->
+      <div style="width: 50%; min-width: 250px; background:var(--accent); color:var(--background); padding:12px; text-align:center; font-weight:600; font-size:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        Cache (L1, L2, L3)<br><span style="font-size:12px; font-weight:400;">Pochissimi cicli • Pochi Megabyte</span>
+      </div>
+      <!-- Livello 3: RAM -->
+      <div style="width: 70%; min-width: 300px; background:var(--blue); color:white; padding:12px; text-align:center; font-weight:600; font-size:15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        Memoria Principale (RAM)<br><span style="font-size:12px; font-weight:400;">Più lenta (~100 cicli) • Gigabyte</span>
+      </div>
+      <!-- Livello 4: SSD -->
+      <div style="width: 90%; min-width: 350px; background:var(--surface2); color:var(--text); border:1px solid var(--border); padding:12px; text-align:center; border-radius:0 0 6px 6px; font-weight:600; font-size:15px;">
+        Memoria di Massa (SSD/HDD)<br><span style="font-size:12px; font-weight:400; color:var(--muted);">Lentissima • Terabyte</span>
+      </div>
+    </div>
+
+    <!-- IL PRINCIPIO DI LOCALITÀ -->
+    <h3 style="font-size:22px; color:var(--text); margin-bottom:16px;">Il Principio di Località</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom: 24px;">Come fa una Cache da pochi Megabyte a essere utile a una RAM da svariati Gigabyte? L'intera magia si regge in piedi esclusivamente grazie al <strong>Principio di Località dei riferimenti</strong>. Un programma non salta mai nella memoria a caso, ma tende a concentrare i propri accessi seguendo due regole:</p>
+
+    <div class="card-grid cols2" style="margin-bottom: 48px; align-items: stretch;">
+      <!-- TEMPORALE -->
+      <div class="card" style="border-top: 4px solid var(--red); display:flex; flex-direction:column; background:var(--surface2);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <span style="font-size:22px;">⏳</span>
+          <h4 style="color:var(--red); font-size:16px; margin:0;">Località Temporale</h4>
+        </div>
+        <p style="font-size:14px; color:var(--text); font-style:italic; margin-bottom:12px;">"Ciò che hai appena usato, ti servirà di nuovo a breve."</p>
+        <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0; flex-grow: 1;">Se una variabile è stata appena letta (es. l'indice <code>i</code> in un ciclo), è <strong>altamente probabile</strong> che verrà riutilizzata prestissimo. Conviene tenerla nella Cache veloce senza doverla richiedere alla RAM.</p>
+      </div>
+
+      <!-- SPAZIALE -->
+      <div class="card" style="border-top: 4px solid var(--blue); display:flex; flex-direction:column; background:var(--surface2);">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+          <span style="font-size:22px;">📏</span>
+          <h4 style="color:var(--blue); font-size:16px; margin:0;">Località Spaziale</h4>
+        </div>
+        <p style="font-size:14px; color:var(--text); font-style:italic; margin-bottom:12px;">"Chi è vicino a te, sarà il prossimo ad esser chiamato."</p>
+        <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0; flex-grow: 1;">Se un dato è stato letto, è probabile che il programma leggerà presto i dati vicini. Per questo la RAM non invia mai un singolo byte, ma travasa <strong>un intero blocco contiguo</strong> nella Cache.</p>
+      </div>
+    </div>
+
+    <!-- CALLOUT AUMENTARE IL BLOCCO -->
+    <div style="background:linear-gradient(to bottom, var(--surface2), var(--background)); border:1px solid var(--border); border-left:4px solid var(--blue); border-radius:8px; padding:32px 32px 24px 32px; margin-bottom:48px; position:relative; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <div style="position:absolute; top:-14px; left:24px; background:var(--blue); color:white; padding:4px 12px; border-radius:12px; font-size:11px; font-weight:bold; letter-spacing:0.5px;">
+        🤔 CURIOSITÀ INGEGNERISTICA
+      </div>
+      <h4 style="color:var(--text); font-size:18px; margin-top:0; margin-bottom:24px;">Aumentare le dimensioni del blocco è sempre una buona idea?</h4>
+      
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">
+        Visto che portare un blocco intero dalla RAM ci fa risparmiare tempo grazie alla <strong>Località Spaziale</strong>, verrebbe spontaneo pensare: <em>"Facciamo blocchi giganteschi così abbiamo già tutto pronto!"</em>. Il grafico, tuttavia, dimostra il contrario attraverso una inequivocabile "Curva a U". Vediamo come leggerlo:
+      </p>
+
+      <div style="display:flex; flex-wrap:wrap; gap:32px; align-items:flex-start;">
+        <!-- Immagine -->
+        <div style="flex:1; min-width:250px; text-align:center;">
+          <img src="assets/extra/dimensione_blocchi.png" alt="Grafico Dimensione Blocchi e Miss Rate" style="max-width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.08); margin-bottom:16px;">
+          <div style="background:var(--background); border:1px solid var(--border); padding:12px; border-radius:6px; text-align:left;">
+            <p style="font-size:12px; color:var(--muted); line-height:1.5; margin:0;">
+              <strong style="color:var(--text);">Asse Y (Verticale):</strong> Frequenza di Miss (più è alta, più la CPU si ferma).<br><br>
+              <strong style="color:var(--text);">Asse X (Orizzontale):</strong> Dimensione del singolo blocco di cache (da 16 a 256 byte).<br><br>
+              <strong style="color:var(--text);">Le Linee:</strong> Rappresentano CPU con Cache di capienza totale diversa (da 4K a 256K).
+            </p>
+          </div>
+        </div>
+
+        <!-- Testo Esteso -->
+        <div style="flex:1.5; min-width:300px; display:flex; flex-direction:column; gap:16px;">
+          
+          <div style="background:var(--background); padding:16px; border-radius:6px; border-left:3px solid var(--green); box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+            <strong style="color:var(--green); font-size:15px; display:block; margin-bottom:8px;">📉 La Discesa (Vince la Località Spaziale)</strong>
+            <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0;">
+              Se guardiamo la linea nera in alto (la Cache più piccola da 4K), passando da blocchi di 16 byte a 64 byte <strong>la frequenza di miss diminuisce</strong>. Ha perfettamente senso: se la RAM ci manda un "vagone" più capiente (64 byte), è estremamente probabile che i dati successivi che la CPU chiederà si trovino già lì dentro pronti all'uso.
+            </p>
+          </div>
+          
+          <div style="background:var(--background); padding:16px; border-radius:6px; border-left:3px solid var(--red); box-shadow:0 2px 4px rgba(0,0,0,0.05);">
+            <strong style="color:var(--red); font-size:15px; display:block; margin-bottom:8px;">📈 La Salita (Vince il "Sovraffollamento")</strong>
+            <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0 0 12px 0;">
+              Passando da 64 a 256 byte, la curva improvvisamente s'impenna e peggiora vertiginosamente. Perché? Perché <strong>la capienza totale della cache è fissa!</strong>
+            </p>
+            <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:20px; margin:0;">
+              <li style="margin-bottom:6px;">Se hai una cache minuscola da 4 KB (4096 byte) e usi blocchi enormi da 256 byte, l'intera cache avrà <strong>soltanto 16 "righe" totali</strong> (4096 / 256 = 16).</li>
+              <li style="margin-bottom:6px;">Avendo così pochi posti, i vari dati del programma inizieranno a "litigare" ferocemente. Un blocco appena arrivato verrà sfrattato quasi subito da un blocco nuovo, prima ancora che la CPU abbia avuto il tempo di leggerlo tutto (distruggendo la preziosissima <em>Località Temporale</em>).</li>
+              <li>Questo fenomeno si chiama <strong>Cache Pollution</strong> (Inquinamento): riempiamo la cache con enormi vagoni di dati che <em>forse</em> non useremo, buttando fuori dati sicuramente utili.</li>
+            </ul>
+          </div>
+          
+        </div>
+      </div>
+      
+      <div style="background:var(--surface2); padding:16px; border-radius:6px; border:1px dashed var(--border); margin-top:24px; text-align:center;">
+        <p style="font-size:14px; color:var(--text); margin:0;">
+          💡 <strong>La conclusione ingegneristica:</strong> Osservando i "punti più bassi" delle curve, il compromesso perfetto (lo <em>sweet spot</em>) si trova quasi sempre tra i <strong>32 e i 64 byte</strong>. Ed è esattamente lo standard adottato da tutti i processori moderni!
+        </p>
+      </div>
+    </div>
+
+    <!-- 2. HIT E MISS -->
+    <h3 style="font-size:22px; color:var(--text); margin-bottom:16px;">Il Funzionamento Logico: Hit e Miss</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom: 24px;">Quando la CPU ha bisogno di un dato, interroga sempre prima la memoria più veloce che ha a disposizione (la Cache L1):</p>
+
+    <!-- FLOWCHART HIT/MISS -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:32px; display:flex; flex-direction:column; align-items:center; gap:16px; box-shadow:inset 0 2px 4px rgba(0,0,0,0.05);">
+      
+      <div style="background:var(--background); padding:8px 24px; border-radius:24px; font-weight:600; border:2px solid var(--text); color:var(--text);">
+        🔍 La CPU cerca un dato
+      </div>
+      
+      <div style="display:flex; width:100%; gap:24px; justify-content:center; align-items:flex-start; position:relative;">
+        <!-- HIT -->
+        <div style="flex:1; max-width:300px; text-align:center;">
+          <div style="background:var(--green); color:var(--background); padding:8px 16px; border-radius:8px; font-weight:bold; margin-bottom:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            ✅ Cache Hit
+          </div>
+          <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0;">Il dato è presente. La CPU lo legge immediatamente alla massima velocità. L'illusione di avere una memoria infinita e veloce è intatta.</p>
+        </div>
+        
+        <!-- MISS -->
+        <div style="flex:1; max-width:300px; text-align:center;">
+          <div style="background:var(--red); color:white; padding:8px 16px; border-radius:8px; font-weight:bold; margin-bottom:12px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            ❌ Cache Miss
+          </div>
+          <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0;">Il dato non c'è. Il sistema deve scendere ai piani bassi (RAM), prelevare il blocco e passarlo alla CPU. Questo ritardo critico è la <strong>Miss Penalty</strong>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- AMAT -->
+    <div style="display:flex; align-items:stretch; gap:16px; margin-bottom:48px; background:var(--background); padding:16px; border-radius:8px; border:1px dashed var(--border);">
+      <div style="background:var(--accent); width:6px; border-radius:3px;"></div>
+      <div>
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span style="font-size:18px;">⏱️</span>
+          <strong style="font-size:15px; color:var(--text);">L'AMAT (Average Memory Access Time)</strong>
+        </div>
+        <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0;">È la formula matematica universale per misurare l'efficienza della gerarchia. Calcola il tempo medio di accesso ai dati bilanciando: il tempo del <strong>Cache Hit</strong>, la percentuale di <strong>Cache Miss</strong> (Miss Rate) e l'impatto distruttivo della <strong>Miss Penalty</strong>.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════ MACRO SEZIONE 2 ══════════════ -->
+  <section class="section" id="s34-mappatura">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">II. Le Tecniche di <span class="accent">Mappatura</span> e il <span class="accent">TAG</span></h2>
+    </div>
+
+    <p class="lead" style="margin-bottom:32px;">La RAM è gigantesca (Gigabyte), mentre la Cache è minuscola (Kilobyte). Se copiamo un blocco dalla RAM alla Cache, dove lo mettiamo esattamente? E soprattutto, come facciamo a riconoscerlo in futuro? Per rispondere, dobbiamo prima capire il concetto di TAG.</p>
+
+    <!-- IL TAG: SPIEGAZIONE E ANALOGIA -->
+    <div style="background:linear-gradient(135deg, var(--surface2) 0%, var(--background) 100%); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:8px; padding:32px; margin-bottom:48px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      
+      <h3 style="font-size:22px; color:var(--text); margin-top:0; margin-bottom:16px; display:flex; align-items:center; gap:8px;">
+        <span style="font-size:24px;">🏷️</span> L'Identikit del Dato: Cos'è il TAG?
+      </h3>
+      
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">
+        Poiché moltissimi blocchi di RAM dovranno inevitabilmente condividere lo stesso piccolo spazio nella Cache, l'indirizzo di memoria da solo non basta. Quando la CPU cerca qualcosa, l'indirizzo viene diviso a metà: una parte (l'<strong>Indice</strong>) indica lo "sportello fisico" in cui guardare, mentre la parte rimanente costituisce il <strong>TAG</strong>.
+      </p>
+
+      <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:stretch;">
+        <div style="flex:1; min-width:250px; background:var(--background); padding:20px; border-radius:8px; border:1px dashed var(--border);">
+          <h4 style="color:var(--blue); font-size:15px; margin:0 0 12px 0;">🎒 L'Analogia degli Armadietti</h4>
+          <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0;">
+            Immagina una palestra con <strong>1000 iscritti</strong> (RAM) e solo <strong>10 armadietti</strong> (Cache). La regola impone di usare l'ultima cifra del badge come "Indice".<br><br>
+            L'iscritto <strong>14</strong> va all'armadietto 4.<br>
+            Ma anche l'iscritto <strong>24</strong> deve usare l'armadietto 4!
+          </p>
+        </div>
+        
+        <div style="flex:1; min-width:250px; background:var(--background); padding:20px; border-radius:8px; border:1px dashed var(--border);">
+          <h4 style="color:var(--red); font-size:15px; margin:0 0 12px 0;">🕵️‍♂️ La Soluzione</h4>
+          <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0;">
+            Quando apri lo sportello 4, ci trovi uno zaino. Di chi è? L'Indice ti ha portato lì, ma non garantisce l'identità.<br><br>
+            Il <strong>TAG</strong> è letteralmente <em>l'etichetta col nome cucita sullo zaino</em>. La CPU apre lo sportello, legge il Tag, e solo se coincide con quello che sta cercando grida al <strong>Cache Hit</strong>. Se il Tag non corrisponde, è lo zaino di un altro (<strong>Cache Miss</strong>).
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:32px; background:var(--surface2); padding:24px; border:1px solid var(--border); border-radius:8px; align-items:center; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <div style="flex:1; min-width:300px;">
+        <h3 style="font-size:20px; color:var(--text); margin-top:0; margin-bottom:12px;">Il Problema dell'Indirizzamento</h3>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">La RAM è gigantesca, mentre la Cache è minuscola. Come decidiamo <strong>dove posizionare un blocco di RAM</strong> quando lo portiamo nella Cache? Esistono tre filosofie architetturali, che possiamo comprendere usando l'analogia di un parcheggio VIP.</p>
+      </div>
+      <div style="flex:1; min-width:300px; text-align:center;">
+        <img src="assets/extra/tipi_cache.png" alt="Tipi di Mappatura Cache" style="max-width:100%; max-height:220px; border-radius:4px;">
+      </div>
+    </div>
+
+    <!-- CAROUSEL TIPI MAPPATURA -->
+    <style>
+      .carousel-wrapper {
+        position: relative;
+        background: transparent;
+        overflow: hidden;
+        margin-bottom: 48px;
+      }
+      .carousel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px 8px 0 0;
+      }
+      .carousel-title {
+        margin: 0;
+        font-size: 16px;
+        color: var(--text);
+        font-weight: 600;
+      }
+      .carousel-controls {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .carousel-btn {
+        background: var(--background);
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 4px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 13px;
+        transition: all 0.2s;
+      }
+      .carousel-btn:hover:not(:disabled) {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: white;
+      }
+      .carousel-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .carousel-indicator {
+        font-size: 13px;
+        color: var(--muted);
+        font-family: 'DM Mono', monospace;
+      }
+      .carousel-viewport {
+        border: 1px solid var(--border);
+        border-top: none;
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+      }
+      .carousel-slides-container-cache {
+        display: flex;
+        transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+        width: 300%;
+      }
+      .carousel-slide-cache {
+        width: 33.33333%;
+        flex-shrink: 0;
+        padding: 24px;
+        box-sizing: border-box;
+      }
+      
+      .slide-layout {
+        display:flex; flex-wrap:wrap; gap:24px; align-items:stretch;
+      }
+      .slide-text {
+        flex:1; min-width:300px; display:flex; flex-direction:column;
+      }
+      .slide-image {
+        flex:1; min-width:300px; display:flex; justify-content:center; align-items:center; background:var(--background); border:1px dashed var(--border); border-radius:8px; padding:16px;
+      }
+      .slide-procon {
+        background:var(--background); padding:12px; border-radius:6px; margin-bottom:12px;
+      }
+    </style>
+
+    <div class="carousel-wrapper">
+      <div class="carousel-header">
+        <h3 class="carousel-title" id="carouselTitleCache">1. Mappatura Diretta</h3>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prevBtnCache" disabled>&#8592; Indietro</button>
+          <span class="carousel-indicator" id="carouselIndicatorCache">1 / 3</span>
+          <button class="carousel-btn" id="nextBtnCache">Avanti &#8594;</button>
+        </div>
+      </div>
+      
+      <div class="carousel-viewport">
+        <div class="carousel-slides-container-cache" id="slidesContainerCache">
+          
+          <!-- SLIDE 1: MAPPATURA DIRETTA -->
+          <div class="carousel-slide-cache">
+            <div class="slide-layout">
+              <!-- Testo -->
+              <div class="slide-text">
+                <div class="card" style="border-left: 4px solid var(--red); background:var(--surface2); flex-grow:1; display:flex; flex-direction:column; justify-content:center; margin:0;">
+                  <p style="font-size:14px; color:var(--text); margin-bottom:16px; line-height:1.6;"><strong>La Regola:</strong> Ogni "auto" (blocco RAM) ha <strong>un solo posto specifico</strong> in cui le è permesso parcheggiare nella Cache. Questo posto è calcolato da una formula fissa matematica basata sull'indirizzo (l'Indice).</p>
+                  
+                  <div class="slide-procon" style="border-left:3px solid var(--green);">
+                    <strong style="color:var(--green); font-size:13px; display:block; margin-bottom:4px;">✅ Il Pro: Velocità Fulminea</strong>
+                    <span style="font-size:13px; color:var(--muted); line-height:1.4; display:block;">La CPU va a colpo sicuro nel posto designato. Se c'è la prende, se non c'è è un Miss. Non deve cercare altrove. Circuiti semplicissimi e a costo zero.</span>
+                  </div>
+                  
+                  <div class="slide-procon" style="border-left:3px solid var(--red); margin-bottom:0;">
+                    <strong style="color:var(--red); font-size:13px; display:block; margin-bottom:4px;">❌ Il Contro: I Conflitti</strong>
+                    <span style="font-size:13px; color:var(--muted); line-height:1.4; display:block;">Se l'auto 14 e la 24 devono andare entrambe al posto 4, continueranno a sfrattarsi a vicenda (Miss da Conflitto) anche se il resto del parcheggio VIP è vuoto!</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Immagine -->
+              <div class="slide-image">
+                <img src="assets/extra/circuito_diretta.png" alt="Circuito Mappatura Diretta" style="max-width:100%; max-height:280px; object-fit:contain; border-radius:4px;">
+              </div>
+            </div>
+          </div>
+
+          <!-- SLIDE 2: FULLY ASSOCIATIVE -->
+          <div class="carousel-slide-cache">
+            <div class="slide-layout">
+              <div class="slide-text" style="max-width:800px; margin:0 auto; flex:none; width:100%;">
+                <div class="card" style="border-left: 4px solid var(--blue); background:var(--surface2); margin:0;">
+                  <p style="font-size:14px; color:var(--text); margin-bottom:16px; line-height:1.6; text-align:center;"><strong>La Regola:</strong> L'opposto assoluto della mappatura diretta. <strong>Libertà totale</strong>. L'auto che arriva dalla RAM può essere parcheggiata in <em>qualsiasi posto libero</em> del parcheggio VIP della Cache.</p>
+                  
+                  <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:24px;">
+                    <div class="slide-procon" style="flex:1; min-width:250px; border-left:3px solid var(--green);">
+                      <strong style="color:var(--green); font-size:13px; display:block; margin-bottom:4px;">✅ Il Pro: Efficienza spaziale</strong>
+                      <span style="font-size:13px; color:var(--muted); line-height:1.4; display:block;">Zero "Miss da Conflitto". Sfrutti il 100% dello spazio disponibile. Nessuno viene sfrattato se c'è ancora anche solo un buco libero da qualche parte.</span>
+                    </div>
+                    
+                    <div class="slide-procon" style="flex:1; min-width:250px; border-left:3px solid var(--red);">
+                      <strong style="color:var(--red); font-size:13px; display:block; margin-bottom:4px;">❌ Il Contro: Lentezza e Costi</strong>
+                      <span style="font-size:13px; color:var(--muted); line-height:1.4; display:block;">Quando la CPU cerca un'auto, non sapendo dove sia, deve controllare <strong>simultaneamente tutti i posti</strong>. Servono circuiti hardware giganti (comparatori in parallelo) costosissimi e affamati di energia.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SLIDE 3: SET-ASSOCIATIVE -->
+          <div class="carousel-slide-cache">
+            <div class="slide-layout">
+              <!-- Testo -->
+              <div class="slide-text">
+                <div class="card" style="border-left: 4px solid var(--accent); background:var(--surface2); flex-grow:1; display:flex; flex-direction:column; justify-content:center; margin:0;">
+                  <p style="font-size:14px; color:var(--text); margin-bottom:16px; line-height:1.6;"><strong>La Regola:</strong> Il compromesso geniale usato nel 99% dei processori. Il parcheggio è diviso in <strong>"Zone" (Insiemi/Sets)</strong>. Un'auto deve andare in una specifica Zona fissa, ma lì dentro può scegliere <em>qualsiasi posto libero</em>.</p>
+                  
+                  <div class="slide-procon" style="border-left:3px solid var(--green); margin-bottom:0;">
+                    <strong style="color:var(--green); font-size:13px; display:block; margin-bottom:4px;">✅ Il Pro: Il Meglio di Entrambi</strong>
+                    <span style="font-size:13px; color:var(--muted); line-height:1.4; display:block;">Abbatte drasticamente i conflitti (perché ogni zona ha più posti liberi) e abbatte i costi hw (la CPU deve controllare in parallelo solo i 4/8 posti di quella specifica zona, non l'intera cache!).</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Immagine -->
+              <div class="slide-image">
+                <img src="assets/extra/circuito_setAssociativa.png" alt="Circuito Set-Associativa" style="max-width:100%; max-height:280px; object-fit:contain; border-radius:4px;">
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+
+
+  </section>
+
+  <!-- ══════════════ MACRO SEZIONE 3 ══════════════ -->
+  <section class="section" id="s34-politiche">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">III. Le Politiche di <span class="accent">Gestione</span></h2>
+    </div>
+
+    <p class="lead" style="margin-bottom:32px;">Oltre a decidere "dove" mettere un dato, la CPU deve rispondere costantemente a due domande pratiche fondamentali per la sopravvivenza del sistema:</p>
+
+    <!-- SFIDA 1: RIMPIAZZO -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:32px; margin-bottom:48px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <span style="font-size:28px;">🗑️</span>
+        <h3 style="font-size:22px; color:var(--text); margin:0;">Sfida 1: Spazio Esaurito (Rimpiazzo)</h3>
+      </div>
+      <p style="font-size:14px; color:var(--text); margin-bottom:32px;">Quando la Cache (o la singola zona in caso di set-associativa) è completamente piena e arriva un nuovo blocco dalla RAM, <strong>quale blocco vecchio butti via?</strong></p>
+
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <!-- LRU (Featured) -->
+        <div style="background:var(--background); border-left:4px solid var(--accent); padding:20px; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:12px;">
+            <strong style="color:var(--accent); font-size:16px;">👑 LRU (Least Recently Used)</strong>
+            <span style="background:var(--accent); color:var(--background); padding:4px 12px; border-radius:12px; font-size:11px; font-weight:bold; letter-spacing:0.5px;">LO STANDARD DI MERCATO</span>
+          </div>
+          <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0;">Il sistema intelligente: tiene traccia degli accessi e butta fuori <strong>il blocco che non viene letto da più tempo</strong>. Segue alla perfezione il <em>Principio di Località Temporale</em> (se non lo usi da tanto, è improbabile che ti servirà a breve).</p>
+        </div>
+        
+        <!-- Altre due in griglia -->
+        <div class="card-grid cols2">
+          <div class="card" style="margin:0; border-top:3px solid var(--border); background:var(--background);">
+            <strong style="color:var(--text); font-size:15px; display:block; margin-bottom:8px;">🛒 FIFO (First-In, First-Out)</strong>
+            <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">Come in coda alla cassa: si butta fuori il blocco che è entrato fisicamente per primo nella cache, ignorando completamente quante volte lo abbiamo letto.</p>
+          </div>
+          <div class="card" style="margin:0; border-top:3px solid var(--border); background:var(--background);">
+            <strong style="color:var(--text); font-size:15px; display:block; margin-bottom:8px;">🎲 Casuale (Random)</strong>
+            <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">Il sistema lancia un "dado" e cancella un blocco a caso. Sembra stupido, ma è istantaneo, facilissimo da costruire e previene "sfortune sistematiche".</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SFIDA 2: SCRITTURA -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:32px; margin-bottom:48px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+        <span style="font-size:28px;">📝</span>
+        <h3 style="font-size:22px; color:var(--text); margin:0;">Sfida 2: Modifica Dati (Scrittura)</h3>
+      </div>
+      <p style="font-size:14px; color:var(--text); margin-bottom:32px;">Quando la CPU modifica una variabile (istruzione di <em>Store</em>), il dato viene aggiornato nella Cache, ma <strong>la RAM rimane con il valore vecchio obsoleto!</strong> Come e quando allineiamo i dati per evitare disastri?</p>
+
+      <div class="card-grid cols2" style="align-items:stretch;">
+        <!-- Write-Through -->
+        <div class="card" style="margin:0; display:flex; flex-direction:column; border-top:4px solid var(--blue); background:var(--background);">
+          <h4 style="color:var(--blue); font-size:18px; margin:0 0 12px 0;">Write-Through <span style="font-weight:normal; font-size:13px; color:var(--muted); display:block; margin-top:4px;">(Scrittura Immediata)</span></h4>
+          <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; flex-grow:1;">Ogni volta che modifichi la Cache, il controllore va <strong>istantaneamente</strong> a correggere anche il dato giù nella RAM.</p>
+          
+          <div style="background:var(--surface2); padding:12px; border-radius:6px; margin-bottom:8px; border-left:3px solid var(--green);">
+            <strong style="color:var(--green); font-size:13px; display:block;">✅ Sicurezza Massima</strong>
+            <span style="font-size:13px; color:var(--muted);">RAM e Cache sono sempre perfettamente speculari. Nessun rischio di perdere dati in caso di crash.</span>
+          </div>
+          <div style="background:var(--surface2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+            <strong style="color:var(--red); font-size:13px; display:block;">❌ Lentezza Mortale</strong>
+            <span style="font-size:13px; color:var(--muted);">Devi aspettare i tempi biblici della RAM ad ogni singola minuscola modifica della CPU.</span>
+          </div>
+        </div>
+
+        <!-- Write-Back -->
+        <div class="card" style="margin:0; display:flex; flex-direction:column; border-top:4px solid var(--accent); background:var(--background);">
+          <h4 style="color:var(--accent); font-size:18px; margin:0 0 12px 0;">Write-Back <span style="font-weight:normal; font-size:13px; color:var(--muted); display:block; margin-top:4px;">(Scrittura Differita)</span></h4>
+          <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px; flex-grow:1;">La CPU scrive <strong>SOLO nella Cache</strong>, accendendo un interruttore speciale chiamato <strong style="color:var(--accent);">Dirty Bit</strong> (Dato sporco). Il blocco verrà riversato e salvato nella RAM <em>solo alla fine</em>, nel momento in cui deve essere sfrattato per fare spazio.</p>
+          
+          <div style="background:var(--surface2); padding:12px; border-radius:6px; margin-bottom:8px; border-left:3px solid var(--green);">
+            <strong style="color:var(--green); font-size:13px; display:block;">✅ Velocità Fulminea</strong>
+            <span style="font-size:13px; color:var(--muted);">Se modifichi una variabile 1000 volte in un ciclo, fai 1000 scritture immediate in Cache e <strong>1 solo viaggio finale</strong> in RAM.</span>
+          </div>
+          <div style="background:var(--surface2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+            <strong style="color:var(--red); font-size:13px; display:block;">❌ Complessità Hardware</strong>
+            <span style="font-size:13px; color:var(--muted);">Serve hardware extra per tenere a mente quali slot hanno il "Dirty Bit" acceso.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // Script per il Carousel Cache Mappatura
+  const prevBtn = document.getElementById('prevBtnCache');
+  const nextBtn = document.getElementById('nextBtnCache');
+  const indicator = document.getElementById('carouselIndicatorCache');
+  const title = document.getElementById('carouselTitleCache');
+  const container = document.getElementById('slidesContainerCache');
+  let currentSlide = 0;
+  const totalSlides = 3;
+  const titles = [
+    "1. Mappatura Diretta",
+    "2. Completamente Associativa",
+    "3. Associativa a Insiemi"
+  ];
+
+  function updateCarousel() {
+    container.style.transform = `translateX(-${(currentSlide * 100)/3}%)`;
+    indicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    title.textContent = titles[currentSlide];
+    
+    if(currentSlide === 0) {
+      prevBtn.disabled = true;
+      nextBtn.disabled = false;
+    } else if(currentSlide === totalSlides - 1) {
+      prevBtn.disabled = false;
+      nextBtn.disabled = true;
+    } else {
+      prevBtn.disabled = false;
+      nextBtn.disabled = false;
+    }
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateCarousel();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateCarousel();
+    }
+  });
+</script>
+<script src="shared.js"></script>
+</body>
+</html>

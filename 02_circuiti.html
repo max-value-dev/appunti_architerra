@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Laboratorio ALU e Circuiti</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Stili per i widget interattivi */
+    .widget-container {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    .widget-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+    }
+    .alu-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 20px;
+      width: 100%;
+      align-items: center;
+    }
+    .alu-inputs, .alu-outputs {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .alu-core {
+      position: relative;
+      background: rgba(91, 156, 246, 0.1);
+      border: 2px solid var(--blue);
+      border-radius: 8px;
+      padding: 40px 20px;
+      text-align: center;
+      min-width: 150px;
+    }
+    .alu-core::before {
+      content: 'ALU 1-BIT';
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      color: var(--blue);
+      font-weight: bold;
+    }
+    .bit-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .bit-label {
+      font-size: 13px;
+      color: var(--text);
+      font-weight: 500;
+      min-width: 60px;
+    }
+    .bit-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .bit-btn.active {
+      background: var(--green);
+      color: #000;
+      border-color: var(--green);
+    }
+    .bit-btn:hover {
+      border-color: var(--blue);
+    }
+    .bit-out {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px dashed var(--border);
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      color: var(--text);
+    }
+    .bit-out.active {
+      background: rgba(234, 179, 8, 0.2);
+      border-color: var(--amber);
+      color: var(--amber);
+      font-weight: bold;
+    }
+    .op-select {
+      background: var(--surface);
+      border: 1px solid var(--blue);
+      color: var(--blue);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      outline: none;
+    }
+    
+    .slt-diagram {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 30px;
+      margin: 24px 0;
+      position: relative;
+    }
+    .alu-box {
+      border: 2px solid var(--border);
+      padding: 10px;
+      text-align: center;
+      font-family: 'DM Mono', monospace;
+      border-radius: 6px;
+      background: var(--surface);
+      width: 100px;
+      margin: 10px auto;
+      z-index: 2;
+      position: relative;
+    }
+    .alu-box.highlight {
+      border-color: var(--purple);
+      color: var(--purple);
+    }
+    .wire-line {
+      position: absolute;
+      width: 2px;
+      background: var(--purple);
+      top: 60px;
+      bottom: 60px;
+      left: calc(50% + 70px);
+      z-index: 1;
+    }
+    .wire-line::after {
+      content: 'Set ➔ Less';
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--purple);
+      font-family: 'DM Mono', monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="02_circuiti.html#s23">
+    <div class="nav-dot"></div> I Mattoni Logici
+    <span class="nav-num">23</span>
+  </a>
+  <a class="nav-item" href="02_circuiti.html#s24">
+    <div class="nav-dot"></div> Gli Addizionatori
+    <span class="nav-num">24</span>
+  </a>
+  <a class="nav-item" href="02_circuiti.html#s25">
+    <div class="nav-dot"></div> L'Evoluzione dell'ALU
+    <span class="nav-num">25</span>
+  </a>
+  <a class="nav-item" href="02_circuiti.html#s26">
+    <div class="nav-dot"></div> Evoluzione Memoria
+    <span class="nav-num">26</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 06 — CIRCUITI E ALU</div>
+    <h1>Dentro la Calcolatrice<br><em>Costruire l'ALU da zero</em></h1>
+    <p>Come l'hardware si trasforma in intelligenza logica: porte logiche, MUX, il complemento a 2 implementato fisicamente, e la genialità dietro l'istruzione <code>slt</code> e l'Overflow.</p>
+  </div>
+
+  
+  <!-- ══════════════ SEZIONE 23 ══════════════ -->
+  <section class="section" id="s23">
+    <div class="section-header">
+      <div class="section-num">23</div>
+      <h2>I Mattoni <span class="accent">Logici</span></h2>
+    </div>
+    
+    <p class="lead">Siamo scesi al Livello 0: qui il computer è solo un intricato sistema di tubature elettriche (0 Volt = Falso, 5 Volt = Vero). La matematica si costruisce "dirottando" questa elettricità tramite le Porte Logiche.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Circuiti Combinatori vs Sequenziali</h3>
+    <p>In elettronica, i circuiti si dividono in due grandi famiglie:</p>
+    <div class="card-grid cols2" style="margin-bottom:20px">
+      <div class="card green">
+        <div class="card-title">Circuiti Combinatori</div>
+        <p style="font-size:13px;margin:4px 0 0">Non hanno memoria. L'uscita in questo esatto momento dipende <strong>esclusivamente</strong> da cosa c'è in ingresso in questo esatto momento. Come una calcolatrice semplice: digiti 2+2, esce 4. È istantaneo e "senza passato". (Es: ALU, Decoder, MUX).</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Circuiti Sequenziali</div>
+        <p style="font-size:13px;margin:4px 0 0">Hanno memoria. L'uscita dipende dagli ingressi attuali <strong>e</strong> da quello che è successo in passato. Usano il segnale di <em>Clock</em> (il metronomo) per decidere <em>quando</em> aggiornare i propri dati. (Es: RAM, Registri, Flip-Flop).</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Le Porte Logiche Base</h3>
+    <p>I circuiti combinatori si costruiscono incastrando miliardi di transistor configurati per formare queste "porte" elementari:</p>
+    <div class="card-grid cols4" style="margin-bottom:24px">
+      <div class="card" style="padding:15px;text-align:center"><strong style="color:var(--blue)">AND</strong><br><span style="font-size:12px">Esce 1 solo se TUTTI gli ingressi sono 1</span></div>
+      <div class="card" style="padding:15px;text-align:center"><strong style="color:var(--green)">OR</strong><br><span style="font-size:12px">Esce 1 se ALMENO UN ingresso è 1</span></div>
+      <div class="card" style="padding:15px;text-align:center"><strong style="color:var(--purple)">NOT</strong><br><span style="font-size:12px">Ribalta il segnale (1 diventa 0)</span></div>
+      <div class="card" style="padding:15px;text-align:center"><strong style="color:var(--red)">XOR</strong><br><span style="font-size:12px">Esce 1 solo se gli ingressi sono DIVERSI</span></div>
+    </div>
+
+    <h3 style="font-size:20px;font-weight:600;color:var(--blue);margin:32px 0 16px">Il Decoder 3 a 8 (Il Cecchino)</h3>
+    <p>Un Decoder riceve un numero binario in ingresso (es. 3 bit: A, B, C) e "accende" esattamente <strong>una sola</strong> linea di uscita (tra le 2<sup>3</sup> = 8 possibili). È il cuore della memoria RAM, perché permette di selezionare la singola riga di celle desiderata partendo dall'indirizzo.</p>
+    
+    <div style="display:flex; gap:24px; align-items:stretch; margin-bottom: 32px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:300px;">
+        <div class="card purple" style="height:100%; margin:0;">
+          <div class="card-title">Come funziona il circuito:</div>
+          <ol style="font-size:14px; margin-top:8px; padding-left:20px; line-height:1.6; color:var(--text)">
+            <li><strong>Gli Ingressi (A, B, C):</strong> A sinistra entrano i 3 bit. Ognuno si sdoppia: un percorso prosegue invariato, l'altro passa per una porta <code>NOT</code> (il triangolo) che ne inverte il valore.</li>
+            <li><strong>I Cavi Verticali:</strong> Si vengono a creare 6 fili verticali che trasportano il segnale normale e invertito per ogni lettera.</li>
+            <li><strong>Le 8 Porte AND:</strong> A destra ci sono 8 porte logiche <code>AND</code>. Ogni porta è "cablata" in modo univoco a 3 fili verticali. Ad esempio, la porta <code>D0</code> è collegata alle linee invertite di tutti e 3 gli ingressi.</li>
+            <li><strong>La Magia Matematica:</strong> Una porta AND emette '1' <em>solo se riceve tutti '1'</em>. Grazie al cablaggio perfetto, per ogni possibile combinazione in entrata (da <code>000</code> a <code>111</code>), <strong>soltanto una singola porta AND</strong> riceverà contemporaneamente tre '1', attivando la sua uscita corrispondente. Tutte le altre 7 resteranno spente.</li>
+          </ol>
+        </div>
+      </div>
+      
+      <div style="flex:1; min-width:300px;">
+        <div class="widget-container" style="position:relative; padding:15px; background:var(--surface); margin:0; height:100%; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div class="widget-title" style="color:var(--text); font-size:16px;">Analisi Visiva: Schema del Decoder</div>
+            <img src="assets/decoder.png" alt="Schema Decoder 3 a 8" style="width:100%; border-radius:8px; border:1px solid var(--border); margin-top:10px;">
+          </div>
+          <div style="margin-top: 24px; text-align: center;">
+            <p style="font-size:14px; color:var(--text); margin-bottom:8px; text-align:left;"><strong>Il Simbolo del Decoder:</strong> Nei diagrammi di architettura ad alto livello, l'intero labirinto di porte logiche viene riassunto in questo semplice blocco costruttivo.</p>
+            <img src="assets/decoder-symbol.png" alt="Simbolo logico del Decoder" style="max-width:220px; width:100%; border-radius:8px; border:1px solid var(--border);">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:20px;font-weight:600;color:var(--green);margin:40px 0 16px">Il Multiplexer 8 a 1 (Lo Scambio Ferroviario)</h3>
+    <p>Il MUX (Multiplexer) fa l'esatto opposto del Decoder: riceve svariati fili dati in ingresso, ma ne fa passare <strong>solo uno</strong> verso l'uscita. I fili di "Select" decidono quale dei cancelli verrà sbloccato. È essenziale nella CPU per prendere decisioni di routing stradale (es. mandiamo all'ALU il valore del Registro o una Costante?).</p>
+
+    <div class="callout green" style="margin-bottom:24px">
+      <strong>La Regola Matematica del MUX:</strong> La relazione tra i fili di controllo (Selettori) e i fili Dati è rigidissima. Con <em>n</em> fili di controllo, il circuito può gestire esattamente <strong>2<sup>n</sup> ingressi dati</strong>. Nello schema sottostante abbiamo 3 selettori (A, B, C), quindi il MUX può "scegliere" tra 2<sup>3</sup> = 8 ingressi Dati!
+    </div>
+
+    <div style="display:flex; gap:24px; align-items:stretch; margin-bottom: 24px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:300px;">
+        <div class="card green" style="height:100%; margin:0;">
+          <div class="card-title">Come funziona il circuito:</div>
+          <ol style="font-size:14px; margin-top:8px; padding-left:20px; line-height:1.6; color:var(--text)">
+            <li><strong>I Dati (D0-D7):</strong> A sinistra entrano gli 8 cavi che trasportano i vari dati possibili. Ognuno finisce direttamente in una porta AND.</li>
+            <li><strong>I Selettori (A, B, C):</strong> In basso entrano i 3 fili di controllo. Anche in questo caso si sdoppiano in linee verticali normali e negate (passando per i <code>NOT</code>).</li>
+            <li><strong>La "Serratura" AND:</strong> Ogni porta AND riceve 4 fili: 1 cavo dati e 3 cavi di controllo. Solo <strong>una</strong> porta AND alla volta riceverà dai cavi di controllo la combinazione magica <code>1-1-1</code>. </li>
+            <li><strong>Il passaggio del Dato:</strong> La singola porta AND "sbloccata" lascerà passare il segnale del suo cavo dati. Tutte le altre porte AND resteranno sbarrate a 0.</li>
+            <li><strong>La grande porta OR:</strong> Raccoglie i risultati di tutte le 8 porte AND. Poiché 7 porte emettono 0 e solo 1 emette il segnale del dato, l'uscita finale `F` sarà esattamente uguale al dato selezionato!</li>
+          </ol>
+        </div>
+      </div>
+      
+      <div style="flex:1; min-width:300px;">
+        <div class="widget-container" style="position:relative; padding:15px; background:var(--surface); margin:0; height:100%; display:flex; flex-direction:column; justify-content:center;">
+          <div class="widget-title" style="color:var(--text); font-size:16px;">Analisi Visiva: Schema del Multiplexer</div>
+          <img src="assets/multiplexer.png" alt="Schema Multiplexer 8 a 1" style="width:100%; border-radius:8px; border:1px solid var(--border); margin-top:10px;">
+        </div>
+      </div>
+    </div>
+    
+    <div class="card teal" style="margin-top:32px; padding:24px;">
+      <div style="display:flex; gap:32px; align-items:center; flex-wrap:wrap;">
+        <div style="flex:1; min-width:300px;">
+          <div class="card-title" style="font-size:18px; margin-bottom:12px;">Il Segreto dell'Hardware:<br>I 32 Multiplexer in Parallelo</div>
+          <p style="font-size:14px; line-height:1.6; color:var(--text)">
+            In un processore RISC-V a 32 bit, i "fili" nei diagrammi non sono fili singoli, ma <em>Bus</em>: nastri composti da 32 fili microscopici paralleli. Come fa la CPU a deviare l'intero traffico di un bus a 32 bit?
+            <br><br>
+            <strong>Non esiste un unico "Super MUX"!</strong> Gli ingegneri usano la forza bruta: piazzano <strong>32 piccoli Multiplexer (da 2-a-1)</strong> messi fisicamente uno di fianco all'altro. Il primo MUX si occupa esclusivamente di far passare il bit 0. Il secondo MUX fa passare il bit 1, e così via fino al bit 31.
+            <br><br>
+            La genialità? <strong>Il cavo di Controllo (il deviatore) è uno solo</strong>, ma viene sdoppiato e collegato al pin "Select" di tutti e 32 i MUX contemporaneamente! Quando l'Unità di Controllo manda un '1' su quel cavo, tutti e 32 i cancelli scattano all'unisono, deviando l'intero numero di 32 bit in un istante perfetto.
+          </p>
+        </div>
+        
+        <div style="flex:1; min-width:300px; text-align: center; background:var(--surface); padding:16px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+          <img src="assets/multiplexer-32.png" alt="I 32 Multiplexer collegati allo stesso filo di controllo" style="width:100%; max-width:400px; border-radius:8px; border:1px solid var(--border);">
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════ SEZIONE 24 ══════════════ -->
+  <section class="section" id="s24">
+    <div class="section-header">
+      <div class="section-num">24</div>
+      <h2>Gli Addizionatori <span class="accent">e ALU 1-bit</span></h2>
+    </div>
+
+    <p class="lead">L'obiettivo primario della CPU è calcolare. Ma come si costruisce un circuito in grado di sommare numeri binari usando solo le porte logiche di base (AND, OR, XOR)?</p>
+
+    <h3 style="font-size:20px;font-weight:600;color:var(--blue);margin:32px 0 16px">L'Half Adder (Mezzo Addizionatore)</h3>
+    <p>Se vogliamo sommare due bit singoli (es. 1 + 1), abbiamo due risultati possibili: la Somma (che vale 0) e il Riporto (Carry, che vale 1). Il circuito più semplice per farlo è l'Half Adder, che usa esattamente due porte logiche in parallelo:</p>
+    
+    <div class="card" style="margin-bottom:24px">
+      <ul style="font-size:14px;line-height:1.6;color:var(--text);margin:0;padding-left:20px">
+        <li><strong>Porta XOR per la Somma:</strong> Ricordi? L'XOR vale 1 solo se gli ingressi sono diversi. Infatti: 0+0=0, 0+1=1, 1+0=1. E 1+1? Fa 0 col riporto di 1! L'XOR per 1 e 1 dà giustamente 0.</li>
+        <li><strong>Porta AND per il Riporto (CarryOut):</strong> L'AND vale 1 solo se tutti gli ingressi sono 1. Infatti il riporto scatta a 1 <em>solo</em> quando sommiamo 1 e 1.</li>
+      </ul>
+    </div>
+
+    <div class="widget-container" style="position:relative;padding-left:10px; background:var(--surface);">
+      <div class="widget-title" style="color:var(--text); font-size:16px;">Analisi Visiva: Half Adder</div>
+      <img src="assets/half-adder.png" alt="Half Adder" style="width:100%; max-width:600px; border-radius:8px; border:1px solid var(--border); margin-top:10px;">
+    </div>
+
+    <h3 style="font-size:20px;font-weight:600;color:var(--green);margin:40px 0 16px">Il Full Adder (Addizionatore Completo)</h3>
+    <p>L'Half Adder va bene per il primo bit, ma per sommare i bit successivi di un numero lungo ci serve un circuito in grado di accettare un terzo ingresso: il <strong>CarryIn</strong> (il riporto generato dalla colonna precedente).</p>
+    <p>Il <strong>Full Adder</strong> si costruisce mettendo in cascata due Half Adder e una porta OR. È in grado di sommare tre bit (A, B e CarryIn) e sputare fuori il Risultato e il CarryOut.</p>
+
+    <div class="widget-container" style="position:relative;padding-left:10px; background:var(--surface);">
+      <div class="widget-title" style="color:var(--text); font-size:16px;">Analisi Visiva: Full Adder</div>
+      <img src="assets/full-adder.png" alt="Full Adder" style="width:100%; max-width:600px; border-radius:8px; border:1px solid var(--border); margin-top:10px;">
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 25: L'Evoluzione dell'ALU ══════════════ -->
+  <section class="section" id="s25">
+    <div class="section-header">
+      <div class="section-num">25</div>
+      <h2>L'Evoluzione <span class="accent">dell'ALU</span></h2>
+    </div>
+
+    <p class="lead">Non possiamo studiare un'ALU a 32 bit guardandola tutta intera: esploderebbe il cervello. Dobbiamo costruirla pezzo per pezzo, partendo da un singolo bit debole e potenziandolo ad ogni ostacolo. Esplora le fasi qui sotto!</p>
+
+    <style>
+      .carousel-wrapper {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        margin: 40px 0;
+      }
+      .carousel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 32px;
+        background: rgba(0,0,0,0.2);
+        border-bottom: 1px solid var(--border);
+      }
+      .carousel-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--blue);
+        margin: 0;
+      }
+      .carousel-controls {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+      .carousel-btn {
+        background: var(--blue);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 20px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .carousel-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(59,130,246,0.3);
+      }
+      .carousel-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+      }
+      .carousel-indicator {
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .carousel-slides-container {
+        display: flex;
+        transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        width: 500%; /* 5 slides */
+      }
+      .carousel-slide {
+        width: 20%; /* 100% / 5 */
+        padding: 40px;
+        box-sizing: border-box;
+      }
+      .slide-content img {
+        width: 100%;
+        max-width: 600px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        margin-top: 24px;
+        display: block;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .slide-content h4 {
+        font-size: 18px;
+        font-weight: 600;
+        margin: 0 0 16px 0;
+        color: var(--text);
+      }
+      .slide-content p {
+        font-size: 15px;
+        line-height: 1.6;
+        color: var(--text);
+        margin-bottom: 16px;
+      }
+    </style>
+
+    <div class="carousel-wrapper">
+      <div class="carousel-header">
+        <h3 class="carousel-title" id="carouselTitle">Fase 1: L'ALU "Neanderthal"</h3>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prevBtn" disabled>&#8592; Indietro</button>
+          <span class="carousel-indicator" id="carouselIndicator">1 / 5</span>
+          <button class="carousel-btn" id="nextBtn">Avanti &#8594;</button>
+        </div>
+      </div>
+      
+      <div class="carousel-slides-container" id="slidesContainer">
+        
+        <!-- SLIDE 1 -->
+        <div class="carousel-slide">
+          <div class="slide-content">
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>Scopo:</strong> Costruire un'ALU primordiale per eseguire solo 3 calcoli (AND, OR, Somma).</li>
+              <li><strong>Costruzione:</strong> Si piazzano in parallelo una porta AND, una porta OR e un Full Adder.</li>
+              <li><strong>Il Controllo:</strong> I segnali entrano in tutti e tre i blocchi. Un <strong>Multiplexer a 3 vie</strong>, guidato dal filo <code>Operation</code>, sceglie l'unico risultato da far uscire.</li>
+            </ul>
+            <img src="assets/alu/alu-1bit.png" alt="ALU 1 bit base">
+            
+            <div style="margin-top:32px; background:rgba(0,0,0,0.1); padding:20px; border-radius:12px;">
+              <h4>Testa l'ALU Base:</h4>
+              <div class="alu-grid" style="max-width:400px; margin:0;">
+                <div class="alu-inputs">
+                  <div class="bit-row"><span class="bit-label">A</span><button id="btnA" class="bit-btn">0</button></div>
+                  <div class="bit-row"><span class="bit-label">B</span><button id="btnB" class="bit-btn">0</button></div>
+                  <div class="bit-row"><span class="bit-label" style="opacity:0.7">Cin</span><button id="btnCin" class="bit-btn" style="border-style:dashed">0</button></div>
+                </div>
+                <div class="alu-core">
+                  <select id="opSelect" class="op-select">
+                    <option value="and">AND (00)</option>
+                    <option value="or">OR (01)</option>
+                    <option value="add" selected>SUM (10)</option>
+                  </select>
+                </div>
+                <div class="alu-outputs">
+                  <div class="bit-row"><span class="bit-out" id="resOut">0</span><span class="bit-label">Res</span></div>
+                  <div class="bit-row" style="margin-top:28px"><span class="bit-out" id="coutOut" style="border-style:dashed">0</span><span class="bit-label" style="opacity:0.7">Cout</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="carousel-slide">
+          <div class="slide-content">
+            <h4>Il Problema delle Operazioni Inverse</h4>
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>Il Problema:</strong> L'ALU base non sa calcolare la Sottrazione né il NOR logico.</li>
+              <li><strong>La Soluzione:</strong> Sfruttare l'addizionatore col <em>Complemento a 2</em> (inverti i bit + somma 1).</li>
+              <li><strong>Hardware:</strong> Vengono piazzati due piccoli MUX in ingresso. Ognuno funge da deviatore tra il segnale <em>normale</em> e il segnale <em>capovolto</em> da una porta NOT.</li>
+            </ul>
+            <div class="card amber" style="margin-top:16px;">
+              <div class="card-title">Il miracolo di B-negate e A-invert</div>
+              <p style="font-size:13px;margin:4px 0 0">Quando ordini una Sottrazione, il filo <code>B-negate</code> devia B nel NOT e forza a 1 il <code>CarryIn</code> iniziale dell'addizionatore. Ma perché aggiungere anche <code>A-invert</code>? Appositamente per creare il <strong>NOR</strong>! Secondo le leggi di De Morgan, invertendo sia A che B e facendoli passare per la porta AND, si ottiene matematicamente <code>(NOT A) AND (NOT B) = A NOR B</code>. Un intero circuito risparmiato!</p>
+            </div>
+            <img src="assets/alu/alu-nor.png" alt="ALU con Invert e Negate">
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="carousel-slide">
+          <div class="slide-content">
+            <h4>Il Problema "Set Less Than" (SLT)</h4>
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>L'Obiettivo:</strong> Rispondere alla domanda A &lt; B (istruzione <code>slt</code>).</li>
+              <li><strong>Il Metodo:</strong> L'hardware calcola A - B. Se il risultato è negativo, A era minore di B.</li>
+              <li><strong>Il Problema:</strong> Il "segno negativo" esiste <em>solo</em> nell'ultima ALU (bit 31). Dobbiamo sdoppiare il design!</li>
+            </ul>
+            
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:24px;">
+              <div style="flex:1; min-width:250px;">
+                <strong style="color:var(--text)">1. Prime 31 ALU (Bit 0-30)</strong>
+                <p style="font-size:13px; color:var(--text)">Il quarto canale <strong>Less</strong> viene saldato a Terra (valore 0). In slt, i primi 31 bit sputano istantaneamente zero!</p>
+                <img src="assets/alu/alu-31bit.png" alt="ALU 31 bit" style="margin-top:8px;">
+              </div>
+              <div style="flex:1; min-width:250px;">
+                <strong style="color:var(--text)">2. La 32esima ALU (Bit Segno)</strong>
+                <p style="font-size:13px; color:var(--text)">Ha un tubo di scappamento speciale <strong>Set</strong>: ruba il bit del segno direttamente dall'addizionatore.</p>
+                <img src="assets/alu/alu-32bit.png" alt="ALU 32 bit" style="margin-top:8px;">
+              </div>
+            </div>
+            
+            <div class="callout blue" style="margin-top:24px;">
+              <strong>La Cucitura (Set ➔ Less)</strong><br>
+              Un lunghissimo cavo di rame prende il bit dal <strong>Set</strong> in cima (la 32esima ALU) e lo inietta brutalmente nel <strong>Less</strong> della primissima ALU (la ALU 0) in basso. Risultato? 31 zeri + il bit del segno.
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="carousel-slide">
+          <div class="slide-content">
+            <h4>Il Problema dello "Strabordamento" (Overflow)</h4>
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>L'Errore:</strong> Sommando numeri enormi, si invade il bit del segno. Il PC crede che il risultato positivo sia negativo: è l'<strong>Overflow</strong>.</li>
+              <li><strong>La Scoperta:</strong> C'è Overflow <em>solo</em> quando il <code>CarryIn</code> dell'ultimo bit differisce dal <code>CarryOut</code> dell'ultimo bit.</li>
+              <li><strong>La Soluzione:</strong> Si piazza una singola porta <strong>XOR</strong> a cavallo dei due Carry. Se sono diversi, scatta l'allarme!</li>
+            </ul>
+            
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:16px;">
+              <div style="flex:1; min-width:250px;">
+                <strong style="color:var(--text)">La 32esima ALU</strong>
+                <p style="font-size:13px; color:var(--text)">Questa è l'ALU che processa l'ultimo bit (il bit del segno).</p>
+                <img src="assets/alu/alu-32bit.png" alt="ALU 32 bit" style="margin-top:8px;">
+              </div>
+              <div style="flex:1; min-width:250px;">
+                <strong style="color:var(--text)">L'Allarme Overflow</strong>
+                <p style="font-size:13px; color:var(--text)">Aggiungendo la porta XOR ai due segnali di Carry, si intercetta l'errore.</p>
+                <img src="assets/alu/overflow.png" alt="XOR per Overflow" style="margin-top:8px;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="carousel-slide">
+          <div class="slide-content">
+            <h4>Il Problema del Salto (L'ALU Definitiva)</h4>
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>Il Requisito:</strong> L'istruzione <code>beq</code> (Branch if Equal) deve saltare se A = B.</li>
+              <li><strong>La Soluzione:</strong> L'ALU viene semplicemente istruita a eseguire una <strong>sottrazione</strong> normale (A - B). I 32 fili del risultato entrano in un titanico <strong>NOR a 32 vie</strong>.</li>
+              <li><strong>Il Ruolo della Control Unit (CU):</strong> L'ALU <em>non ha</em> un'operazione specifica per il beq. Si limita a sottrarre. È la <strong>Control Unit</strong> che legge l'allarme <strong>Zero</strong> sputato dal NOR: se è '1' (cioè il risultato della sottrazione era tutto zeri), la CU capisce che i numeri erano uguali e fa scattare il salto!</li>
+            </ul>
+
+            <div style="display:flex; gap:24px; flex-wrap:wrap; margin-top:24px; align-items:center;">
+              <div style="flex:2; min-width:300px;">
+                <img src="assets/alu-completa.png" alt="ALU Completa" style="width:100%; max-width:800px;">
+              </div>
+              
+              <div style="flex:1; min-width:280px; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:16px;">
+                <h4 style="font-size:15px; margin:0 0 12px 0; color:var(--blue);">Controllo Operazioni ALU</h4>
+                <p style="font-size:12px; line-height:1.4; color:var(--text); margin-bottom:12px;">La Control Unit invia 4 bit di comando (1 per A-invert, 1 per B-negate, 2 per Operation) combinati per decidere cosa far fare all'ALU:</p>
+                <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
+                  <thead>
+                    <tr style="background:var(--blue); color:#fff;">
+                      <th style="padding:8px; border:1px solid var(--border);">ALU control lines</th>
+                      <th style="padding:8px; border:1px solid var(--border);">Function</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td style="padding:6px 8px; border:1px solid var(--border);">0000</td><td style="padding:6px 8px; border:1px solid var(--border);">AND</td></tr>
+                    <tr style="background:rgba(0,0,0,0.05);"><td style="padding:6px 8px; border:1px solid var(--border);">0001</td><td style="padding:6px 8px; border:1px solid var(--border);">OR</td></tr>
+                    <tr><td style="padding:6px 8px; border:1px solid var(--border);">0010</td><td style="padding:6px 8px; border:1px solid var(--border);">add</td></tr>
+                    <tr style="background:rgba(0,0,0,0.05);"><td style="padding:6px 8px; border:1px solid var(--border);">0110</td><td style="padding:6px 8px; border:1px solid var(--border);">subtract</td></tr>
+                    <tr><td style="padding:6px 8px; border:1px solid var(--border);">0111</td><td style="padding:6px 8px; border:1px solid var(--border);">set less than</td></tr>
+                    <tr style="background:rgba(0,0,0,0.05);"><td style="padding:6px 8px; border:1px solid var(--border);">1100</td><td style="padding:6px 8px; border:1px solid var(--border);">NOR</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="callout green" style="margin-top:24px; text-align:center;">
+              <strong>La Scatola Nera</strong><br>
+              D'ora in poi, l'intero labirinto di circuiti sparirà, diventando quel glorioso simbolo a "V" (visibile qui sotto) completo dei pin <code>Control</code>, <code>Result</code>, <code>Zero</code> e <code>Overflow</code>.
+              <img src="assets/alu-simbolo.png" alt="Simbolo ALU a V" style="width:100%; max-width:400px; margin-top:16px; border-radius:0; border:none; box-shadow:none;">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  
+  
+  
+  <!-- ══════════════ SEZIONE 26: Latch SR ══════════════ -->
+  <section class="section" id="s26">
+    <div class="section-header">
+      <div class="section-num">26</div>
+      <h2>L'Evoluzione <span class="accent">della Memoria</span></h2>
+    </div>
+
+    <p class="lead">L'ALU calcola ma non ricorda. Seguiamo l'evoluzione dei circuiti di memoria (Circuiti Sequenziali): dalla forma più elementare instabile fino al sofisticato Flip-Flop utilizzato nelle CPU vere.</p>
+
+    <style>
+      .carousel-slides-container-6 {
+        display: flex;
+        transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+        width: 600%; /* 6 slides */
+      }
+      .carousel-slide-6 {
+        width: 16.6666%; /* 100% / 6 */
+        padding: 40px;
+        box-sizing: border-box;
+      }
+    </style>
+
+    <div class="carousel-wrapper">
+      <div class="carousel-header">
+        <h3 class="carousel-title" id="carouselTitle2">Fase 1: Il Latch SR</h3>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prevBtn2" disabled>&#8592; Indietro</button>
+          <span class="carousel-indicator" id="carouselIndicator2">1 / 6</span>
+          <button class="carousel-btn" id="nextBtn2">Avanti &#8594;</button>
+        </div>
+      </div>
+      
+      <div class="carousel-slides-container-6" id="slidesContainer2">
+        
+        <!-- SLIDE 1 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <ul style="font-size:15px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:0;">
+              <li>Il <strong>Latch SR</strong> è formato da due porte NOR incrociate (l'uscita di una è l'ingresso dell'altra).</li>
+              <li><strong>Set (S=1)</strong> accende la memoria a 1. <strong>Reset (R=1)</strong> la spegne a 0.</li>
+              <li><strong>Hold (S=0, R=0)</strong> chiude gli ingressi, mantenendo il segnale intrappolato nel loop.</li>
+            </ul>
+            <img src="assets/latch/latch-SR.png" alt="Latch SR" style="max-width:500px; display:block; margin:24px auto;">
+            <div class="callout red" style="margin-top:16px;">
+              <strong>⚠️ Caso Vietato (S=1, R=1):</strong> Se si attivano Set e Reset assieme e si rilasciano contemporaneamente, le due NOR si rincorrono in un <strong>loop infinito e imprevedibile</strong> (oscillazione).
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 2 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <h4>Perché inventare il Clock? (Il problema del Transitorio)</h4>
+            <div style="font-size:14px; line-height:1.6; color:var(--text); margin-bottom:16px;">
+              <p style="margin-bottom:8px;">Il Latch base è "sempre in ascolto", ed è un problema a causa della fisica dei circuiti:</p>
+              <ul style="padding-left:20px; margin-bottom:12px;">
+                <li><strong>Strade diverse, tempi diversi:</strong> S e R provengono da un labirinto di calcoli. Se S attraversa 1 sola porta ci mette 1ns ad arrivare; se R ne attraversa 5 ci mette 5ns.</li>
+                <li><strong>Il "Tremolio":</strong> Se l'obiettivo finale è S=1 e R=0, al nanosecondo 1 la S è già a 1, ma la R è in ritardo e magari vale ancora 1 per un vecchio calcolo. Per ben 4 nanosecondi il Latch vedrebbe <strong>S=1 e R=1</strong> (il caso vietato!), impazzendo.</li>
+              </ul>
+              <div class="callout green" style="margin-top:12px; margin-bottom:16px;">
+                <strong>La Soluzione: Il Clock (Il Cancello)</strong><br>
+                Aggiungiamo un interruttore generale. Il Clock funge da cancello <em>chiuso</em>: aspetta pazientemente (es. 10ns) che <strong>tutti i calcoli abbiano finito di tremolare e si siano stabilizzati</strong>. Solo a quel punto si apre (C=1) e lascia entrare i dati corretti nel Latch.
+              </div>
+            </div>
+            <img src="assets/latch/latch-SR-sincronizzato.png" alt="Latch SR Sincronizzato" style="max-height: 250px; margin: 0 auto; display: block;">
+          </div>
+        </div>
+
+        <!-- SLIDE 3 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <h4>Latch D Sincronizzato</h4>
+            <ul style="font-size:14px; line-height:1.6; color:var(--text); padding-left:20px; margin-bottom:16px;">
+              <li><strong>Il Problema:</strong> L'utente può ancora sbagliare e premere S=1 e R=1, mandando il Latch in oscillazione.</li>
+              <li><strong>La Soluzione:</strong> Eliminiamo il doppio comando! Creiamo un solo ingresso <strong>Data (D)</strong>. Il segnale D entra diretto nel Set, e invertito (tramite un NOT) nel Reset.</li>
+              <li><strong>Risultato:</strong> È matematicamente impossibile che Set e Reset valgano 1 contemporaneamente. Assicurazione totale.</li>
+            </ul>
+            <img src="assets/latch/latch-D-sincronizzato.png" alt="Latch D Sincronizzato">
+          </div>
+        </div>
+
+        <!-- SLIDE 4 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <h4 style="margin-bottom:12px;">Diagramma Temporale & Trasparenza</h4>
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+              
+              <!-- Colonna Sinistra: Setup, Hold e Ritardo -->
+              <div style="flex:1;">
+                <p style="font-size:13px; line-height:1.5; margin-bottom:8px; color:var(--text);"><strong>Il Manuale di Istruzioni (Il Diagramma)</strong></p>
+                <ul style="font-size:12.5px; line-height:1.4; color:var(--text); padding-left:16px; margin-bottom:12px;">
+                  <li><strong>Ritardo di propagazione (Frecce blu):</strong> L'uscita Q non scatta istantaneamente; c'è un leggero scivolamento a destra (il tempo fisico di attraversamento delle porte).</li>
+                  <li><strong>Setup Time (Tempo di preparazione):</strong> D deve essersi già stabilizzato <em>prima</em> che C (linea rossa) diventi alto. D non può cambiare nell'esatto istante in cui sale C, andrebbe in confusione!</li>
+                  <li><strong>Hold Time (Tempo di mantenimento):</strong> Quando C torna a 0 chiudendo il cancello, D deve rimanere fisso ancora un po' <em>dopo</em>, altrimenti il segnale "scivola via dalle mani" mentre la porta si sta chiudendo.</li>
+                </ul>
+                <img src="assets/diagramma-temporale-latchD.png" alt="Diagramma Temporale Latch D" style="max-width:100%; display:block; margin:0 auto;">
+              </div>
+              
+              <!-- Colonna Destra: Trasparenza -->
+              <div style="flex:1; border-left:1px solid var(--border); padding-left:16px;">
+                <p style="font-size:13px; line-height:1.5; margin-bottom:8px; color:var(--text);"><strong>Il Problema Trasparenza (Effetto Flipper)</strong><br>Quando C=1 il Latch D è "trasparente". Immagina un Contatore ad anello che fa +1 ad ogni battito:</p>
+                <ul style="font-size:12.5px; line-height:1.4; color:var(--text); padding-left:16px; margin-bottom:8px;">
+                  <li><strong>T=0:</strong> C scatta a 1 (apre le porte). Esce 0 in Q. L'addizionatore calcola 0+1=1 e lo manda in D.</li>
+                  <li><strong>Il Disastro:</strong> Poiché il Latch è trasparente (C rimarrà 1 per 2ns), l'1 entra ed <strong>esce immediatamente in Q</strong>! L'addizionatore lo vede, fa 1+1=2, lo manda in D, esce subito 2, calcola 3...</li>
+                </ul>
+                <div class="callout red" style="font-size:12.5px; padding:8px 12px; margin-top:8px;">
+                  <strong>Immondizia Elettronica</strong><br>
+                  L'effetto flipper avviene alla velocità della luce. Quando C finalmente chiude, dentro rimarrà un numero totalmente a caso (es. 7) generato da questo loop incontrollabile.
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- SLIDE 5 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <h4 style="margin-bottom:16px;">Dal Latch al Flip-Flop: Creare l'Istante Perfetto</h4>
+            
+            <p style="font-size:14px; line-height:1.6; margin-bottom:16px; color:var(--text);"><strong>1. Livello vs. Fronte</strong><br>Il Latch commuta "a livello" (resta aperto per tutto il tempo in cui il Clock è a 1), causando il disastroso effetto flipper. Il <strong>Flip-Flop</strong> commuta "sul fronte": memorizza il dato in un singolo istante microscopico (es. passaggio 0→1), risolvendo il problema alla radice.</p>
+            
+            <p style="font-size:14px; line-height:1.6; margin-bottom:16px; color:var(--text);"><strong>2. Il Generatore di Impulsi (Il trucco della porta NOT)</strong><br>Come dire a un circuito di rimanere aperto per un solo milionesimo di secondo? Sdoppiando il filo del Clock in una porta AND. Un ramo va dritto, l'altro passa in una <strong>porta NOT</strong> che lo rallenta leggermente (ritardo fisico Δ).</p>
+            
+            <div class="callout blue" style="font-size:14px; padding:12px 16px; margin-top:8px; margin-bottom:20px;">
+              <strong>L'Impulso Magico</strong><br>
+              Durante la salita del Clock, a causa del ritardo della NOT, c'è un brevissimo istante in cui la AND riceve <strong>due '1' assieme</strong>. Questo genera un picco elettrico strettissimo (un impulso) che attiva la memoria in un flash, senza lasciarle minimamente il tempo di fare l'effetto flipper!
+            </div>
+            
+            <img src="assets/latch/flipflop-tipoD.png" alt="Flip Flop Tipo D" style="max-height:200px; display:block; margin:0 auto;">
+          </div>
+        </div>
+
+        <!-- SLIDE 6 -->
+        <div class="carousel-slide-6">
+          <div class="slide-content">
+            <h4 style="margin-bottom:12px;">Flip-Flop Master-Slave</h4>
+            <div style="display:flex; gap:16px; align-items:flex-start;">
+              
+              <!-- Colonna Sinistra: Master Slave -->
+              <div style="flex:1;">
+                <p style="font-size:13px; line-height:1.5; margin-bottom:8px; color:var(--text);"><strong>Le Doppie Porte della Banca</strong><br>Il metodo più robusto per disconnettere ingresso e uscita è mettere due Latch D in serie, comandati da Clock opposti:</p>
+                <ul style="font-size:12.5px; line-height:1.4; color:var(--text); padding-left:16px; margin-bottom:8px;">
+                  <li><strong>Fase 1 (Clock Alto):</strong> Il <em>Master</em> riceve il Clock normale ed è <strong>aperto</strong> (legge l'ingresso D). Lo <em>Slave</em> riceve il Clock invertito da una porta NOT ed è <strong>chiuso</strong>. Il dato entra nella prima stanza ma l'uscita Q è bloccata.</li>
+                  <li><strong>Fase 2 (Il Fronte):</strong> Quando il Clock scende a 0, il Master si <strong>chiude</strong> (intrappolando il valore). Nello stesso istante lo Slave si <strong>apre</strong> e lascia uscire il dato in Q.</li>
+                </ul>
+                <div class="callout green" style="font-size:12.5px; padding:8px 12px; margin-top:8px;">
+                  Le due porte non sono <strong>mai aperte contemporaneamente</strong>! Questo rende il Flip-Flop sicurissimo per i circuiti ad anello.
+                </div>
+              </div>
+              
+              <!-- Colonna Destra: Salita vs Discesa -->
+              <div style="flex:1; border-left:1px solid var(--border); padding-left:16px;">
+                <p style="font-size:13px; line-height:1.5; margin-bottom:8px; color:var(--text);"><strong>Fronte di Discesa vs Fronte di Salita</strong><br>Il modo in cui colleghi la porta NOT decide l'istante di scatto:</p>
+                <ul style="font-size:12.5px; line-height:1.4; color:var(--text); padding-left:16px; margin-bottom:12px;">
+                  <li><strong>Fronte di DISCESA (1→0):</strong> Come descritto a sinistra (Master = C, Slave = NOT C). Quando il Clock è a 1, Q non cambia perché lo Slave è bloccato. L'uscita Q si aggiorna solo quando C <em>cade</em> a 0.</li>
+                  <li><strong>Fronte di SALITA (0→1):</strong> Inverti la logica! Metti la porta NOT sul Master. Ora il Master cattura quando il Clock è a 0, e lo Slave "spara" fuori il dato non appena il Clock <em>sale</em> a 1.</li>
+                </ul>
+              </div>
+
+            </div>
+            
+            <img src="assets/latch/flipflop-tipoD-fronteDiscesa.png" alt="Fronte di Discesa o Salita" style="max-height:160px; display:block; margin:16px auto 0;">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- IL BUFFER TRI-STATE (FUORI DALLA MEMORIA) -->
+  <section class="section" id="tri-state" style="padding-bottom:0; border-bottom:none;">
+    <div class="section-header">
+      <div class="section-num" style="background:var(--amber);">!</div>
+      <h2>Il Trasporto Dati: <span class="accent">Buffer Tri-State</span></h2>
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom: 24px;">
+      <!-- Colonna Sinistra -->
+      <div class="card red" style="display:flex; flex-direction:column; justify-content:center;">
+        <h3 style="font-size:16px; font-weight:600; color:var(--red); margin-bottom:12px;">1. Il Problema sul Bus</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">I grandi componenti hardware (CPU, RAM, Hard Disk, Scheda Video) comunicano tra loro utilizzando un unico <strong>cavo condiviso (il Bus di Sistema)</strong>.</p>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Se il Componente A tenta di inviare un <code>1</code> e il Componente B tenta di inviare uno <code>0</code> nello stesso esatto momento, avviene un <strong>cortocircuito</strong> (valore indefinito) che blocca il sistema.</p>
+        
+        <div class="callout red" style="margin:0; padding:12px; font-size:13px;">
+          Non basta "spegnere" (inviare 0) un componente per non disturbare gli altri. Quando non trasmette, deve essere <strong>fisicamente scollegato</strong> dal Bus.
+        </div>
+      </div>
+
+      <!-- Colonna Destra -->
+      <div class="card green" style="display:flex; flex-direction:column; justify-content:center;">
+        <h3 style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:12px;">2. La Soluzione: High-Z</h3>
+        <p style="font-size:13px; color:var(--muted); margin-bottom:16px;">Il <strong>Buffer Tri-State</strong> (qui sotto in figura) funge da interruttore d'accesso al bus, aggiungendo ai classici 0 e 1 un terzo stato: l'<strong>Alta Impedenza (Z)</strong>, ovvero il taglio netto del filo.</p>
+        
+        <div style="display:flex; gap:16px; align-items:stretch;">
+          <!-- Immagine Buffer -->
+          <div style="flex:1; background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; justify-content:center; align-items:center;">
+            <img src="assets/latch/buffer.png" alt="Buffer Tri-State" style="width:100%; max-height:160px; object-fit:contain;">
+          </div>
+          
+          <!-- Tabella -->
+          <div style="flex:1; display:flex; align-items:center;">
+            <table style="margin:0; width:100%; font-size:12px;">
+              <thead>
+                <tr>
+                  <th style="padding:6px 8px;">EN</th>
+                  <th style="padding:6px 8px;">D</th>
+                  <th style="padding:6px 8px; color:var(--amber);">Q</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="t-red" style="padding:6px 8px;">0</td>
+                  <td style="padding:6px 8px; color:var(--dim); font-style:italic;">X</td>
+                  <td class="t-red" style="padding:6px 8px; font-weight:700; font-size:16px;">Z <span style="font-size:10px; font-weight:normal; color:var(--muted);">(Staccato)</span></td>
+                </tr>
+                <tr>
+                  <td class="t-blue" style="padding:6px 8px;">1</td>
+                  <td style="padding:6px 8px;">0</td>
+                  <td class="t-blue" style="padding:6px 8px;">0</td>
+                </tr>
+                <tr>
+                  <td class="t-blue" style="padding:6px 8px;">1</td>
+                  <td style="padding:6px 8px;">1</td>
+                  <td class="t-blue" style="padding:6px 8px;">1</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SEZIONE MEMORIA: DAL FLIP FLOP ALLA RAM -->
+  <section class="section" id="architettura-memoria">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2>Oltre il Flip-Flop: <span class="accent">Registri e RAM</span></h2>
+    </div>
+    <p class="lead">Dal singolo Flip-Flop alla memoria RAM del computer. Come salvare, selezionare e trasportare i dati in modo organizzato.</p>
+
+    <!-- 1. REGISTER FILE -->
+    <h3 style="font-size:20px; font-weight:700; margin-bottom:16px; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:8px; margin-top:32px;">1. Il Register File (La Libreria della CPU)</h3>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:20px;">Il Register File raggruppa tutti i 32 registri della CPU in un'unica "scatola nera". Di seguito vediamo lo schema del circuito interno completo in tutta la sua bellezza, per poi smontarlo nelle sue due sotto-categorie funzionali: estrazione dati e salvataggio.</p>
+
+    <!-- Overview (Circuito Completo in primo piano) -->
+    <div class="card blue" style="text-align:center; margin-bottom:24px; padding:24px;">
+      <h4 style="font-size:18px; color:var(--blue); font-weight:700; margin-bottom:16px; text-transform:uppercase; letter-spacing:1px;">Il Circuito Completo</h4>
+      <div style="background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; justify-content:center; align-items:center; margin-bottom:16px;">
+        <img src="assets/memoria/Reg_completo.png" alt="Circuito Register File Completo" style="max-width:100%; max-height:400px; object-fit:contain;">
+      </div>
+      <p style="font-size:14px; color:var(--text); margin:0; margin-bottom:12px;">In questa "sintesi finale" didattica vediamo tutti i pezzi uniti: il Decoder abilita la scrittura in basso (attraverso le porte AND), mentre a destra tutte le uscite confluiscono nei MUX per la lettura.</p>
+      
+      <div class="callout blue" style="margin:0 auto; text-align:left; font-size:13px; max-width:600px;">
+        <strong>⚠️ Nota sulle dimensioni (RISC-V):</strong> Per non rendere lo schema illeggibile, l'immagine usa un <strong>Decoder 3-a-8</strong> (con bus di indirizzamento a <strong>3 bit</strong>). In un vero processore RISC-V a 32 bit, i bus di selezione sono a <strong>5 bit</strong> ed entrano in un colossale <strong>Decoder 5-a-32</strong> (poiché con 5 bit possiamo esprimere \(2^5 = 32\) combinazioni, necessarie per selezionare uno dei 32 registri).
+      </div>
+    </div>
+
+    <!-- Sotto-sistemi (Lettura e Scrittura più grandi) -->
+    <h4 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--text); text-transform:uppercase; letter-spacing:1px; text-align:center;">Sotto-categorie del Circuito</h4>
+    <div class="card-grid cols2">
+      <!-- Lettura -->
+      <div class="card purple" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <h4 style="font-size:15px; color:var(--purple); font-weight:700; margin-bottom:12px;">1. Circuito di Lettura (Asincrono)</h4>
+        <div style="background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; justify-content:center; align-items:center; margin-bottom:16px; min-height: 250px;">
+          <img src="assets/memoria/Read_register.png" alt="Lettura" style="max-width:100%; max-height:280px; object-fit:contain;">
+        </div>
+        <div style="font-size:13px; color:var(--text); margin:0;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--surface2); border-left:3px solid var(--purple); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:14px;">L'Imbuto (MUX)</strong>
+              Due Multiplexer giganti scorrono tutte le 32 uscite per incanalare verso l'ALU solo i 2 registri selezionati.
+            </div>
+            <div style="background:var(--surface2); border-left:3px solid var(--purple); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:14px;">Lettura Asincrona</strong>
+              Non c'è bisogno del segnale di Clock per leggere! Stiamo solo "osservando" i dati senza modificarli.
+            </div>
+            <div style="background:var(--surface2); border-left:3px solid var(--purple); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:14px;">Istantaneità</strong>
+              Non essendoci rischio di sovrascritture, i MUX propagano il dato istantaneamente verso l'ALU in totale sicurezza.
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Scrittura -->
+      <div class="card amber" style="display:flex; flex-direction:column; justify-content:space-between;">
+        <h4 style="font-size:15px; color:var(--amber); font-weight:700; margin-bottom:12px;">2. Circuito di Scrittura (Sincrono)</h4>
+        <div style="background:var(--surface); border:1px solid var(--border); padding:16px; border-radius:8px; display:flex; justify-content:center; align-items:center; margin-bottom:16px; min-height: 250px;">
+          <img src="assets/memoria/Write_register.png" alt="Scrittura" style="max-width:100%; max-height:280px; object-fit:contain;">
+        </div>
+        <div style="font-size:13px; color:var(--text); margin:0;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="background:var(--surface2); border-left:3px solid var(--amber); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--amber); display:block; margin-bottom:4px; font-size:14px;">1. Broadcast del Dato</strong>
+              Il nuovo dato da salvare viene inviato sul cavo e raggiunge contemporaneamente gli ingressi di <em>tutti</em> i 32 registri.
+            </div>
+            <div style="background:var(--surface2); border-left:3px solid var(--amber); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--amber); display:block; margin-bottom:4px; font-size:14px;">2. Il Lucchetto (Porte AND)</strong>
+              Il segnale di comando <em>Write</em> arriva alle porte AND di tutti i registri, ma inizialmente non passa per nessuno.
+            </div>
+            <div style="background:var(--surface2); border-left:3px solid var(--amber); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--amber); display:block; margin-bottom:4px; font-size:14px;">3. La Chiave (Decoder)</strong>
+              Il Decoder invia un <code>1</code> <em>esclusivamente</em> alla porta AND del registro bersaglio indicato dall'indirizzo.
+            </div>
+            <div style="background:var(--surface2); border-left:3px solid var(--amber); padding:10px 12px; border-radius:4px; line-height:1.4;">
+              <strong style="color:var(--amber); display:block; margin-bottom:4px; font-size:14px;">4. Il Salvataggio</strong>
+              Al colpo di Clock, solo la porta AND sbloccata dal Decoder lascia passare il Write. Quel singolo registro memorizza il dato.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout blue" style="margin-top:20px; font-size:13px;">
+      <strong>La Magia del Decoder in scrittura:</strong> Il dato da salvare "viaggia" in un tubo davanti a tutti i registri contemporaneamente, ma <strong>solo quello sbloccato dal Decoder</strong> vede il suo Clock andare a 1 e inghiotte il dato. Gli altri lo ignorano.
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2. RAM -->
+    <h3 style="font-size:20px; font-weight:700; margin-bottom:16px; color:var(--text); border-bottom:1px solid var(--border); padding-bottom:8px;">2. Verso la RAM Centrale</h3>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:20px;">Ora che abbiamo capito come funziona la memoria all'interno della CPU, proviamo ad applicare lo stesso concetto su larghissima scala per costruire la memoria centrale del computer.</p>
+    
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      
+      <!-- Immagine SRAM -->
+      <div style="background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; display:flex; justify-content:center; align-items:center;">
+        <img src="assets/memoria/Ram.png" alt="Memoria RAM" style="max-width:100%; max-height:300px; object-fit:contain;">
+      </div>
+
+      <!-- Spiegazione -->
+      <div style="display:flex; flex-direction:column; justify-content:center; gap:12px;">
+        
+        <div style="background:var(--surface2); border-left:3px solid var(--green); padding:10px 12px; border-radius:4px; line-height:1.4; font-size:13px; color:var(--text);">
+          <strong style="color:var(--green); display:block; margin-bottom:4px; font-size:14px;">Spiegazione dello Schema</strong>
+          L'immagine mostra una SRAM espansa in una matrice bidimensionale. In <strong>Lettura</strong>, il Decoder a sinistra accende una specifica riga orizzontale, permettendo alle celle di riversare i propri bit sulle colonne verticali (bus di output). In <strong>Scrittura</strong>, la memorizzazione all'interno dei Flip-Flop è garantita dalla combinazione del <strong>segnale del Decoder + il Write Enable</strong>: solo quando entrambi sono attivi il dato viene sbloccato e registrato nella cella corretta.
+        </div>
+        
+        <div style="background:var(--surface2); border-left:3px solid var(--red); padding:10px 12px; border-radius:4px; line-height:1.4; font-size:13px; color:var(--text);">
+          <strong style="color:var(--red); display:block; margin-bottom:4px; font-size:14px;">Il Limite Assurdo del RISC-V</strong>
+          Se volessimo usare questo stesso identico design "piatto" per mappare tutto lo spazio degli indirizzi di un processore RISC-V a 32 bit, ci servirebbe un <strong>Decoder colossale da 32 a \(2^{32}\)</strong> (per coprire oltre 4 miliardi di righe!) con 32 colonne per il bus di output. È una cosa molto scomoda e ingegneristicamente infattibile!
+        </div>
+
+        <div style="background:var(--surface2); border-left:3px solid var(--amber); padding:10px 12px; border-radius:4px; line-height:1.4; font-size:13px; color:var(--text);">
+          <strong style="color:var(--amber); display:block; margin-bottom:4px; font-size:14px;">SRAM vs DRAM (I Condensatori)</strong>
+          Inoltre, lo schema usa i Flip-Flop (tecnologia <strong>SRAM</strong>, velocissima ma ingombrante). La vera RAM dei computer si chiama <strong>DRAM</strong>: per risparmiare spazio, memorizza i bit dentro microscopici <strong>condensatori</strong> al posto dei Flip-Flop. Essendo così piccoli si scaricano velocemente, quindi la DRAM deve essere continuamente "rinfrescata" per non perdere i dati.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script>
+  // Logica per il Carousel
+  const titles = [
+    "Fase 1: L'ALU Base",
+    "Fase 2: Sottrazione e NOR",
+    "Fase 3: Il Problema SLT",
+    "Fase 4: L'Allarme Overflow",
+    "Fase 5: L'ALU a 32 bit Completa"
+  ];
+  
+  let currentSlide = 0;
+  const maxSlides = 5;
+  const container = document.getElementById('slidesContainer');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const indicator = document.getElementById('carouselIndicator');
+  const title = document.getElementById('carouselTitle');
+
+  function updateCarousel() {
+    container.style.transform = `translateX(-${currentSlide * 20}%)`;
+    indicator.textContent = `${currentSlide + 1} / ${maxSlides}`;
+    title.textContent = titles[currentSlide];
+    
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === maxSlides - 1;
+  }
+
+  prevBtn.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateCarousel();
+    }
+  });
+
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < maxSlides - 1) {
+      currentSlide++;
+      updateCarousel();
+    }
+  });
+
+  // Logica per il Simulatore Interattivo (nella Slide 1)
+  const btnA = document.getElementById('btnA');
+  const btnB = document.getElementById('btnB');
+  const btnCin = document.getElementById('btnCin');
+  const opSelect = document.getElementById('opSelect');
+  const resOut = document.getElementById('resOut');
+  const coutOut = document.getElementById('coutOut');
+
+  let valA = 0;
+  let valB = 0;
+  let valCin = 0;
+
+  function updateLogic() {
+    if (!btnA) return;
+    const op = opSelect.value;
+    let res = 0;
+    let cout = 0;
+
+    if (op === 'and') {
+      res = valA & valB;
+      cout = 0;
+    } else if (op === 'or') {
+      res = valA | valB;
+      cout = 0;
+    } else if (op === 'add') {
+      const sum = valA + valB + valCin;
+      res = sum % 2;
+      cout = sum >= 2 ? 1 : 0;
+    }
+
+    resOut.textContent = res;
+    coutOut.textContent = cout;
+
+    if(res === 1) resOut.classList.add('active');
+    else resOut.classList.remove('active');
+
+    if(cout === 1) coutOut.classList.add('active');
+    else coutOut.classList.remove('active');
+  }
+
+  function toggleBtn(btn, valSetter) {
+    let current = parseInt(btn.textContent);
+    let next = current === 0 ? 1 : 0;
+    btn.textContent = next;
+    if(next === 1) btn.classList.add('active');
+    else btn.classList.remove('active');
+    valSetter(next);
+    updateLogic();
+  }
+
+  if (btnA) btnA.addEventListener('click', () => toggleBtn(btnA, v => valA = v));
+  if (btnB) btnB.addEventListener('click', () => toggleBtn(btnB, v => valB = v));
+  if (btnCin) btnCin.addEventListener('click', () => toggleBtn(btnCin, v => valCin = v));
+  if (opSelect) opSelect.addEventListener('change', updateLogic);
+
+  updateLogic();
+</script>
+<script src="shared.js"></script>
+
+<script>
+  // Logica per il Carousel 2 (Memoria)
+  const titles2 = [
+    "Fase 1: Il Latch SR",
+    "Fase 2: Latch SR Sincronizzato",
+    "Fase 3: Latch D Sincronizzato",
+    "Fase 4: Il Problema Trasparenza",
+    "Fase 5: Il Flip-Flop D",
+    "Fase 6: Flip-Flop D (Discesa)"
+  ];
+  
+  let currentSlide2 = 0;
+  const maxSlides2 = 6;
+  const container2 = document.getElementById('slidesContainer2');
+  const prevBtn2 = document.getElementById('prevBtn2');
+  const nextBtn2 = document.getElementById('nextBtn2');
+  const indicator2 = document.getElementById('carouselIndicator2');
+  const title2 = document.getElementById('carouselTitle2');
+
+  function updateCarousel2() {
+    container2.style.transform = `translateX(-${currentSlide2 * 16.6666}%)`;
+    indicator2.textContent = `${currentSlide2 + 1} / ${maxSlides2}`;
+    title2.textContent = titles2[currentSlide2];
+    
+    prevBtn2.disabled = currentSlide2 === 0;
+    nextBtn2.disabled = currentSlide2 === maxSlides2 - 1;
+  }
+
+  prevBtn2.addEventListener('click', () => {
+    if (currentSlide2 > 0) {
+      currentSlide2--;
+      updateCarousel2();
+    }
+  });
+
+  nextBtn2.addEventListener('click', () => {
+    if (currentSlide2 < maxSlides2 - 1) {
+      currentSlide2++;
+      updateCarousel2();
+    }
+  });
+</script>
+</body>
+</html>

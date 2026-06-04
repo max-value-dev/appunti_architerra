@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Input / Output - Architettura dei Calcolatori</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Stili per il diagramma Mermaid per integrarlo perfettamente col tema dark */
+    .mermaid {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 48px;
+      display: flex;
+      justify-content: center;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--background);
+      font-weight: bold;
+      font-size: 16px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item active" href="06_io.html#s35-mappa">
+    <div class="nav-dot"></div> 1. Mappa Architetturale
+    <span class="nav-num">I</span>
+  </a>
+  <a class="nav-item" href="06_io.html#s35-traduttore">
+    <div class="nav-dot"></div> 2. Il Traduttore
+    <span class="nav-num">II</span>
+  </a>
+  <a class="nav-item" href="06_io.html#s35-problema">
+    <div class="nav-dot"></div> 3. Il Problema dell'Attesa
+    <span class="nav-num">III</span>
+  </a>
+  <a class="nav-item" href="06_io.html#s35-soluzione">
+    <div class="nav-dot"></div> 4. La Soluzione (Interrupt)
+    <span class="nav-num">IV</span>
+  </a>
+  <a class="nav-item" href="06_io.html#s35-dma">
+    <div class="nav-dot"></div> 5. L'Assistente (DMA)
+    <span class="nav-num">V</span>
+  </a>
+  <a class="nav-item" href="06_io.html#s35-riscv">
+    <div class="nav-dot"></div> 6. Incidenti Interni
+    <span class="nav-num">VI</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 10</div>
+    <h1>Input / Output<br><em>Il Mondo Esterno</em></h1>
+    <p>La CPU isolata è inutile. Scopriamo passo passo come dialoga con le periferiche fisiche, dai fili elettrici fino alle istruzioni del RISC-V.</p>
+  </div>
+
+  <!-- ══════════════ 1. MAPPA ARCHITTETTURALE ══════════════ -->
+  <section class="section" id="s35-mappa">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">1</span> La Mappa <span class="accent">Architetturale</span></h2>
+    </div>
+    
+    <p class="lead" style="margin-bottom: 24px;">Prima di imparare <em>come</em> comunicano i componenti, dobbiamo guardare l'intera mappa dall'alto. Questa è l'architettura fisica reale che permette al "cervello" (la CPU) di interagire col mondo.</p>
+
+    <!-- Diagramma Mermaid -->
+    <div class="mermaid">
+      graph LR
+          subgraph Core ["Il Cervello e la Memoria"]
+              CPU[CPU]
+              RAM[Memoria Principale]
+          end
+
+          BUS{{"Bus di Sistema<br/>(Indirizzi, Dati, Controllo)"}}
+
+          subgraph Controllers ["I Traduttori (Controllori)"]
+              C_USB["Controller USB<br/>(Condiviso)"]
+              C_DISK["Controller Disco<br/>(Dedicato)"]
+              C_GPU["Scheda Video<br/>(Dedicata)"]
+          end
+
+          subgraph Periferiche ["Il Mondo Esterno"]
+              MOUSE(("Mouse"))
+              KEY(("Tastiera"))
+              SSD[("Hard Disk / SSD")]
+              MONITOR["Schermo"]
+          end
+
+          CPU <--> BUS
+          RAM <--> BUS
+
+          BUS <--> C_USB
+          BUS <--> C_DISK
+          BUS <--> C_GPU
+
+          C_USB <--> MOUSE
+          C_USB <--> KEY
+          C_DISK <--> SSD
+          C_GPU <--> MONITOR
+
+          style CPU fill:#f44336,stroke:#b71c1c,color:#fff
+          style RAM fill:#ff9800,stroke:#e65100,color:#fff
+          style BUS fill:#333,stroke:#ffb300,stroke-width:2px,color:#ffd54f
+          style C_USB fill:#2196f3,stroke:#0d47a1,color:#fff
+          style C_DISK fill:#2196f3,stroke:#0d47a1,color:#fff
+          style C_GPU fill:#2196f3,stroke:#0d47a1,color:#fff
+          style MOUSE fill:#e0e0e0,stroke:#9e9e9e,color:#000
+          style KEY fill:#e0e0e0,stroke:#9e9e9e,color:#000
+          style SSD fill:#e0e0e0,stroke:#9e9e9e,color:#000
+          style MONITOR fill:#e0e0e0,stroke:#9e9e9e,color:#000
+    </div>
+
+    <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom: 48px;">Dal disegno si nota un dettaglio fondamentale: la CPU <strong>non possiede cavi diretti</strong> che vanno al mouse o allo schermo. È obbligata a passare per il <em>Bus di Sistema</em>, e a parlare con i blocchi blu chiamati <em>Controllori</em>.</p>
+  </section>
+
+  <!-- ══════════════ 2. IL TRADUTTORE ══════════════ -->
+  <section class="section" id="s35-traduttore">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">2</span> Il Ruolo del <span class="accent">Controllore</span></h2>
+    </div>
+
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Perché esistono i blocchi blu (i Controllori) nel disegno? Perché la CPU ragiona in pura logica binaria, mentre il mondo esterno usa motori meccanici (stampanti), impulsi elettrici lenti (mouse) o pannelli luminosi (schermi). Il controllore è il <strong>traduttore simultaneo</strong>.</p>
+
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">I 3 Cassetti del Controllore</h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:16px;">Per permettere alla CPU di dargli ordini, ogni controllore ha al suo interno una microscopica memoria divisa in tre registri (i "cassetti"):</p>
+    <div class="card-grid cols3" style="margin-bottom:32px;">
+      <div class="card" style="border-top: 4px solid var(--blue); background:var(--surface2);">
+        <h4 style="color:var(--blue); font-size:15px; margin:0 0 8px 0;">📦 Registri Dati</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">Il vassoio di scambio. Contengono il file da salvare nel disco o la lettera 'A' appena digitata sulla tastiera.</p>
+      </div>
+      <div class="card" style="border-top: 4px solid var(--accent); background:var(--surface2);">
+        <h4 style="color:var(--accent); font-size:15px; margin:0 0 8px 0;">⚡ Registri Comandi</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">La CPU ci scrive dentro per azionare la macchina fisica: <em>"Accendi i pixel"</em> o <em>"Inizia a girare il disco"</em>.</p>
+      </div>
+      <div class="card" style="border-top: 4px solid var(--red); background:var(--surface2);">
+        <h4 style="color:var(--red); font-size:15px; margin:0 0 8px 0;">🚦 Registri Stato (Status)</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">La periferica ci scrive dentro per aggiornare la CPU: <em>"Lavoro finito"</em>, <em>"Carta inceppata"</em> o <em>"Nuovo dato pronto"</em>.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">Trovare la strada nell'autostrada</h3>
+    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:48px;">
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:12px;">Se guardi il diagramma iniziale, tutti i controllori sono attaccati allo stesso Bus (la linea gialla). Come fa la CPU a inviare un comando <em>solo</em> al Controller del Disco, senza che il Controller USB lo intercetti? Usando un <strong>Indirizzo</strong>. Esistono due filosofie:</p>
+      <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin:0; line-height:1.6;">
+        <li style="margin-bottom:8px;"><strong style="color:var(--accent);">Memory-Mapped I/O:</strong> (RISC-V, ARM). I registri del controller ricevono un indirizzo che sembra una cella della RAM normale. La CPU è "illusa" di scrivere in RAM usando <code>sw</code>, ma il controller intercetta quel preciso indirizzo sul Bus.</li>
+        <li><strong style="color:var(--text);">Isolated I/O:</strong> (x86). La CPU sa perfettamente che sta parlando con l'esterno e usa due mappe di indirizzi separate e istruzioni di codice dedicate (es. <code>in</code> e <code>out</code>).</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 3. IL PROBLEMA DELL'ATTESA ══════════════ -->
+  <section class="section" id="s35-problema">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">3</span> Il Problema dell'Attesa (<span class="accent">Busy Waiting</span>)</h2>
+    </div>
+
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Ora che la CPU sa come trovare il controller (es. la Tastiera), supponiamo che un programma ti chieda di "Premere un tasto per continuare". Come fa la CPU a sapere *quando* lo premi?</p>
+
+    <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:48px;">
+      <div style="flex:1; min-width:300px; background:linear-gradient(to right, rgba(244, 67, 54, 0.1), transparent); border-left:4px solid var(--red); padding:24px; border-radius:0 8px 8px 0;">
+        <strong style="color:var(--red); font-size:18px; display:block; margin-bottom:12px;">⏳ L'Approccio "Polling" (I/O Programmato)</strong>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:12px;">Il metodo più elementare per il programmatore è creare un ciclo infinito: la CPU continua a leggere ossessivamente il bit <em>READY</em> del registro di stato del Controller USB chiedendo: <em>"Hai premuto? E ora? Sei pronto?"</em> a un ritmo di miliardi di volte al secondo.</p>
+        <div style="background:var(--background); padding:16px; border-radius:6px; border:1px dashed var(--red);">
+          <strong style="color:var(--red); font-size:13px; display:block;">Lo Svantaggio Fatale</strong>
+          <span style="font-size:13px; color:var(--muted);">La CPU rimane letteralmente <strong>intrappolata nel loop</strong>, sprecando il 100% della sua potenza solo per aspettare un tuo dito. Durante quell'attesa, il computer è paralizzato e non può scaricare una pagina web o riprodurre musica.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ 4. LA SOLUZIONE ══════════════ -->
+  <section class="section" id="s35-soluzione">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">4</span> La Soluzione (<span class="accent">Gli Interrupt</span>)</h2>
+    </div>
+
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">L'ingegneria moderna ha ribaltato la logica del Busy Waiting. <strong>Non è la CPU a interrogare la periferica, è la periferica a chiamare la CPU solo quando serve.</strong></p>
+
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:24px; margin-bottom:32px;">
+      <h4 style="color:var(--accent); font-size:16px; margin:0 0 12px 0;">🔔 L'Analogia del Campanello e la "Trasparenza"</h4>
+      <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0;">Invece di stare alla porta tutto il giorno aspettando il corriere (Polling), tu fai le tue cose in salotto. Quando il corriere ha il pacco pronto, suona il campanello (Interrupt). Metti in pausa, ritiri il pacco e riprendi. <strong>La Regola d'Oro:</strong> l'interruzione deve essere trasparente e invisibile per il programma in esecuzione.</p>
+    </div>
+
+
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">La Sequenza al Rallentatore (Cosa succede davvero?)</h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:24px;">Ecco nel dettaglio la sequenza di micro-operazioni divise nei due mondi: prima l'Elettronica (Hardware), poi il Codice (Software).</p>
+
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:16px; margin-bottom:32px; overflow-x:auto;">
+      <div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant P as Periferica
+    participant C as Controller I/O
+    participant PL as PLIC
+    participant CPU as CPU (Hardware)
+    participant RAM as OS Handler (Software)
+    
+    rect rgba(33, 150, 243, 0.1)
+    Note over P, CPU: FASE 1: REAZIONE HARDWARE (Fili dedicati)
+    P->>C: Click!
+    C->>PL: Segnale su filo IRQ dedicato
+    PL->>CPU: Alza filo Interrupt
+    Note over CPU: Attende la fine dell'istruzione
+    CPU->>PL: Richiesta Identificazione (sul Bus)
+    PL-->>CPU: Vettore ID (es. 42)
+    Note over CPU: Salva PC in SEPC e salta
+    end
+
+    rect rgba(76, 175, 80, 0.1)
+    Note over CPU, RAM: FASE 2: REAZIONE SOFTWARE (Sul Bus Dati)
+    CPU->>RAM: Esecuzione Handler
+    Note over RAM: Congelamento: salva i registri nello Stack
+    RAM->>C: L'OS richiede dati I/O (sul Bus)
+    C-->>RAM: Il Controller invia i Dati
+    Note over RAM: Risoluzione e Riordino dello Stack
+    RAM->>CPU: Istruzione sret (Scongelamento)
+    Note over CPU: Ripristino PC da SEPC.<br/>Programma interrotto riprende.
+    end
+      </div>
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom:48px; align-items:stretch;">
+      <div class="card" style="border-top:4px solid var(--blue); margin:0;">
+        <h4 style="color:var(--blue); font-size:16px; margin:0 0 16px 0;">1. Chi lancia l'allarme: L'Hardware <span style="font-size:11px; font-weight:normal; color:var(--muted); display:block; margin-top:4px;">(Scheda Madre e CPU)</span></h4>
+        <ol style="font-size:13px; color:var(--text); line-height:1.6; padding-left:16px; margin:0;">
+          <li style="margin-bottom:8px;">
+            <strong>La Chiamata (Il Percorso dell'Allarme):</strong> L'emergenza salta il Bus e usa una rete di cavi dedicata (IRQ) seguendo tre step rigorosi:
+            <ul style="padding-left:16px; margin:4px 0 8px 0; color:var(--muted); list-style-type:circle;">
+              <li style="margin-bottom:4px;"><strong>Periferica &rarr; Controller:</strong> Il dispositivo (es. Mouse) manda il segnale al suo Controller I/O.</li>
+              <li style="margin-bottom:4px;"><strong>Controller &rarr; PLIC:</strong> Dal Controller parte un singolo filo elettrico (linea IRQ) che "vola" sulla scheda madre, ignora il Bus di Sistema e si infila nel PLIC (il centralino).</li>
+              <li><strong>PLIC &rarr; CPU:</strong> Il PLIC valuta l'allarme e accende un altro filo dedicato che entra dritto nell'Unità di Controllo del processore.</li>
+            </ul>
+          </li>
+          <li style="margin-bottom:8px;"><strong>Il Congedo:</strong> L'Unità di Controllo non si ferma a metà: aspetta di aver <em>completato</em> l'istruzione corrente che stava eseguendo nel Datapath.</li>
+          <li style="margin-bottom:8px;"><strong>Il Filtro:</strong> La CPU controlla di non avere le orecchie tappate (<em>Interrupt Mascherati</em> disabilitati). Se è un'emergenza vitale (<em>NMI</em>), la accetta a prescindere.</li>
+          <li style="margin-bottom:8px;">
+            <strong>L'Identificazione (Claim):</strong> La CPU accetta l'allarme e interroga il PLIC appoggiandosi al Bus Dati:
+            <ul style="padding-left:16px; margin:4px 0 8px 0; color:var(--muted); list-style-type:circle;">
+              <li style="margin-bottom:4px;"><strong>CPU &rarr; Bus &rarr; PLIC:</strong> La CPU invia un segnale di Claim per scoprire chi è in emergenza.</li>
+              <li><strong>PLIC &rarr; Bus &rarr; CPU:</strong> Il PLIC risponde inviando il <strong>Vettore</strong> (un numero identificativo che le dice esattamente "chi" ha suonato).</li>
+            </ul>
+          </li>
+          <li style="margin-bottom:8px;"><strong>La Fotografia (CSR):</strong> <em>Tutto in automatico in un istante hardware!</em> La CPU salva lo stato: copia l'indirizzo a cui era arrivata (il PC) dentro il registro speciale <code>SEPC</code>, e salva il motivo dell'interruzione in <code>SCAUSE</code>.</li>
+          <li><strong>La Deviazione (Multiplexer):</strong> L'hardware forza il multiplexer del Program Counter a caricare un nuovo indirizzo (preso dal registro <code>STVEC</code>), facendo deviare fisicamente la CPU verso la Memoria RAM. Qui finisce il lavoro dell'Elettronica!</li>
+        </ol>
+      </div>
+
+      <div class="card" style="border-top:4px solid var(--green); margin:0;">
+        <h4 style="color:var(--green); font-size:16px; margin:0 0 16px 0;">2. Chi risolve il problema: Il Software <span style="font-size:11px; font-weight:normal; color:var(--muted); display:block; margin-top:4px;">(Nella Memoria RAM)</span></h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:12px;">La palla passa all'Handler (un normalissimo elenco di istruzioni Assembly scritto dal Sistema Operativo), che esegue i suoi 4 passaggi:</p>
+        <ol style="font-size:13px; color:var(--text); line-height:1.6; padding-left:16px; margin:0;">
+          <li style="margin-bottom:8px;"><strong>Il Congelamento:</strong> L'Handler per prima cosa salva nello Stack tutti i registri generici (es. X1, X2) che intende usare per sé, così da non distruggere i calcoli del programma interrotto.</li>
+          <li style="margin-bottom:8px;">
+            <strong>La Risoluzione (Il Percorso dei Dati):</strong> Ora il software esegue le vere operazioni di I/O, appoggiandosi al Bus:
+            <ul style="padding-left:16px; margin:4px 0 8px 0; color:var(--muted); list-style-type:circle;">
+              <li style="margin-bottom:4px;"><strong>CPU &rarr; Bus &rarr; Controller I/O:</strong> La CPU manda un comando chiedendo i dati (es. "inviami le coordinate del mouse").</li>
+              <li><strong>Controller I/O &rarr; Bus &rarr; CPU:</strong> Il Controller prende i numeri veri e propri e li fa viaggiare sul Bus di Sistema fino alla memoria del processore.</li>
+            </ul>
+          </li>
+          <li style="margin-bottom:8px;"><strong>Il Riordino:</strong> Finito il lavoro, l'Handler ricarica dallo Stack i vecchi valori dei registri, rimettendo la CPU esattamente com'era prima dell'emergenza.</li>
+          <li><strong>Il Ritorno (Scongelamento):</strong> Il punto finale! L'istruzione conclusiva è sempre <code>sret</code>. Questa "parola magica" segnala all'hardware di far scendere i privilegi, ripescare l'indirizzo da <code>SEPC</code> e riavvolgere il nastro, continuando l'esecuzione originale.</li>
+        </ol>
+      </div>
+    </div>
+
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">Gestione dei Conflitti e Priorità</h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:24px;">Cosa succede se 5 dispositivi "suonano il campanello" contemporaneamente? Oppure se qualcuno suona mentre la CPU sta già gestendo l'emergenza di qualcun altro?</p>
+
+    <div class="card" style="border-left:4px solid var(--amber); margin-bottom:48px;">
+      <h4 style="color:var(--amber); font-size:16px; margin:0 0 12px 0;">La Gerarchia e il "Segretario" PLIC</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:16px;">Per evitare il caos, ad ogni dispositivo viene assegnato un livello di priorità proporzionale a quanto è "critico" il suo lavoro (ad esempio, una scheda di rete che rischia di perdere pacchetti di dati avrà una priorità molto più alta rispetto ai click del mouse).</p>
+      <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0;">
+        <li style="margin-bottom:8px;"><strong style="color:var(--text);">Interrupt Annidati (Nested):</strong> Se la CPU sta gestendo il mouse (priorità bassa) e arriva un segnale dalla rete (priorità alta), il sistema blocca il mouse e permette alla rete di <em>interrompere l'interruzione</em>! Finito con la rete, si riprende il mouse.</li>
+        <li><strong style="color:var(--text);">Il ruolo hardware del PLIC:</strong> Se arrivano 5 richieste nello stesso esatto istante, la CPU non ha il tempo per calcolare le precedenze matematicamente. Per questo, sulla scheda madre esiste un chip dedicato: il <strong>PLIC</strong> (<em>Platform-Level Interrupt Controller</em>). Questo chip raccoglie tutti i fili degli interrupt delle periferiche, valuta istantaneamente la priorità e manda alla CPU solo il segnale del "vincitore", facendole da segretario per non sovraccaricarla.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ 5. L'ASSISTENTE (DMA) ══════════════ -->
+  <section class="section" id="s35-dma">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">5</span> L'Assistente per Dati Massivi (<span class="accent">DMA</span>)</h2>
+    </div>
+
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Ripensa al diagramma iniziale: l'<strong>SSD</strong> deve inviare alla <strong>RAM</strong> un film da 1 Gigabyte. Se usassimo gli Interrupt, la CPU verrebbe interrotta un miliardo di volte per copiare ogni singolo byte! Inaccettabile.</p>
+
+    <div style="background:var(--background); border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:8px; padding:24px; margin-bottom:48px;">
+      <strong style="color:var(--text); font-size:16px; display:block; margin-bottom:12px;">Il Direct Memory Access (DMA)</strong>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:16px;">Il DMA è un chip assistente. La CPU compila un modulo di delega nei suoi registri e se ne lava le mani. I 4 ordini sono:</p>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px;">
+        <div style="flex:1; background:var(--surface2); padding:12px; border-radius:6px; min-width:140px;">
+          <strong style="color:var(--blue); font-size:12px; display:block;">1. Sorgente</strong>
+          <span style="font-size:11px; color:var(--muted);">Da dove (Controller Disco)</span>
+        </div>
+        <div style="flex:1; background:var(--surface2); padding:12px; border-radius:6px; min-width:140px;">
+          <strong style="color:var(--green); font-size:12px; display:block;">2. Destinazione</strong>
+          <span style="font-size:11px; color:var(--muted);">A dove (Indirizzo RAM)</span>
+        </div>
+        <div style="flex:1; background:var(--surface2); padding:12px; border-radius:6px; min-width:140px;">
+          <strong style="color:var(--amber); font-size:12px; display:block;">3. Conteggio</strong>
+          <span style="font-size:11px; color:var(--muted);">Quanti Byte (es. 1 GB)</span>
+        </div>
+        <div style="flex:1; background:var(--surface2); padding:12px; border-radius:6px; min-width:140px;">
+          <strong style="color:var(--red); font-size:12px; display:block;">4. Direzione</strong>
+          <span style="font-size:11px; color:var(--muted);">Lettura / Scrittura</span>
+        </div>
+      </div>
+      
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin:0;">Una volta delegato, il DMA prende il controllo e "ruba" il Bus di Sistema alla CPU per frazioni di secondo (<em style="color:var(--accent);">Cycle Stealing</em>) copiando i dati direttamente in RAM. Manderà <strong>un solo Interrupt finale</strong> alla CPU a operazione conclusa.</p>
+    </div>
+  </section>
+
+  <!-- ══════════════ 6. INCIDENTI INTERNI E RISC-V ══════════════ -->
+  <section class="section" id="s35-riscv">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;"><span class="step-number">6</span> Gli Incidenti Interni (Trap) e <span class="accent">RISC-V</span></h2>
+    </div>
+
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Fino ad ora abbiamo parlato di eventi dal "mondo esterno" (Interrupt Asincroni). Ma cosa succede se l'emergenza nasce <strong>da dentro la CPU stessa</strong> mentre esegue i calcoli? Si parla di <strong>Trap</strong> (Eccezione Sincrona).</p>
+
+    <div style="background:linear-gradient(to right, rgba(33, 150, 243, 0.1), transparent); border-left:4px solid var(--blue); padding:24px; border-radius:0 8px 8px 0; margin-bottom:32px;">
+      <strong style="color:var(--blue); font-size:16px; display:block; margin-bottom:12px;">La Meccanica: Cos'è e come funziona una Trap?</strong>
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:12px;">Una Trap è un trasferimento <em>forzato</em> e automatico del controllo. Quando l'hardware della CPU rileva una condizione anomala (o un'istruzione speciale), scatta come una "trappola":</p>
+      <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0;">
+        <li style="margin-bottom:6px;"><strong style="color:var(--text);">1. Blocco Immediato:</strong> L'esecuzione del programma utente viene sospesa all'istante (salvando il Program Counter) per impedirgli di fare danni.</li>
+        <li style="margin-bottom:6px;"><strong style="color:var(--text);">2. Cambio di Privilegio (Escalation):</strong> La CPU eleva automaticamente i propri permessi hardware, passando dalla modalità Utente (limitata) alla modalità Supervisore (privilegiata).</li>
+        <li><strong style="color:var(--text);">3. Chiamata al S.O.:</strong> Il comando passa in mano al <em>Trap Handler</em>, un pezzo di codice intoccabile del Sistema Operativo. Sarà lui a interrogare l'hardware per capire cosa è successo e decidere se "uccidere" il programma (es. Errore grave) o esaudire la sua richiesta (es. System Call).</li>
+      </ul>
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      <div class="card" style="background:var(--surface2);">
+        <h4 style="color:var(--red); font-size:15px; margin:0 0 8px 0;">🛑 Incidenti Hardware (Errori)</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Divisione per zero o Overflow Matematico. L'hardware rileva l'errore istantaneamente e genera una Trap in automatico.</p>
+        <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; border:1px dashed var(--red);">
+          <strong style="color:var(--text); font-size:12px; display:block; margin-bottom:4px;">Il mondo senza Trap:</strong>
+          <span style="font-size:12px; color:var(--muted);">Senza questa magia hardware, dopo <em>ogni singola istruzione</em> di addizione (<code>add</code>), saresti costretto a inserire delle istruzioni di salto (<code>branch</code>) per testare se il risultato ha fatto "il giro del contachilometri" superando i limiti dei 32-bit. Il tuo codice diventerebbe chilometrico e il processore sprecherebbe cicli solo per fare controlli!</span>
+        </div>
+      </div>
+      <div class="card" style="background:var(--surface2);">
+        <h4 style="color:var(--blue); font-size:15px; margin:0 0 8px 0;">📞 System Call (Volontarie)</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin:0;">Se il tuo programma vuole usare la scheda di rete (vedi diagramma su), lancia una Trap volontaria (istruzione <code>ecall</code>) chiedendo i permessi all'OS.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">La Scatola Nera del RISC-V (Registri CSR)</h3>
+    <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:24px;">Per documentare i crash in modo ultra-rapido senza usare la lenta RAM, il processore RISC-V scatta una foto dell'incidente e la salva in una speciale scatola nera (banco di registri <strong>CSR</strong>):</p>
+    
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:6px; border-left:3px solid var(--blue);">
+        <strong style="color:var(--blue); font-size:15px; display:block; margin-bottom:4px; font-family:var(--font-mono);">SEPC</strong>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:8px 0 0 0;">(Exception PC). Salva l'indirizzo esatto dell'istruzione interrotta, la "scena del crimine".</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:6px; border-left:3px solid var(--red);">
+        <strong style="color:var(--red); font-size:15px; display:block; margin-bottom:4px; font-family:var(--font-mono);">SCAUSE</strong>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:8px 0 0 0;">Il "referto medico". Il 1° bit vale 1 (Interrupt) o 0 (Trap). I bit rimanenti indicano il codice numerico del crash.</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:6px; border-left:3px solid var(--green);">
+        <strong style="color:var(--green); font-size:15px; display:block; margin-bottom:4px; font-family:var(--font-mono);">STVEC</strong>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:8px 0 0 0;">Contiene l'indirizzo dei soccorsi. Il RISC-V può saltarvi in modo diretto (bit 00) o vettorizzato "a colpo sicuro" (bit 01).</p>
+      </div>
+      <div style="background:rgba(255,255,255,0.03); padding:16px; border-radius:6px; border-left:3px solid var(--amber);">
+        <strong style="color:var(--amber); font-size:15px; display:block; margin-bottom:4px; font-family:var(--font-mono);">STVAL</strong>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:8px 0 0 0;">Se l'errore è un accesso invalido alla RAM, si salva quell'indirizzo per farlo ispezionare.</p>
+      </div>
+    </div>
+
+
+    
+    <div style="display:flex; align-items:center; background:var(--surface2); padding:16px; border-radius:8px; border:1px solid var(--border);">
+      <code style="font-size:20px; color:var(--accent); font-weight:bold; margin-right:24px;">sret</code>
+      <span style="font-size:13px; color:var(--muted); line-height:1.5;">La parola magica finale. Finito il soccorso, il gestore chiama <code>sret</code>: ripristina i privilegi, legge SEPC e riavvolge il nastro ripartendo esattamente da dove si era interrotto il programma originale.</span>
+    </div>
+
+  </section>
+
+</main>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', fontFamily: 'DM Sans, sans-serif' });
+</script>
+<script>
+const sections = document.querySelectorAll('section');
+const navItems = document.querySelectorAll('.sidebar .nav-item');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.clientHeight;
+    if (pageYOffset >= (sectionTop - 150)) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href').includes(current)) {
+      item.classList.add('active');
+    }
+  });
+});
+</script>
+<script src="shared.js"></script>
+</body>
+</html>

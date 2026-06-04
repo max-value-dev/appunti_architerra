@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Introduzione, Livelli e Prestazioni</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="00_introduzione.html#s0a">
+    <div class="nav-dot"></div> Livelli di Astrazione
+    <span class="nav-num">00a</span>
+  </a>
+  <a class="nav-item" href="00_introduzione.html#s0b">
+    <div class="nav-dot"></div> Prestazioni CPU
+    <span class="nav-num">00b</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 00 — INTRODUZIONE</div>
+    <h1>Storia, Livelli e Prestazioni<br><em>Dalle valvole al clock della CPU</em></h1>
+    <p>Il viaggio storico dei calcolatori, l'astrazione in macchine virtuali a 5 livelli, e la quantificazione delle prestazioni del sistema.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 00a ══════════════ -->
+  <section class="section" id="s0a">
+    <div class="section-header">
+      <div class="section-num">00a</div>
+      <h2>Livelli di <span class="accent">astrazione e macchine</span></h2>
+    </div>
+
+    <p class="lead">Un calcolatore fisico è composto da transistor e circuiti complessi ed è impraticabile da programmare direttamente a livello hardware. Per questo motivo, l'architettura dei sistemi è strutturata in 5 livelli di astrazione cumulativi.</p>
+
+    <div class="onion-stack">
+      <div class="onion-layer l4">
+        <div class="layer-title">Livello 4 — Linguaggio Orientato al Problema <span class="layer-badge">C / Java / Python</span></div>
+        <p class="layer-desc">Linguaggi ad alto livello con costrutti condizionali strutturati, tipizzazione forte, polimorfismo e astrazioni avanzate. Vengono tradotti (compilati o interpretati) in assembly o bytecode.</p>
+      </div>
+      <div class="onion-layer l3">
+        <div class="layer-title">Livello 3 — Linguaggio Assembly <span class="layer-badge">Assemblatore</span></div>
+        <p class="layer-desc">Rappresentazione simbolica leggibile delle istruzioni macchina (es. <code>add</code>, <code>lw</code>, <code>sw</code>). Tradotta in binario puro direttamente dall'Assemblatore.</p>
+      </div>
+      <div class="onion-layer l2">
+        <div class="layer-title">Livello 2 — Macchina del Sistema Operativo <span class="layer-badge">Interpretazione Parziale</span></div>
+        <p class="layer-desc">Introduce nuove astrazioni (File System, Memoria Virtuale, Thread e processi concorrenti). Gestisce I/O complessi che differiscono tra macchine diverse (es: Hard Disk, USB Key) uniformando l'interfaccia.</p>
+      </div>
+      <div class="onion-layer l1">
+        <div class="layer-title">Livello 1 — Instruction Set Architecture (ISA) <span class="layer-badge">RISC-V / ARM / x86</span></div>
+        <p class="layer-desc">Il contratto tra l'hardware e il software. È l'insieme di istruzioni macchina (bit) eseguite direttamente dai circuiti logici (o microprogramma) della CPU.</p>
+      </div>
+      <div class="onion-layer l0">
+        <div class="layer-title">Livello 0 — Logica Digitale <span class="layer-badge">Esecuzione Hardware</span></div>
+        <p class="layer-desc">Porte logiche elementari costruite tramite transistor, collegate per formare la ALU (Arithmetic Logic Unit), registri fisici e il Data Path interno.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Architettura vs Organizzazione</h3>
+
+    <div class="card-grid cols2" style="margin:12px 0 16px">
+      <div class="card blue">
+        <div class="card-title">Architettura dei Calcolatori</div>
+        <p style="font-size:13px;margin:0">L'insieme dei tipi di dati, istruzioni, registri e funzionalità della macchina <strong>visibili al programmatore</strong> dell'assembly. Rappresenta il modello concettuale e il set di regole operative (ISA).</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Organizzazione dei Calcolatori</div>
+        <p style="font-size:13px;margin:0">La struttura fisica e le relazioni funzionali di dettaglio (bus, cache, circuiteria ALU) che implementano una data architettura. <strong>Non è visibile</strong> al programmatore software ed è specifica del costruttore.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">La corrispondenza: binario vs simbolico</h3>
+
+    <p>Di seguito un esempio di corrispondenza diretta tra linguaggio macchina puro a 16 bit e linguaggio assembly simbolico:</p>
+
+    <table>
+      <tr><th>Linguaggio Macchina (Binario)</th><th>Linguaggio Assembly (Simbolico)</th><th>Significato Logico</th></tr>
+      <tr><td><code>0001 0101 0110 1100</code></td><td><code class="t-blue">LOAD R5 108</code></td><td>Carica in R5 il contenuto della cella 108: M[108] → R5</td></tr>
+      <tr><td><code>0001 0110 0110 1101</code></td><td><code class="t-blue">LOAD R6 109</code></td><td>Carica in R6 il contenuto della cella 109: M[109] → R6</td></tr>
+      <tr><td><code>0101 0000 0101 0110</code></td><td><code class="t-green">ADD R0 R5 R6</code></td><td>Somma i contenuti di R5 e R6 in R0: R5 + R6 → R0</td></tr>
+      <tr><td><code>0011 0000 0101 1110</code></td><td><code class="t-amber">STORE R0 110</code></td><td>Scrivi R0 nella cella di memoria 110: R0 → M[110]</td></tr>
+    </table>
+  </section>
+
+    <!-- ══════════════ SEZIONE 00b ══════════════ -->
+  <section class="section" id="s0b">
+    <div class="section-header">
+      <div class="section-num">00b</div>
+      <h2>Misurare le <span class="accent">prestazioni CPU</span></h2>
+    </div>
+
+    <p class="lead">Il tempo di calcolo effettivo dipende dall'efficienza combinata dell'architettura software, dal set di istruzioni ISA e dalla frequenza del clock hardware.</p>
+
+    <div class="card-grid cols2" style="margin:16px 0">
+      <div class="card blue">
+        <div class="card-title">Tempo di esecuzione</div>
+        <p style="font-size:13px;margin:0">Il tempo totale necessario a completare un singolo task (tempo di CPU utente + tempo di CPU di sistema). Ridurre questo tempo è l'obiettivo delle ottimizzazioni a livello di compilatore.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Throughput</div>
+        <p style="font-size:13px;margin:0">La larghezza di banda o tasso di produttività complessivo: rappresenta il numero di compiti/task completati dal sistema nell'unità di tempo.</p>
+      </div>
+    </div>
+
+    </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Assembly RISC-V Fondamentali</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="02_assembly.html#s9">
+    <div class="nav-dot"></div> Cos'è RISC-V
+    <span class="nav-num">09</span>
+  </a>
+  <a class="nav-item" href="02_assembly.html#s13">
+    <div class="nav-dot"></div> Linguaggio macchina
+    <span class="nav-num">13</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 02 — ASSEMBLY</div>
+    <h1>Assembly RISC-V<br><em>Istruzioni e Machine</em></h1>
+    <p>L'Instruction Set Architecture (ISA), le operazioni logico-aritmetiche, gli accessi alla memoria in complemento a 2 e la codifica nei 5 formati di linguaggio macchina.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 9 ══════════════ -->
+  <section class="section" id="s9">
+    <div class="section-header">
+      <div class="section-num">09</div>
+      <h2>Cos'è <span class="accent">RISC-V</span></h2>
+    </div>
+
+    <p class="lead">RISC-V è un ISA (Instruction Set Architecture) open source e royalty-free, nato nel 2010 all'Università di Berkeley e progettato originariamente da Andrew Waterman, Yunsup Lee e Krste Asanovic.</p>
+
+    <div class="card-grid cols2" style="margin-bottom:20px">
+      <div class="card blue">
+        <div class="card-title">Origine e Mantenimento</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          Proposto a Berkeley per superare i limiti delle ISA commerciali. Dal 2015, le specifiche e l'evoluzione dello standard sono gestite e mantenute dalla <strong>RISC-V Foundation</strong>, garantendo l'interoperabilità tra dispositivi eterogenei (dai microcontrollori ai supercomputer).
+        </p>
+      </div>
+      <div class="card red">
+        <div class="card-title">Cosa NON è RISC-V</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          RISC-V <strong>non è un'azienda</strong> e <strong>non è un singolo chip fisico</strong>. È un insieme di regole aperte e standardizzate (una grammatica) che chiunque è libero di implementare in silicio senza pagare royalties o licenze.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Gli Obiettivi di Berkeley</h3>
+    <p>La progettazione di RISC-V si basa su obiettivi di efficienza estrema:</p>
+    <div class="card-grid cols3" style="margin:16px 0 24px">
+      <div class="card green">
+        <div class="card-title">Hardware semplice</div>
+        <p style="font-size:12px;margin:0">Meno transistor, decodifica immediata e consumi energetici ridotti al minimo.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Compilatori efficienti</div>
+        <p style="font-size:12px;margin:0">Istruzioni regolari che permettono ai compilatori C/C++ di generare codice ottimale.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Massime prestazioni</div>
+        <p style="font-size:12px;margin:0">Cicli di clock brevi, esecuzione snella e latenze di memoria minimizzate.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:28px 0 12px">RISC vs CISC: Filosofia e Visioni a Confronto</h3>
+    <p>Per comprendere appieno il ruolo di RISC-V, è necessario fare un passo indietro e inquadrare l'architettura all'interno della secolare dicotomia progettuale delle CPU. I due grandi standard commerciali che hanno guidato l'informatica moderna, <strong>x86</strong> (tipico dei personal computer e server Intel/AMD) e <strong>ARM</strong> (standard assoluto nei dispositivi mobile), incarnano due visioni ingegneristiche antitetiche:</p>
+
+    <div class="card-grid cols2" style="margin:16px 0 24px">
+      <div class="card red">
+        <div class="card-title">L'Approccio CISC (Intel / AMD x86) — Dizionario Complesso</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          <strong>La filosofia:</strong> Fornire un dizionario di istruzioni estremamente ampio e ricco di comandi complessi, riducendo al minimo lo sforzo logico del compilatore.
+          <br><br>
+          <strong>L'analogia del Cuoco:</strong> Immagina di ordinare a un cuoco direttamente: <em>"Preparami una torta di mele"</em>. Per farlo, la CPU deve alloggiare al suo interno un circuito immensamente grande e complesso (il <strong>Decoder microprogrammato</strong>) in grado di scomporre questo singolo comando astratto in decine di micro-azioni fisiche elementari.
+          <br><br>
+          <strong style="color:var(--green)">✔ Vantaggi:</strong> Elevata densità di codice (programmi compatti) e file eseguibili di dimensioni contenute.
+          <br>
+          <strong style="color:var(--red)">✘ Svantaggi:</strong> Decoder fisici sul chip giganteschi, calore elevato e consumi proibitivi. La lunghezza variabile delle istruzioni rende difficile ottimizzare il clock e implementare il pipelining.
+        </p>
+      </div>
+
+      <div class="card green">
+        <div class="card-title">L'Approccio RISC (ARM &amp; RISC-V) — Vocabolario Semplificato</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          <strong>La filosofia:</strong> Spostare la complessità dal silicio al compilatore software, riducendo l'hardware a un nucleo di istruzioni elementari, uniformi e a lunghezza fissa.
+          <br><br>
+          <strong>L'analogia del Cuoco:</strong> Al cuoco non viene mai chiesto di "preparare una torta", ma gli si impartiscono solo comandi atomici: <em>"Prendi farina"</em>, <em>"Rompi uovo"</em>, <em>"Mescola"</em>, <em>"Inforna"</em>.
+          <br><br>
+          <strong style="color:var(--red)">✘ Svantaggi:</strong> I programmi assembly risultano notevolmente più lunghi e i compilatori devono essere estremamente sofisticati nell'organizzare ed ottimizzare le sequenze di istruzioni elementari.
+          <br><br>
+          <strong style="color:var(--green)">✔ Vantaggi (Devastanti):</strong> Decoder fisico piccolissimo, che occupa pochissimo spazio sul die di silicio. La CPU esegue quasi ogni comando in <strong>1 singolo ciclo di clock</strong>. L'architettura è intrinsecamente efficiente, fredda e ideale per il pipelining (catena di montaggio hardware), motivo per cui tutti gli smartphone usano chip RISC.
+        </p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:28px 0 12px">La "V" e la Rivoluzione dell'Open-Source Hardware</h3>
+    <p>La lettera <strong>"V"</strong> sta per <em>Fifth Generation</em> (la quinta evoluzione delle architetture RISC nate a Berkeley nel 2010). Ma la vera forza dirompente di RISC-V non è solo tecnica, bensì <strong>legale e commerciale</strong>: si tratta del primo Instruction Set Architecture (ISA) di classe industriale ad essere <strong>completamente Open Source e royalty-free</strong>.</p>
+
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:20px;margin:20px 0">
+      <h4 style="font-size:14px;font-weight:600;color:var(--blue);margin-bottom:12px;text-transform:uppercase;letter-spacing:0.5px">Il superamento delle barriere commerciali tradizionali</h4>
+      <p style="font-size:13px;margin:0 0 16px;line-height:1.5">Fino alla nascita di RISC-V, chi intendeva progettare un processore doveva scontrarsi con vincoli di proprietà privata invalicabili:</p>
+      
+      <div class="card-grid cols2" style="gap:16px">
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <strong style="color:var(--red);display:block;margin-bottom:6px">Duopolio Proprietario (x86 e ARM)</strong>
+          <p style="font-size:12px;margin:0;line-height:1.4">
+            L'architettura <strong>x86</strong> è coperta da segreto industriale ed è di proprietà esclusiva di Intel (AMD vi accede tramite accordi storici). L'architettura <strong>ARM</strong> è concessa in licenza da ARM Holdings in cambio di <strong>miliardi di dollari</strong> e costose royalties per singolo chip commercializzato.
+          </p>
+        </div>
+        <div style="background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <strong style="color:var(--green);display:block;margin-bottom:6px">Il Modello di RISC-V (Open-Source)</strong>
+          <p style="font-size:12px;margin:0;line-height:1.4">
+            Gestito da una fondazione no-profit globale, RISC-V è di pubblico dominio. Chiunque, dallo studente universitario a colossi come Google o la NASA, può scaricare gratuitamente le specifiche fisiche, studiarle, e <strong>costruire il proprio chip personalizzato in silicio</strong> senza dover chiedere permessi né pagare un centesimo di diritti d'autore.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:28px 0 12px">Perché RISC-V sta modificando gli equilibri globali</h3>
+    <p>Questo paradigma sta scuotendo l'industria per tre fattori chiave:</p>
+    
+    <div class="card-grid cols3" style="margin:16px 0 24px">
+      <div class="card purple">
+        <div class="card-title">1. Taglio dei Costi e Start-Up</div>
+        <p style="font-size:12px;margin:0;line-height:1.4">L'eliminazione dei costi di licenza abbatte le barriere d'ingresso sul mercato dell'hardware, consentendo anche a piccole realtà o dipartimenti di ricerca di testare e fabbricare silicio proprietario.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">2. Estrema Modularità</div>
+        <p style="font-size:12px;margin:0;line-height:1.4">I progettisti possono implementare la sola "grammatica" integer base e integrare estensioni dedicate (come calcoli vettoriali per l'Intelligenza Artificiale), buttando via tutto il superfluo ed evitando sprechi fisici sul chip.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">3. Indipendenza Geopolitica</div>
+        <p style="font-size:12px;margin:0;line-height:1.4">Essendo un'architettura aperta e neutrale, paesi come la Cina e l'Unione Europea stanno convogliando enormi capitali su RISC-V per conquistare la sovranità tecnologica ed evitare embarghi industriali legati a brevetti statunitensi o britannici.</p>
+      </div>
+    </div>
+
+    <div class="card purple" style="margin-bottom:28px">
+      <p style="font-size:14px;font-weight:500;text-align:center;margin:0;line-height:1.5">
+        <em>"Se il transistor è il mattone elementare con cui costruiamo i computer, l'ISA è la lingua in cui questi mattoni si coordinano. RISC-V rappresenta il primo riuscito sforzo collettivo di creare una lingua universale, libera e gratuita per l'hardware di domani."</em>
+      </p>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">I 3 Principi Fondamentali RISC</h3>
+    <p>Come ogni architettura RISC (Reduced Instruction Set Computer), si fonda su tre pilastri:</p>
+    <div class="card-grid cols3" style="margin:16px 0 24px">
+      <div class="card blue">
+        <div class="card-title">1. Semplicità e Regolarità</div>
+        <p style="font-size:12px;margin:0">Istruzioni uniformi, formato fisso a 32 bit, sempre 3 operandi (2 sorgenti e 1 destinazione) per facilitare la decodifica.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">2. Dimensioni minori = Velocità</div>
+        <p style="font-size:12px;margin:0">Pochi registri ma velocissimi. Istruzioni elementari che la CPU può eseguire in un solo ciclo di clock.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">3. Compromessi intelligenti</div>
+        <p style="font-size:12px;margin:0">Es. un campo immediato limitato a 12 bit per preservare la regolarità ed evitare formati sprecati.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Estensibilità e Modularità</h3>
+    <p>RISC-V è modulare: esiste un <strong>base integer ISA</strong> fisso, a cui si aggiungono estensioni opzionali contrassegnate da lettere:</p>
+
+    <table style="margin-bottom:24px">
+      <tr><th>Variante</th><th>Descrizione ed Estensioni</th></tr>
+      <tr><td><code class="t-blue">RV32I</code></td><td>Base integer a 32 bit — la versione utilizzata in questo corso. Spazio indirizzi RAM di 2³² byte.</td></tr>
+      <tr><td><code class="t-blue">RV64I</code></td><td>Base integer a 64 bit — registri e indirizzi RAM espansi a 64 bit (2⁶⁴ byte), aggiunge <code>ld</code>/<code>sd</code>.</td></tr>
+      <tr><td><code class="t-green">RV64M</code></td><td>Estensione Integer Multiplication & Division (moltiplicazioni e divisioni intere).</td></tr>
+      <tr><td><code class="t-amber">RV64F / RV64D</code></td><td>Estensioni Floating-Point (gestione hardware di numeri in virgola mobile a precisione singola/doppia).</td></tr>
+      <tr><td><code class="t-purple">RV32E / RV64E</code></td><td>Variante Embedded — ottimizzata per chip piccolissimi, con solo 16 registri invece di 32.</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Lo Spazio Architetturale (Registri e RAM)</h3>
+    <p>All'interno di un processore RISC-V RV32I troviamo tre tipologie di registri e l'interfaccia con la RAM:</p>
+    <div class="card-grid cols3" style="margin:16px 0 24px">
+      <div class="card blue">
+        <div class="card-title">32 Registri Interi</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          Chiamati da <code>x0</code> a <code>x31</code>. In RV32I ciascuno è a <strong>32 bit</strong> (chiamato <strong>Parola</strong> o <em>Word</em>). In RV64I sono a 64 bit (<strong>Parola doppia</strong> o <em>Doubleword</em>).
+        </p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">PC e CSR</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          Il <strong>Program Counter (PC)</strong> (indirizzo dell'istruzione corrente) e <strong>4096 CSRs (Control Status Registers)</strong> come <code>sepc</code> o <code>status</code>, usati per eccezioni e stato.
+        </p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Registri Floating Point</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          Opzionalmente (estensioni F/D) sono presenti altri 32 registri (<code>f0..f31</code>) dedicati ai calcoli con virgola mobile.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-bottom:24px">
+      <strong>Parola (Word) vs Doppia Parola:</strong> In RISC-V, una <strong>Word</strong> equivale sempre a <strong>32 bit</strong> (4 byte), mentre una <strong>Doubleword</strong> equivale a <strong>64 bit</strong> (8 byte). Indipendentemente dalla variante (RV32I o RV64I), <strong>ogni istruzione occupa esattamente 32 bit</strong> in memoria per garantire allineamento e regolarità durante il fetch.
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Convenzioni ABI e Registro dei Registri (x0 - x31)</h3>
+    <p>Per permettere a codice scritto da compilatori e programmatori diversi di cooperare, RISC-V definisce una convenzione sui nomi simbolici e i ruoli di ciascuno dei 32 registri interi:</p>
+
+    <table style="font-size:13px;line-height:1.4">
+      <tr>
+        <th>Registro</th>
+        <th>Nome ABI</th>
+        <th>Ruolo nel Software / Convenzione di Chiamata</th>
+        <th>Saver (Preservato?)</th>
+      </tr>
+      <tr>
+        <td><code>x0</code></td>
+        <td><code class="t-blue">zero</code></td>
+        <td><strong>Costante zero fisso</strong>. Scrivere qui non ha effetto; leggere restituisce sempre 0.</td>
+        <td>—</td>
+      </tr>
+      <tr>
+        <td><code>x1</code></td>
+        <td><code class="t-green">ra</code></td>
+        <td><strong>Return Address</strong> — indirizzo di ritorno per le procedure (salvato da salti <code>jal</code>).</td>
+        <td>No (temporaneo)</td>
+      </tr>
+      <tr>
+        <td><code>x2</code></td>
+        <td><code class="t-purple">sp</code></td>
+        <td><strong>Stack Pointer</strong> — punta alla cima dello Stack in memoria RAM.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x3</code></td>
+        <td><code class="t-dim">gp</code></td>
+        <td><strong>Global Pointer</strong> — punta all'area dati globali.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x4</code></td>
+        <td><code class="t-dim">tp</code></td>
+        <td><strong>Thread Pointer</strong> — punta a dati specifici del thread.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x5 – x7</code></td>
+        <td><code class="t-amber">t0 – t2</code></td>
+        <td><strong>Registri Temporanei</strong> — liberi da usare, non preservati dalle procedure chiamate.</td>
+        <td>No (temporanei)</td>
+      </tr>
+      <tr>
+        <td><code>x8</code></td>
+        <td><code class="t-purple">s0 / fp</code></td>
+        <td><strong>Saved Register 0 / Frame Pointer</strong> — base del record di attivazione corrente.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x9</code></td>
+        <td><code class="t-purple">s1</code></td>
+        <td><strong>Saved Register 1</strong> — va preservato se utilizzato.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x10 – x11</code></td>
+        <td><code class="t-teal">a0 – a1</code></td>
+        <td><strong>Arguments / Return</strong> — passaggio di parametri e restituzione del risultato.</td>
+        <td>No (temporanei)</td>
+      </tr>
+      <tr>
+        <td><code>x12 – x17</code></td>
+        <td><code class="t-teal">a2 – a7</code></td>
+        <td><strong>Arguments</strong> — altri registri per passare parametri alle procedure.</td>
+        <td>No (temporanei)</td>
+      </tr>
+      <tr>
+        <td><code>x18 – x27</code></td>
+        <td><code class="t-purple">s2 – s11</code></td>
+        <td><strong>Saved Registers</strong> — registri salvati; il loro contenuto va preservato dalla chiamata.</td>
+        <td><strong>Sì (Preservato)</strong></td>
+      </tr>
+      <tr>
+        <td><code>x28 – x31</code></td>
+        <td><code class="t-amber">t3 – t6</code></td>
+        <td><strong>Registri Temporanei aggiuntivi</strong> — non preservati in caso di chiamata.</td>
+        <td>No (temporanei)</td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 13 ══════════════ -->
+
+  <section class="section" id="s13">
+    <div class="section-header">
+      <div class="section-num">13</div>
+      <h2>Il linguaggio <span class="accent">macchina (Codifica)</span></h2>
+    </div>
+
+    <p class="lead">Ogni istruzione assembly viene tradotta in esattamente 32 bit. RISC-V usa 5 formati, ognuno con campi a posizioni fisse — così la CPU sa sempre dove tagliare i 32 bit senza ambiguità.</p>
+
+    <div id="fmt-wrap">
+      <div class="fmt-tabs">
+        <button class="fmt-tab ft-on" data-fmt="R" onclick="fmtTab('R',this)">Tipo R</button>
+        <button class="fmt-tab" data-fmt="I" onclick="fmtTab('I',this)">Tipo I</button>
+        <button class="fmt-tab" data-fmt="S" onclick="fmtTab('S',this)">Tipo S</button>
+        <button class="fmt-tab" data-fmt="B" onclick="fmtTab('B',this)">Tipo B</button>
+        <button class="fmt-tab" data-fmt="U" onclick="fmtTab('U',this)">Tipo U</button>
+        <button class="fmt-tab" data-fmt="J" onclick="fmtTab('J',this)">Tipo J</button>
+      </div>
+      <div class="fmt-body">
+
+        <!-- ── R ── -->
+        <div class="fmt-panel ft-on" id="fp-R">
+          <div class="fmt-desc">
+            <strong>Formato R — Register</strong> &nbsp;·&nbsp; tre registri, nessun immediato.<br>
+            Usato per operazioni aritmetiche e logiche che leggono due registri sorgente e scrivono in un registro destinazione. <code>funct7</code> + <code>funct3</code> + <code>opcode</code> insieme identificano l'operazione esatta.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">add</span><span class="fmt-instr-chip">sub</span>
+            <span class="fmt-instr-chip">and</span><span class="fmt-instr-chip">or</span>
+            <span class="fmt-instr-chip">xor</span><span class="fmt-instr-chip">sll</span>
+            <span class="fmt-instr-chip">srl</span><span class="fmt-instr-chip">sra</span>
+            <span class="fmt-instr-chip">mul</span><span class="fmt-instr-chip">div</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-f7  fw-7"><span class="ff-name">funct7</span><span class="ff-bits">31–25 · 7bit</span></div>
+            <div class="fmt-field ff-rs2 fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20 · 5bit</span></div>
+            <div class="fmt-field ff-rs1 fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3  fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># add x5, x9, x10   →   x5 = x9 + x10</span>
+<span class="fe-note">0000000</span> <span class="fe-note">01010</span> <span class="fe-note">01001</span> <span class="fe-note">000</span> <span class="fe-note">00101</span> <span class="fe-note">0110011</span>
+<span class="fe-cmt">  f7=0   rs2=x10 rs1=x9  f3  rd=x5   opcode</span>
+
+<span class="fe-cmt"># sub x18, x19, x5  →   x18 = x19 - x5</span>
+<span class="fe-note">0100000</span> <span class="fe-note">00101</span> <span class="fe-note">10011</span> <span class="fe-note">000</span> <span class="fe-note">10010</span> <span class="fe-note">0110011</span>
+<span class="fe-cmt">  f7=32  rs2=x5  rs1=x19 f3  rd=x18  opcode</span></div>
+          <div class="fmt-note"><strong>Nota:</strong> add e sub hanno lo stesso opcode e funct3 — si distinguono solo per il bit 30 di funct7 (0 = add, 1 = sub). Stessa logica per srl vs sra.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--purple-bg);border-color:var(--purple-border)"></div>funct7 — disambigua varianti (add/sub, srl/sra)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>rs2 — 2° operando sorgente</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>rs1 — 1° operando sorgente</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--purple-bg);border-color:var(--purple-border)"></div>funct3 — tipo operazione</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--green-bg);border-color:var(--green-border)"></div>rd — registro destinazione</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--blue-bg);border-color:var(--blue-border)"></div>opcode — identifica il formato</div>
+          </div>
+        </div>
+
+        <!-- ── I ── -->
+        <div class="fmt-panel" id="fp-I">
+          <div class="fmt-desc">
+            <strong>Formato I — Immediate</strong> &nbsp;·&nbsp; un registro sorgente + costante a 12 bit.<br>
+            Usato per operazioni con costante incorporata nell'istruzione, load dalla memoria, e <code>jalr</code>. La costante è rappresentata in complemento a 2: range da −2048 a +2047.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">addi</span><span class="fmt-instr-chip">andi</span>
+            <span class="fmt-instr-chip">ori</span><span class="fmt-instr-chip">xori</span>
+            <span class="fmt-instr-chip">lw</span><span class="fmt-instr-chip">lh</span>
+            <span class="fmt-instr-chip">lb</span><span class="fmt-instr-chip">lhu</span>
+            <span class="fmt-instr-chip">lbu</span><span class="fmt-instr-chip">slli</span>
+            <span class="fmt-instr-chip">srli</span><span class="fmt-instr-chip">srai</span>
+            <span class="fmt-instr-chip">jalr</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm fw-12"><span class="ff-name">imm[11:0]</span><span class="ff-bits">31–20 · 12bit</span></div>
+            <div class="fmt-field ff-rs1 fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3  fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># addi x7, x5, -6   →   x7 = x5 + (-6)</span>
+<span class="fe-note">111111111010</span> <span class="fe-note">00101</span> <span class="fe-note">000</span> <span class="fe-note">00111</span> <span class="fe-note">0010011</span>
+<span class="fe-cmt">  imm=-6        rs1=x5 f3  rd=x7   opcode</span>
+
+<span class="fe-cmt"># lw x9, 176(x22)   →   x9 = Mem[x22+176]</span>
+<span class="fe-note">000010110000</span> <span class="fe-note">10110</span> <span class="fe-note">010</span> <span class="fe-note">01001</span> <span class="fe-note">0000011</span>
+<span class="fe-cmt">  imm=176       rs1=x22 f3  rd=x9  opcode(load)</span></div>
+          <div class="fmt-note"><strong>Perché solo 12 bit per l'immediato?</strong> Con 12 bit si coprono offset da −2048 a +2047 — sufficiente per quasi tutti i casi pratici (accesso array, stack). Se serve una costante più grande si usano <code>lui</code> + <code>addi</code> in coppia.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>imm[11:0] — costante/offset in complemento a 2</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>rs1 — registro base (per load: indirizzo base)</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--purple-bg);border-color:var(--purple-border)"></div>funct3 — tipo operazione / ampiezza del load</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--green-bg);border-color:var(--green-border)"></div>rd — destinazione</div>
+          </div>
+        </div>
+
+        <!-- ── S ── -->
+        <div class="fmt-panel" id="fp-S">
+          <div class="fmt-desc">
+            <strong>Formato S — Store</strong> &nbsp;·&nbsp; due registri sorgente + offset a 12 bit <em>spezzato</em>.<br>
+            Usato per scrivere in memoria. L'offset è diviso in due pezzi (<code>imm[11:5]</code> e <code>imm[4:0]</code>) in modo che <code>rs1</code> e <code>rs2</code> stiano <em>esattamente nelle stesse posizioni bit</em> del formato R — così l'hardware di decodifica è più semplice e veloce.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">sw</span><span class="fmt-instr-chip">sh</span>
+            <span class="fmt-instr-chip">sb</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm  fw-7"><span class="ff-name">imm[11:5]</span><span class="ff-bits">31–25 · 7bit</span></div>
+            <div class="fmt-field ff-rs2  fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20 · 5bit</span></div>
+            <div class="fmt-field ff-rs1  fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15 · 5bit</span></div>
+            <div class="fmt-field ff-f3   fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-imm2 fw-5"><span class="ff-name">imm[4:0]</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># sw x9, 24(x22)   →   Mem[x22+24] = x9</span>
+<span class="fe-note">0000000</span>  <span class="fe-note">01001</span>  <span class="fe-note">10110</span>  <span class="fe-note">010</span>  <span class="fe-note">11000</span>  <span class="fe-note">0100011</span>
+<span class="fe-cmt">imm[11:5]=0 rs2=x9 rs1=x22 f3 imm[4:0]=24 op</span>
+
+<span class="fe-cmt"># Ricomponi offset: {imm[11:5], imm[4:0]} = 24</span>
+<span class="fe-cmt"># 0000000 ++ 11000 = 000000011000 = 24 ✓</span></div>
+          <div class="fmt-note"><strong>Perché non c'è rd?</strong> Store scrive in memoria, non in un registro — quindi non serve il campo destinazione. Quello spazio viene usato per la seconda metà dell'immediato.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>imm[11:5] — parte alta dell'offset</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>imm[4:0] — parte bassa dell'offset</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>rs2 — registro da scrivere in memoria</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>rs1 — registro base indirizzo</div>
+          </div>
+        </div>
+
+        <!-- ── B ── -->
+        <div class="fmt-panel" id="fp-B">
+          <div class="fmt-desc">
+            <strong>Formato B — Branch</strong> &nbsp;·&nbsp; due registri da confrontare + offset a 13 bit (ma b0 è sempre 0).<br>
+            Usato per salti condizionati. L'offset è relativo al PC corrente. I bit dell'immediato sono riordinati in modo bizzarro — ma mantengono <code>rs1</code> e <code>rs2</code> nella stessa posizione del tipo R/S.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">beq</span><span class="fmt-instr-chip">bne</span>
+            <span class="fmt-instr-chip">blt</span><span class="fmt-instr-chip">bge</span>
+            <span class="fmt-instr-chip">bltu</span><span class="fmt-instr-chip">bgeu</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm  fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[12]</span><span class="ff-bits">31</span></div>
+            <div class="fmt-field ff-imm  fw-6"><span class="ff-name">im[10:5]</span><span class="ff-bits">30–25</span></div>
+            <div class="fmt-field ff-rs2  fw-5"><span class="ff-name">rs2</span><span class="ff-bits">24–20</span></div>
+            <div class="fmt-field ff-rs1  fw-5"><span class="ff-name">rs1</span><span class="ff-bits">19–15</span></div>
+            <div class="fmt-field ff-f3   fw-3"><span class="ff-name">f3</span><span class="ff-bits">14–12</span></div>
+            <div class="fmt-field ff-imm2 fw-4"><span class="ff-name">im[4:1]</span><span class="ff-bits">11–8</span></div>
+            <div class="fmt-field ff-imm2 fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[11]</span><span class="ff-bits">7</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># bne x9, x24, ENDLOOP  (offset = +12)</span>
+<span class="fe-note">0</span> <span class="fe-note">000000</span> <span class="fe-note">11000</span> <span class="fe-note">01001</span> <span class="fe-note">001</span> <span class="fe-note">0110</span> <span class="fe-note">0</span> <span class="fe-note">1100011</span>
+<span class="fe-cmt">im12 im[10:5] rs2=x24 rs1=x9 f3 im[4:1] im11 op</span>
+
+<span class="fe-cmt"># Ricomponi offset: {im12,im11,im[10:5],im[4:1],0}</span>
+<span class="fe-cmt"># = 0 0 000000 0110 0 = 00000001100 = 12 ✓</span></div>
+          <div class="fmt-note"><strong>Perché l'offset salta il bit 0?</strong> Le istruzioni RISC-V sono sempre allineate a 2 byte (o 4), quindi b0 dell'offset è sempre 0 — inutile codificarlo. Si guadagna 1 bit di range: con 12 bit utili si arriva a ±4KB invece di ±2KB.</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>imm — offset relativo al PC, bit riordinati per semplicità hardware</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--amber-bg);border-color:var(--amber-border)"></div>rs1 / rs2 — i due registri da confrontare (stessa posizione del tipo R)</div>
+          </div>
+        </div>
+
+        <!-- ── U ── -->
+        <div class="fmt-panel" id="fp-U">
+          <div class="fmt-desc">
+            <strong>Formato U — Upper Immediate</strong> &nbsp;·&nbsp; un registro destinazione + costante enorme a 20 bit.<br>
+            Usato per caricare valori molto grandi (che non entrano nei 12 bit del formato I) nei 20 bit più significativi (alti) di un registro, riempiendo la parte bassa con zeri. Fondamentale per superare il "limite dei 12 bit" degli offset.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">lui</span><span class="fmt-instr-chip">auipc</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm fw-20"><span class="ff-name">imm[31:12]</span><span class="ff-bits">31–12 · 20bit</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># lui x5, 0x12345   →   x5 = 0x12345000</span>
+<span class="fe-note">00010010001101000101</span> <span class="fe-note">00101</span> <span class="fe-note">0110111</span>
+<span class="fe-cmt">imm=0x12345          rd=x5  opcode(lui)</span>
+
+<span class="fe-cmt"># Il trucco lui + addi (la pseudostruzione 'la'):</span>
+<span class="fe-cmt"># Per caricare l'indirizzo 32-bit completo 0x12345678 in x5:</span>
+<span class="fe-cmt"># 1. lui x5, 0x12345   (x5 diventa 0x12345000)</span>
+<span class="fe-cmt"># 2. addi x5, x5, 0x678 (x5 diventa 0x12345678)</span>
+<span class="fe-cmt"># La combo perfetta!</span></div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>imm[31:12] — la parte alta (Upper) della costante da 32 bit</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--green-bg);border-color:var(--green-border)"></div>rd — registro destinazione</div>
+          </div>
+        </div>
+
+        <!-- ── J ── -->
+        <div class="fmt-panel" id="fp-J">
+          <div class="fmt-desc">
+            <strong>Formato J — Jump</strong> &nbsp;·&nbsp; un registro destinazione + offset a 21 bit (b0 sempre 0).<br>
+            Usato esclusivamente da <code>jal</code>. L'offset enorme (±1MB) permette di saltare a qualsiasi funzione nel programma. Come il tipo B, i bit dell'immediato sono riordinati per mantenere l'opcode e rd nelle stesse posizioni di tutti gli altri formati.
+          </div>
+          <div class="fmt-instrs">
+            <span class="fmt-instr-chip">jal</span>
+          </div>
+          <div class="fmt-bit-range">bit 31 ──────────────────────────────────────────────────── bit 0</div>
+          <div class="fmt-row">
+            <div class="fmt-field ff-imm fw-1" style="min-width:20px"><span class="ff-name" style="font-size:8px">im[20]</span><span class="ff-bits">31</span></div>
+            <div class="fmt-field ff-imm fw-10"><span class="ff-name">imm[10:1]</span><span class="ff-bits">30–21 · 10bit</span></div>
+            <div class="fmt-field ff-imm fw-1" style="min-width:22px"><span class="ff-name" style="font-size:8px">im[11]</span><span class="ff-bits">20</span></div>
+            <div class="fmt-field ff-imm fw-8"><span class="ff-name">imm[19:12]</span><span class="ff-bits">19–12 · 8bit</span></div>
+            <div class="fmt-field ff-rd  fw-5"><span class="ff-name">rd</span><span class="ff-bits">11–7 · 5bit</span></div>
+            <div class="fmt-field ff-opcode fw-7"><span class="ff-name">opcode</span><span class="ff-bits">6–0 · 7bit</span></div>
+          </div>
+          <div class="fmt-example">
+<span class="fe-cmt"># jal ra, SOMMA   →   ra = PC+4;  PC = PC + offset</span>
+<span class="fe-note">0</span> <span class="fe-note">0000000001</span> <span class="fe-note">0</span> <span class="fe-note">00000001</span> <span class="fe-note">00001</span> <span class="fe-note">1101111</span>
+<span class="fe-cmt">im20  im[10:1]  im11 im[19:12] rd=ra   opcode</span></div>
+          <div class="fmt-note"><strong>Range ±1MB:</strong> con 20 bit utili di offset (b0 implicito = 0) si possono raggiungere indirizzi a ±2²⁰ byte = ±1.048.576 byte dal PC. Per salti più lontani si usa <code>jalr</code> con indirizzo caricato in un registro (<code>auipc</code> + <code>jalr</code>).</div>
+          <div class="fmt-legend">
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--red-bg);border-color:var(--red-border)"></div>imm[20:1] — offset relativo al PC (20 bit utili → ±1MB), b0 implicito = 0</div>
+            <div class="fmt-leg"><div class="fmt-lbox" style="background:var(--green-bg);border-color:var(--green-border)"></div>rd — registro dove salvare PC+4 (return address); x0 per scartarlo</div>
+          </div>
+        </div>
+
+      </div><!-- /fmt-body -->
+    </div><!-- /fmt-wrap -->
+
+    <script>
+    window.fmtTab = function(id, btn) {
+      document.querySelectorAll('.fmt-panel').forEach(function(p){ p.classList.remove('ft-on'); });
+      document.querySelectorAll('.fmt-tab').forEach(function(b){ b.classList.remove('ft-on'); });
+      document.getElementById('fp-'+id).classList.add('ft-on');
+      btn.classList.add('ft-on');
+    };
+    </script>
+
+    <div class="callout amber" style="margin-top:20px">
+      <strong>Il principio unificante:</strong> in tutti e 5 i formati, <code>opcode</code> sta sempre nei bit 6–0, <code>rd</code> sempre in 11–7, <code>rs1</code> sempre in 19–15, <code>rs2</code> sempre in 24–20. La CPU può leggere questi campi <em>prima ancora di sapere</em> che tipo di istruzione è — questo è ciò che rende RISC-V semplice da implementare in hardware.
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

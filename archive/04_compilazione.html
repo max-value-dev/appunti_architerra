@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Catena di Compilazione ed Esecuzione</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="04_compilazione.html#s18">
+    <div class="nav-dot"></div> Catena di traduzione
+    <span class="nav-num">18</span>
+  </a>
+  <a class="nav-item" href="04_compilazione.html#s19">
+    <div class="nav-dot"></div> Assemblatore a due passi
+    <span class="nav-num">19</span>
+  </a>
+  <a class="nav-item" href="04_compilazione.html#s20">
+    <div class="nav-dot"></div> Direttive e macro
+    <span class="nav-num">20</span>
+  </a>
+  <a class="nav-item" href="04_compilazione.html#s21">
+    <div class="nav-dot"></div> Il Linker
+    <span class="nav-num">21</span>
+  </a>
+  <a class="nav-item" href="04_compilazione.html#s22">
+    <div class="nav-dot"></div> Loader e binding
+    <span class="nav-num">22</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 04 — COMPILAZIONE</div>
+    <h1>Catena di Traduzione<br><em>Compilatore, Assemblatore, Linker e Loader</em></h1>
+    <p>La trasformazione dal codice C leggibile dall'uomo fino ai bit macchina in esecuzione nella CPU. Il funzionamento a due passi, le direttive assembly, la rilocazione ed il caricamento.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 18 ══════════════ -->
+  <section class="section" id="s18">
+    <div class="section-header">
+      <div class="section-num">18</div>
+      <h2>La catena di <span class="accent">traduzione</span></h2>
+    </div>
+
+    <p class="lead">Scrivere codice C e vederlo girare sulla CPU richiede 4 trasformazioni in sequenza. Ogni passo converte la rappresentazione in qualcosa di più vicino al linguaggio macchina.</p>
+
+    <div class="chain-flow">
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--blue)">Sorgente C</div>
+        <div class="chain-from">main.c</div>
+        <div class="chain-desc">Codice leggibile dall'uomo, alto livello</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--blue-bg);border-color:var(--blue-border)">
+        <div class="chain-tool" style="color:var(--blue)">Compilatore</div>
+        <div class="chain-from">gcc -S</div>
+        <div class="chain-desc">Traduce C in mnemonici assembly</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--green)">Assembly</div>
+        <div class="chain-from">main.s</div>
+        <div class="chain-desc">Istruzioni mnemoniche, etichette simboliche</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--green-bg);border-color:var(--green-border)">
+        <div class="chain-tool" style="color:var(--green)">Assemblatore</div>
+        <div class="chain-from">as / gcc -c</div>
+        <div class="chain-desc">Traduce mnemonici in bit → modulo oggetto</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--amber)">Oggetto</div>
+        <div class="chain-from">main.o</div>
+        <div class="chain-desc">Binario parziale, indirizzi non definitivi</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--amber-bg);border-color:var(--amber-border)">
+        <div class="chain-tool" style="color:var(--amber)">Linker</div>
+        <div class="chain-from">ld / gcc</div>
+        <div class="chain-desc">Unisce moduli, risolve indirizzi</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box">
+        <div class="chain-tool" style="color:var(--red)">Eseguibile</div>
+        <div class="chain-from">a.out / ELF</div>
+        <div class="chain-desc">Binario completo pronto per il loader</div>
+      </div>
+      <div class="chain-arrow">→</div>
+      <div class="chain-box" style="background:var(--red-bg);border-color:var(--red-border)">
+        <div class="chain-tool" style="color:var(--red)">Loader</div>
+        <div class="chain-from">OS</div>
+        <div class="chain-desc">Carica in RAM e avvia esecuzione</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Esempio concreto: la funzione scambia</h3>
+
+    <p>Il compilatore GCC traduce C in assembly (con la flag <code>-S</code>). Lo stesso codice può essere scritto a mano in modo leggermente diverso ma equivalente. Nota la differenza — GCC usa alias simbolici (<code>a0</code>, <code>a1</code>), la versione del testo usa i numeri di registro (<code>x10</code>, <code>x11</code>):</p>
+
+    <div class="card-grid cols2">
+      <div class="card blue">
+        <div class="card-title">Codice C sorgente</div>
+        <pre style="margin:8px 0 0;font-size:12px;background:none;border:none;padding:0;color:var(--text)">void scambia(size_t v[], size_t k) {
+  size_t temp;
+  temp   = v[k];
+  v[k]   = v[k+1];
+  v[k+1] = temp;
+}</pre>
+      </div>
+      <div class="card green">
+        <div class="card-title">Output GCC (RV32I)</div>
+        <pre style="margin:8px 0 0;font-size:12px;background:none;border:none;padding:0;color:var(--text)">scambia:
+  slli  a1, a1, 2
+  add   a5, a0, a1
+  lw    a4, 0(a5)
+  addi  a1, a1, 4
+  add   a0, a0, a1
+  lw    a3, 0(a0)
+  sw    a3, 0(a5)
+  sw    a4, 0(a0)
+  ret</pre>
+      </div>
+    </div>
+
+    <p style="margin-top:16px">L'assemblatore poi converte ogni istruzione mnemonica in 32 bit. Il GCC in questo esempio ha prodotto anche istruzioni <strong>compressed</strong> a 16 bit (estensione C di RISC-V): <code>c.slli</code>, <code>c.lw</code>, <code>c.sw</code> — sono versioni compatte di istruzioni comuni, riconoscibili dai byte hex più corti nel dump.</p>
+
+    <div class="callout amber" style="margin-top:16px">
+      <strong>L'illusione delle Variabili:</strong> Nel codice C vedi nomi rassicuranti come <code>temp</code> o <code>v[k]</code>. Per la CPU, tutto questo non esiste. Il processore non ha la più pallida idea di cosa sia una "variabile". Vede solo sequenze di registri numerici (es. <code>a4</code>, <code>a5</code>) e indirizzi di memoria crudi (es. <code>0x1000</code>). Il Compilatore è l'illusionista che mantiene l'associazione mentale tra il nome testuale che tu hai scritto e la scatola di silicio in cui ha deciso di confinarlo.
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Traduzione per Java: JVM e JIT</h3>
+
+    <div class="card-grid cols2">
+      <div class="card purple">
+        <div class="card-title">Java Virtual Machine (JVM)</div>
+        <p style="font-size:13px;margin:0">Il compilatore Java produce <strong>bytecode</strong> (non codice macchina nativo). La JVM lo interpreta a runtime — portabile su qualsiasi piattaforma che abbia una JVM.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Just In Time (JIT)</div>
+        <p style="font-size:13px;margin:0">La JVM può invocare il compilatore JIT che <strong>compila i metodi hot in codice macchina nativo</strong> della CPU su cui gira. Risultato: velocità vicina al C, portabilità del bytecode.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <strong>RISC-V vs MIPS — formati incompatibili:</strong> entrambi sono ISA RISC a 32 bit, ma la codifica binaria è completamente diversa. RISC-V usa 7 bit per l'opcode, MIPS ne usa 6. Un binario RISC-V non può girare su una CPU MIPS e viceversa — l'ISA è il contratto tra software e hardware.
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 19 ══════════════ -->
+  <section class="section" id="s19">
+    <div class="section-header">
+      <div class="section-num">19</div>
+      <h2>L'assemblatore <span class="accent">a due passi</span></h2>
+    </div>
+
+    <p class="lead">L'assemblatore traduce mnemonici in bit e risolve le etichette simboliche in indirizzi numerici. Deve farlo in due passi perché un'etichetta può essere usata prima di essere definita.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Il problema: forward reference</h3>
+
+    <p>Nel codice assembly un salto può puntare a un'etichetta che appare <em>più avanti</em> nel file. Quando l'assemblatore incontra <code>bgt a2,a3,.L20</code>, non sa ancora dove si trova <code>.L20</code> — quella etichetta verrà definita solo decine di istruzioni dopo. Questo si chiama <strong>forward reference</strong>. Il contrario (puntare a un'etichetta già vista) si chiama <strong>backward reference</strong>.</p>
+
+    <div class="card-grid cols2" style="margin:16px 0">
+      <div class="card blue">
+        <div class="card-title">Passo 1 — Costruisce la Symbol Table</div>
+        <p style="font-size:13px;margin:0">L'assemblatore scorre tutto il file senza tradurre. Per ogni etichetta trovata registra nella <strong>Symbol Table</strong> il nome e il valore dell'ILC (Instruction Location Counter) — la posizione relativa dell'istruzione nel programma.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Passo 2 — Traduce le istruzioni</div>
+        <p style="font-size:13px;margin:0">Rescorre il file e traduce ogni istruzione in binario. Quando incontra un riferimento a un'etichetta consulta la Symbol Table costruita nel passo 1 — ora sa sempre dove si trova ogni etichetta, anche le forward reference.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Esempio: Symbol Table per is_sorted</h3>
+
+    <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
+      <div style="flex:1;min-width:220px">
+        <pre style="font-size:12px"><span class="label">is_sorted:</span>
+  <span class="cmt">...        ← ILC = 0x420</span>
+  <span class="kw">add</span>   <span class="reg">a4</span>,<span class="reg">a4</span>,<span class="reg">a0</span>
+<span class="label">.L18:</span>      <span class="cmt">← ILC = 0x432</span>
+  <span class="kw">lw</span>    <span class="reg">a2</span>,<span class="imm">0</span>(<span class="reg">a5</span>)
+  <span class="kw">lw</span>    <span class="reg">a3</span>,<span class="imm">4</span>(<span class="reg">a5</span>)
+  bgt   <span class="reg">a2</span>,<span class="reg">a3</span>,<span class="label">.L20</span>  <span class="cmt">← forward ref!</span>
+  <span class="kw">addi</span>  <span class="reg">a5</span>,<span class="reg">a5</span>,<span class="imm">4</span>
+  <span class="kw">bne</span>   <span class="reg">a5</span>,<span class="reg">a4</span>,<span class="label">.L18</span>  <span class="cmt">← backward ref</span>
+  li    <span class="reg">a0</span>,<span class="imm">1</span>
+  ret
+  <span class="cmt">...</span>
+<span class="label">.L20:</span>      <span class="cmt">← ILC = 0x462</span>
+  li    <span class="reg">a0</span>,<span class="imm">0</span>
+  ret</pre>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Symbol Table (dopo passo 1)</div>
+        <table style="font-size:13px">
+          <tr><th>Simbolo</th><th>Valore ILC</th></tr>
+          <tr><td><code class="t-purple">is_sorted</code></td><td><code>0x420</code></td></tr>
+          <tr><td><code class="t-purple">.L18</code></td><td><code>0x432</code></td></tr>
+          <tr><td><code class="t-purple">.L20</code></td><td><code>0x462</code></td></tr>
+        </table>
+        <div class="callout" style="margin-top:14px;font-size:13px">
+          <strong>ILC = Instruction Location Counter</strong> — tiene traccia della posizione corrente durante la scansione. In RISC-V ogni istruzione è 4 byte, quindi l'ILC avanza di 4 ad ogni istruzione normale (2 per le compressed).
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Passo 2: calcolo degli offset di salto</h3>
+
+    <p>Nel passo 2 l'assemblatore sa che <code>.L20</code> sta a <code>0x462</code> e che l'istruzione <code>bgt a2,a3,.L20</code> sta a <code>0x43a</code>. L'offset del salto è relativo al PC: <code>0x462 − 0x43a = 0x28 = 40</code> byte. Questo valore viene codificato nel campo immediato dell'istruzione B in linguaggio macchina.</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 20 ══════════════ -->
+  <section class="section" id="s20">
+    <div class="section-header">
+      <div class="section-num">20</div>
+      <h2>Direttive, pseudoistruzioni <span class="accent">e macro</span></h2>
+    </div>
+
+    <p class="lead">Il linguaggio assembly offre strumenti aggiuntivi oltre alle istruzioni ISA: le <strong>direttive</strong> controllano l'assemblatore, le <strong>pseudoistruzioni</strong> sono alias comode, le <strong>macro</strong> sono template espandibili.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Assembly directives</h3>
+
+    <p>Le direttive iniziano con un punto e danno istruzioni all'assemblatore su come organizzare il programma — non producono istruzioni macchina da sole:</p>
+
+    <table>
+      <tr><th>Direttiva</th><th>Argomento</th><th>Cosa fa</th></tr>
+      <tr><td><code class="t-blue">.text</code></td><td>—</td><td>Inizia (o continua) la sezione codice — tutto ciò che segue va nel segmento .text</td></tr>
+      <tr><td><code class="t-blue">.data</code></td><td>—</td><td>Inizia la sezione dati — variabili globali e statiche</td></tr>
+      <tr><td><code class="t-blue">.bss</code></td><td>—</td><td>Sezione dati non inizializzati (Block Started by Symbol)</td></tr>
+      <tr><td><code class="t-green">.globl</code></td><td>simbolo</td><td>Rende il simbolo visibile agli altri moduli (scope GLOBAL)</td></tr>
+      <tr><td><code class="t-green">.local</code></td><td>simbolo</td><td>Simbolo visibile solo nel modulo corrente (scope LOCAL)</td></tr>
+      <tr><td><code class="t-amber">.string</code></td><td>"testo"</td><td>Alloca una stringa terminata da null</td></tr>
+      <tr><td><code class="t-amber">.byte</code></td><td>val,...</td><td>Alloca uno o più byte</td></tr>
+      <tr><td><code class="t-amber">.word</code></td><td>val,...</td><td>Alloca una o più word da 32 bit</td></tr>
+      <tr><td><code class="t-amber">.dword</code></td><td>val,...</td><td>Alloca una o più doubleword da 64 bit</td></tr>
+      <tr><td><code class="t-purple">.align</code></td><td>n</td><td>Allinea il prossimo dato a 2ⁿ byte</td></tr>
+      <tr><td><code class="t-purple">.macro / .endm</code></td><td>nome, args</td><td>Definisce una macro assembly</td></tr>
+      <tr><td><code class="t-purple">.section</code></td><td>.text/.data/...</td><td>Seleziona la sezione corrente esplicitamente</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Pseudoistruzioni estese</h3>
+
+    <p>Le pseudoistruzioni non esistono nell'ISA — l'assemblatore le espande in 1 o più istruzioni reali. Rendono il codice più leggibile senza aggiungere overhead:</p>
+
+    <table>
+      <tr><th>Pseudoistruzione</th><th>Si espande in</th><th>Significato</th></tr>
+      <tr><td><code class="t-green">nop</code></td><td><code>addi x0, x0, 0</code></td><td>No operation — non fa nulla</td></tr>
+      <tr><td><code class="t-green">mv rd, rs</code></td><td><code>addi rd, rs, 0</code></td><td>Copia registro</td></tr>
+      <tr><td><code class="t-green">li rd, imm</code></td><td>varie sequenze</td><td>Carica costante arbitraria (può servire lui+addi)</td></tr>
+      <tr><td><code class="t-green">la rd, simbolo</code></td><td><code>auipc</code> + <code>addi</code></td><td>Carica l'indirizzo di una variabile/etichetta</td></tr>
+      <tr><td><code class="t-green">neg rd, rs</code></td><td><code>sub rd, x0, rs</code></td><td>Complemento a due (cambia segno)</td></tr>
+      <tr><td><code class="t-green">not rd, rs</code></td><td><code>xori rd, rs, -1</code></td><td>NOT bit a bit</td></tr>
+      <tr><td><code class="t-blue">beqz rs, L</code></td><td><code>beq rs, x0, L</code></td><td>Salta se zero</td></tr>
+      <tr><td><code class="t-blue">bnez rs, L</code></td><td><code>bne rs, x0, L</code></td><td>Salta se non zero</td></tr>
+      <tr><td><code class="t-blue">bgt rs, rt, L</code></td><td><code>blt rt, rs, L</code></td><td>Salta se maggiore (scambia operandi)</td></tr>
+      <tr><td><code class="t-blue">ble rs, rt, L</code></td><td><code>bge rt, rs, L</code></td><td>Salta se minore o uguale</td></tr>
+      <tr><td><code class="t-amber">j offset</code></td><td><code>jal x0, offset</code></td><td>Salto incondizionato (scarta ra)</td></tr>
+      <tr><td><code class="t-amber">call offset</code></td><td><code>auipc x1, …</code> + <code>jalr x1, …</code></td><td>Chiama funzione anche lontana (&gt;±1MB)</td></tr>
+      <tr><td><code class="t-amber">ret</code></td><td><code>jalr x0, 0(x1)</code></td><td>Ritorna dalla funzione</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Macro: template con parametri</h3>
+
+    <p>Una macro è un template che viene <strong>espanso testualmente</strong> dall'assemblatore ogni volta che viene invocata — non è una funzione, non c'è <code>jal</code>/<code>ret</code>. Il codice viene duplicato inline ad ogni uso:</p>
+
+    <pre><span class="cmt"># Definizione della macro "swap"</span>
+<span class="label">.macro</span> swap reg1, reg2, reg3
+    <span class="kw">add</span>  \reg3, \reg2, <span class="reg">zero</span>   <span class="cmt"># reg3 = reg2</span>
+    <span class="kw">add</span>  \reg2, \reg1, <span class="reg">zero</span>   <span class="cmt"># reg2 = reg1</span>
+    <span class="kw">add</span>  \reg1, \reg3, <span class="reg">zero</span>   <span class="cmt"># reg1 = reg3</span>
+<span class="label">.endm</span>
+
+<span class="cmt"># Utilizzo</span>
+li   <span class="reg">s1</span>, <span class="imm">10</span>
+li   <span class="reg">s2</span>, <span class="imm">20</span>
+swap <span class="reg">s1</span>, <span class="reg">s2</span>, <span class="reg">t0</span>    <span class="cmt"># ← viene espanso nelle 3 add qui sotto</span>
+
+<span class="cmt"># Dopo espansione diventa:</span>
+<span class="cmt"># add t0, s2, zero</span>
+<span class="cmt"># add s2, s1, zero</span>
+<span class="cmt"># add s1, t0, zero</span></pre>
+
+    <table style="margin-top:16px">
+      <tr><th>Caratteristica</th><th>Macro</th><th>Procedura (jal)</th></tr>
+      <tr><td>Quando viene "chiamata"?</td><td class="t-amber">Durante l'assemblaggio</td><td class="t-blue">Durante l'esecuzione</td></tr>
+      <tr><td>Il corpo viene inserito inline?</td><td class="t-green">Sì — ogni volta</td><td class="t-red">No — una sola copia</td></tr>
+      <tr><td>Serve jal + ret?</td><td class="t-red">No</td><td class="t-green">Sì</td></tr>
+      <tr><td>Quante copie nel binario?</td><td class="t-amber">Una per invocazione</td><td class="t-green">Una sola</td></tr>
+      <tr><td>Overhead di chiamata</td><td class="t-green">Zero</td><td class="t-amber">jal + ret + salvataggi</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 21 ══════════════ -->
+  <section class="section" id="s21">
+    <div class="section-header">
+      <div class="section-num">21</div>
+      <h2>Il <span class="accent">Linker</span></h2>
+    </div>
+
+    <p class="lead">Un programma reale è diviso in più file sorgente compilati separatamente. Ogni file diventa un modulo oggetto con il suo spazio di indirizzi locale. Il Linker fonde tutto in un unico eseguibile con indirizzi definitivi.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Perché serve il linker?</h3>
+
+    <p>Quando l'assemblatore traduce un file, molti indirizzi sono sconosciuti: la funzione <code>printf</code> è in un'altra libreria, la funzione <code>B</code> è in un altro file <code>.c</code>. L'assemblatore lascia questi indirizzi a zero e inserisce nel file oggetto le <strong>informazioni di rilocazione</strong> — una lista di "toppe" da applicare quando gli indirizzi saranno noti.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Struttura di un file oggetto ELF</h3>
+
+    <div class="card-grid cols2">
+      <div class="card blue">
+        <div class="card-title">Object file header</div>
+        <p style="font-size:13px;margin:0">Descrive la dimensione e posizione di tutti gli altri segmenti nel file.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Text segment</div>
+        <p style="font-size:13px;margin:0">Il codice in linguaggio macchina — le istruzioni da eseguire.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Static data segment (.data e .bss)</div>
+        <p style="font-size:13px;margin:0">Contiene le variabili globali e statiche. È diviso in <strong>.data</strong> (variabili inizializzate, es. <code>int x = 5;</code>) e <strong>.bss</strong> (Block Started by Symbol: variabili non inizializzate, es. <code>int y;</code>, che vengono messe a zero dal sistema per risparmiare spazio nel binario).</p>
+      </div>
+      <div class="card red">
+        <div class="card-title">Relocation info</div>
+        <p style="font-size:13px;margin:0">Elenco di istruzioni e dati che dipendono da indirizzi assoluti ancora ignoti — da aggiornare dal linker.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Symbol table</div>
+        <p style="font-size:13px;margin:0">Etichette esportate (definite qui, usabili dagli altri) e importate (definite altrove). Le voci importate hanno indirizzo "–" (unknown).</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Debugging info</div>
+        <p style="font-size:13px;margin:0">Mappa tra istruzioni macchina e righe del sorgente C — usata dal debugger (gdb, LLDB).</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Cosa fa il linker: 4 operazioni</h3>
+
+    <table>
+      <tr><th>#</th><th>Operazione</th><th>Dettaglio</th></tr>
+      <tr><td>1</td><td>Inventario moduli</td><td>Raccoglie tutti i file <code>.o</code> e le librerie, registra le loro dimensioni (text + data)</td></tr>
+      <tr><td>2</td><td>Assegna indirizzi base</td><td>Decide dove inizia ogni modulo nello spazio lineare: es. Procedura A inizia a <code>0x400000</code>, B a <code>0x400100</code></td></tr>
+      <tr><td>3</td><td>Rilocazione</td><td>Aggiunge a ogni riferimento di memoria la <em>relocation constant</em> = indirizzo di partenza del suo modulo</td></tr>
+      <tr><td>4</td><td>Risolve simboli esterni</td><td>Aggiorna le istruzioni che chiamano funzioni di altri moduli con i loro indirizzi definitivi</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Esempio: linking di procedura A e B</h3>
+
+    <p>Procedura A chiama B con <code>jal x1, 0</code> (indirizzo ignoto) e legge la variabile X. Procedura B chiama A e scrive Y. Dopo il linking:</p>
+
+    <pre><span class="cmt"># File oggetto A — indirizzi locali (relativi)</span>
+  <span class="imm">0x00</span>:  lw  x10, <span class="imm">0</span>(x3)   <span class="cmt"># legge X — indirizzo ignoto</span>
+  <span class="imm">0x04</span>:  jal x1, <span class="imm">0</span>        <span class="cmt"># chiama B — indirizzo ignoto</span>
+
+<span class="cmt"># File oggetto B — indirizzi locali (relativi)</span>
+  <span class="imm">0x00</span>:  sw  x11, <span class="imm">0</span>(x3)   <span class="cmt"># scrive Y — indirizzo ignoto</span>
+  <span class="imm">0x04</span>:  jal x1, <span class="imm">0</span>        <span class="cmt"># chiama A — indirizzo ignoto</span>
+
+<span class="cmt"># File eseguibile finale — indirizzi definitivi</span>
+<span class="cmt"># A inizia a 0x400000, B inizia a 0x400100</span>
+<span class="cmt"># X sta a 0x10000000,  Y sta a 0x10000020</span>
+
+  <span class="imm">0x400000</span>: lw  x10, <span class="imm">0</span>(x3)      <span class="cmt"># x3=gp=0x10000000 → X</span>
+  <span class="imm">0x400004</span>: jal x1, <span class="imm">+252</span>       <span class="cmt"># 0x400100−0x400004=252</span>
+  <span class="imm">0x400100</span>: sw  x11, <span class="imm">32</span>(x3)     <span class="cmt"># gp+32 = 0x10000020 → Y</span>
+  <span class="imm">0x400104</span>: jal x1, <span class="imm">-260</span>       <span class="cmt"># 0x400000−0x400104=-260</span></pre>
+
+    <div class="callout green">
+      <strong>jal usa indirizzamento relativo al PC:</strong> l'offset nel binario è sempre la differenza tra l'indirizzo destinazione e l'indirizzo dell'istruzione <code>jal</code> stessa. Così il codice può essere spostato in memoria senza ricalcolare i salti interni al modulo.
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Linking statico vs dinamico</h3>
+
+    <div class="card-grid cols2">
+      <div class="card amber">
+        <div class="card-title">Collegamento statico</div>
+        <p style="font-size:13px;margin:0">Le librerie vengono incorporate nell'eseguibile al momento del linking. Vantaggio: eseguibile autosufficiente. Svantaggio: file grossi, aggiornare la libreria richiede ricompilare tutto.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Collegamento dinamico (DLL / .so)</div>
+        <p style="font-size:13px;margin:0">Le librerie vengono caricate solo a runtime, al primo utilizzo (<em>lazy binding</em>). La prima chiamata passa per un <strong>dummy stub</strong> che invoca il loader dinamico; le chiamate successive vanno direttamente alla funzione — un salto solo.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 22 ══════════════ -->
+  <section class="section" id="s22">
+    <div class="section-header">
+      <div class="section-num">22</div>
+      <h2>Il Loader e il <span class="accent">binding dinamico</span></h2>
+    </div>
+
+    <p class="lead">Il Loader è un programma del sistema operativo che prende il file eseguibile dal disco e lo prepara per l'esecuzione in memoria centrale. È l'ultimo anello della catena prima che il codice giri davvero sulla CPU.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Le 6 operazioni del loader</h3>
+
+    <div class="card-grid cols2">
+      <div class="card blue" style="grid-column:span 2">
+        <div class="card-title" style="margin-bottom:10px">Sequenza di caricamento</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">1</div>
+            <p style="font-size:13px;margin:0">Legge l'intestazione del file ELF per determinare le dimensioni del segmento testo e dati.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">2</div>
+            <p style="font-size:13px;margin:0">Riserva uno spazio in RAM sufficiente a contenere codice, dati statici, heap e stack.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">3</div>
+            <p style="font-size:13px;margin:0">Copia il segmento testo (codice) dal disco alla RAM nello spazio riservato.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">4</div>
+            <p style="font-size:13px;margin:0">Copia nello stack i parametri passati al <code>main</code> (il famoso <code>argc</code> e <code>argv</code>).</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">5</div>
+            <p style="font-size:13px;margin:0">Inizializza tutti i registri: imposta SP (stack pointer), GP (global pointer), PC (program counter), e azzera i registri temporanei.</p>
+          </div>
+          <div style="display:flex;gap:10px;align-items:flex-start">
+            <div style="width:24px;height:24px;border-radius:50%;background:rgba(91,156,246,.3);border:1px solid rgba(91,156,246,.6);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">6</div>
+            <p style="font-size:13px;margin:0">Salta a una procedura di startup che copia i parametri dallo stack ai registri <code>a0</code>/<code>a1</code> e poi invoca <code>main</code>.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Binding: quando si assegnano gli indirizzi?</h3>
+
+    <p>Il <strong>binding</strong> è il momento in cui un nome simbolico (es. la variabile <code>x</code> o la funzione <code>printf</code>) viene associato a un indirizzo fisico di memoria. Esistono varie scelte:</p>
+
+    <table>
+      <tr><th>Momento del binding</th><th>Chi lo fa</th><th>Vantaggi / Svantaggi</th></tr>
+      <tr><td>Al momento della scrittura del codice</td><td>Programmatore</td><td class="t-red">Rigidissimo — indirizzi hardcoded nel sorgente</td></tr>
+      <tr><td>Al momento della compilazione</td><td>Compilatore</td><td class="t-amber">Più flessibile ma ancora statico</td></tr>
+      <tr><td>Al momento del linking</td><td>Linker</td><td class="t-amber">Statico — librerie incorporate nell'eseguibile</td></tr>
+      <tr><td>Al momento del caricamento</td><td>Loader</td><td class="t-green">Rilocazione al load time — programma spostabile</td></tr>
+      <tr><td>Al momento dell'esecuzione</td><td>OS + registro base</td><td class="t-green">Massima flessibilità — DLL, shared libraries</td></tr>
+    </table>
+
+    <h3 style="font-size:16px;font-weight:500;margin:20px 0 12px">Come funziona il linking dinamico lazy</h3>
+
+    <p>La prima volta che il programma chiama <code>printf</code>, invece di saltare direttamente alla funzione salta a uno <strong>stub dummy</strong> che invoca il loader dinamico del sistema operativo. Il loader trova <code>printf</code> nella libreria <code>libc.so</code>, la mappa in memoria e sovrascrive l'indirizzo nello stub. Dalla seconda chiamata in poi il salto va direttamente a <code>printf</code> — nessun overhead aggiuntivo:</p>
+
+    <div class="card-grid cols2">
+      <div class="card red">
+        <div class="card-title">Prima chiamata a printf</div>
+        <p style="font-size:13px;margin:0">
+          1. <code>jal ra, printf@plt</code> → stub<br>
+          2. Stub invoca il loader dinamico (OS)<br>
+          3. Loader mappa <code>printf</code> in memoria<br>
+          4. Aggiorna l'indirizzo nello stub<br>
+          5. Salta a <code>printf</code> — esegue normalmente
+        </p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Chiamate successive</div>
+        <p style="font-size:13px;margin:0">
+          1. <code>jal ra, printf@plt</code> → stub<br>
+          2. Stub ora punta direttamente a <code>printf</code><br>
+          3. Salta a <code>printf</code> — <strong>un salto solo</strong><br><br>
+          Overhead = 1 salto indiretto extra, trascurabile.
+        </p>
+      </div>
+    </div>
+
+    <div class="callout amber" style="margin-top:16px">
+      <strong>PLT = Procedure Linkage Table:</strong> la tabella di stub usata per il lazy binding. Ogni funzione di libreria dinamica ha la sua voce nella PLT. Puoi vederla nel disassembly come <code>printf@plt</code> — è il "trampolino" verso la funzione reale.
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

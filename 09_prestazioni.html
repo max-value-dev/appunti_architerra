@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Prestazioni e Clock</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s38">
+    <div class="nav-dot"></div> Metriche Base
+    <span class="nav-num">38</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s39">
+    <div class="nav-dot"></div> Esercizi sul Clock
+    <span class="nav-num">39</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s40">
+    <div class="nav-dot"></div> MIPS e MFLOPS
+    <span class="nav-num">40</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s41">
+    <div class="nav-dot"></div> Grandezze e Prefissi
+    <span class="nav-num">41</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s42">
+    <div class="nav-dot"></div> Mbit vs MB
+    <span class="nav-num">42</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 09 — PRESTAZIONI E CLOCK</div>
+    <h1>Misurare la CPU<br><em>Oltre la Frequenza</em></h1>
+    <p>Come calcolare le vere prestazioni di un processore usando frequenza, CPI, e numero di istruzioni.</p>
+  </div>
+
+  <section class="section" id="s38">
+    <div class="section-header">
+      <div class="section-num">38</div>
+      <h2>Il Falso Mito della <span class="accent">Frequenza</span></h2>
+    </div>
+
+    <p class="lead">Il punto che confonde più spesso chi studia le prestazioni di una CPU è questo: <strong>la frequenza NON indica quante istruzioni al secondo fa la CPU</strong>. La frequenza indica solo quanti "battiti" (cicli di clock) il processore compie in un secondo.</p>
+
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px; border-left:4px solid var(--red); margin-bottom:32px;">
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">
+        Non significa automaticamente che a 4 GHz esegui 4 miliardi di istruzioni al secondo, perché ogni istruzione può richiedere più o meno cicli! Una CPU con frequenza (GHz) più alta non è automaticamente più veloce rispetto a un'altra CPU: potrebbe avere un CPI pessimo (ogni istruzione spreca molti cicli) o dover eseguire un numero esagerato di istruzioni per fare la stessa cosa.
+      </p>
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <!-- N e CPI -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">1. Istruzioni (N) e Cicli (CPI)</h4>
+        <ul style="font-size:13px; color:var(--text); line-height:1.5; padding-left:16px; margin:0;">
+          <li style="margin-bottom:8px;"><strong>Numero di Istruzioni (N):</strong> È il totale delle istruzioni del tuo programma. Se <code>N = 100</code>, il tuo programma ha 100 istruzioni.</li>
+          <li><strong>CPI (Cicli per Istruzione):</strong> Quanti "battiti" (cicli) servono <em>in media</em> per eseguire una singola istruzione. Se <code>CPI = 2</code>, ogni istruzione consuma 2 cicli.</li>
+        </ul>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; margin-top:12px; font-family:'DM Mono',monospace; color:var(--accent); font-size:13px; text-align:center;">
+          Cicli Totali = N &times; CPI
+        </div>
+      </div>
+
+      <!-- Frequenza e Periodo -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">2. Frequenza (f) e Periodo (T_clock)</h4>
+        <ul style="font-size:13px; color:var(--text); line-height:1.5; padding-left:16px; margin:0;">
+          <li style="margin-bottom:8px;"><strong>Frequenza (f):</strong> Quanti cicli il processore fa in un secondo. Es. <code>4 GHz = 4&times;10⁹ cicli/s</code>.</li>
+          <li><strong>Periodo (T<sub>clock</sub>):</strong> È il contrario della frequenza (<code>1/f</code>), e dice quanto dura un singolo ciclo. Se <code>f = 1 GHz</code>, allora <code>T<sub>clock</sub> = 1 ns</code> (un nanosecondo).</li>
+        </ul>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; margin-top:12px; font-family:'DM Mono',monospace; color:var(--accent); font-size:13px; text-align:center;">
+          T<sub>clock</sub> = 1 / f
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s39">
+    <div class="section-header">
+      <div class="section-num">39</div>
+      <h2>La Formula <span class="accent">Suprema</span></h2>
+    </div>
+
+    <p class="lead">Ora uniamo tutto per capire come calcolare il tempo di esecuzione di un programma.</p>
+
+    <div class="callout purple" style="margin-bottom:24px;">
+      <strong>Il Tempo di Esecuzione (T)</strong><br>
+      Il programma ha <strong>N</strong> istruzioni, ognuna richiede in media <strong>CPI</strong> cicli. Quindi fa <code>N &times; CPI</code> cicli totali.<br>
+      Se la CPU riesce a fare <strong>f</strong> cicli in un solo secondo, il tempo totale richiesto per eseguire il programma è:
+      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center;">
+        T = (N &times; CPI) / f
+      </div>
+      Oppure, usando il periodo (visto che <code>1/f = T<sub>clock</sub></code>), la formula alternativa identica è: 
+      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center;">
+        T = N &times; CPI &times; T<sub>clock</sub>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="s40">
+    <div class="section-header">
+      <div class="section-num">40</div>
+      <h2>Istruzioni al Secondo: <span class="accent">MIPS e MFLOPS</span></h2>
+    </div>
+
+    <p class="lead">Spesso si cerca un modo facile per dire quante istruzioni la CPU "digerisce" al secondo. Da qui nascono due unità di misura molto popolari: MIPS e MFLOPS.</p>
+
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      <!-- MIPS -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">MIPS</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;"><strong>Millions of Instructions Per Second.</strong> Misura quante istruzioni generiche vengono eseguite in un secondo. Dato che <em>Istruzioni/sec = f / CPI</em>, la formula per ottenere i MIPS è:</p>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; font-family:'DM Mono',monospace; color:var(--green); font-size:13px; text-align:center;">
+          MIPS = f / (CPI &times; 10⁶)<br>oppure<br>MIPS = N / (T &times; 10⁶)
+        </div>
+      </div>
+
+      <!-- MFLOPS -->
+      <div class="card" style="border-left:4px solid var(--red);">
+        <h4 style="font-size:16px; color:var(--red); margin-bottom:12px;">MFLOPS</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;"><strong>Millions of Floating-Point Operations Per Second.</strong> A differenza dei MIPS, i MFLOPS contano <strong>solo</strong> le operazioni matematiche complesse in virgola mobile.</p>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; font-family:'DM Mono',monospace; color:var(--red); font-size:13px; text-align:center;">
+          MFLOPS = (Operazioni FP) / (T &times; 10⁶)
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.5; margin-top:8px;">Es: Se il 40% delle <code>N</code> istruzioni sono calcoli floating-point, <code>Op. FP = 0.40 &times; N</code>.</p>
+      </div>
+    </div>
+
+    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:16px; border-left:4px solid var(--accent); margin-bottom:32px;">
+      <strong style="color:var(--accent); font-size:15px; display:block; margin-bottom:8px;">Riassunto Super Importante</strong>
+      <table style="width:100%; font-size:13px; color:var(--text); text-align:left; border-collapse:collapse;">
+        <tr style="border-bottom:1px solid var(--border);"><th style="padding:8px; color:var(--muted);">Grandezza</th><th style="padding:8px; color:var(--muted);">Significato</th></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace; width:80px;">N</td><td style="padding:8px;">Numero totale di istruzioni del programma</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">CPI</td><td style="padding:8px;">Cicli necessari in media per una singola istruzione</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">f</td><td style="padding:8px;">Cicli eseguiti al secondo (Frequenza)</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">T<sub>clock</sub></td><td style="padding:8px;">Durata temporale di un singolo ciclo</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">T</td><td style="padding:8px;">Tempo totale di esecuzione in secondi</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">MIPS</td><td style="padding:8px;">Milioni di istruzioni al secondo</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">MFLOPS</td><td style="padding:8px;">Milioni di operazioni in virgola mobile al secondo</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="section" id="s41">
+    <div class="section-header">
+      <div class="section-num">41</div>
+      <h2>Grandezze e Prefissi: <span class="accent">Kilo, Mega, Giga</span></h2>
+    </div>
+
+    <p class="lead">Prima di fare qualsiasi calcolo di memoria o rete, devi dominare i prefissi delle grandezze. Attenzione: esiste una differenza tra il mondo decimale e quello binario.</p>
+
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:24px;">
+      <table style="width:100%; text-align:left; border-collapse:collapse;">
+        <thead>
+          <tr style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Prefisso</th>
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Simbolo</th>
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Potenza</th>
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Valore Decimale</th>
+          </tr>
+        </thead>
+        <tbody style="font-size:14px; color:var(--text); font-family:'DM Mono',monospace;">
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 16px;">kilo</td>
+            <td style="padding:12px 16px; color:var(--blue);">k / K</td>
+            <td style="padding:12px 16px;">10³</td>
+            <td style="padding:12px 16px;">1.000</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 16px;">mega</td>
+            <td style="padding:12px 16px; color:var(--green);">M</td>
+            <td style="padding:12px 16px;">10⁶</td>
+            <td style="padding:12px 16px;">1.000.000</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 16px;">giga</td>
+            <td style="padding:12px 16px; color:var(--amber);">G</td>
+            <td style="padding:12px 16px;">10⁹</td>
+            <td style="padding:12px 16px;">1.000.000.000</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 16px;">tera</td>
+            <td style="padding:12px 16px; color:var(--purple);">T</td>
+            <td style="padding:12px 16px;">10¹²</td>
+            <td style="padding:12px 16px;">1.000.000.000.000</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 16px;">peta</td>
+            <td style="padding:12px 16px; color:var(--red);">P</td>
+            <td style="padding:12px 16px;">10¹⁵</td>
+            <td style="padding:12px 16px;">1.000.000.000.000.000</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">La Grande Confusione: Decimale vs Binario</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:16px;">
+      Storicamente, l'informatica ha "rubato" i prefissi decimali (Kilo = 1.000) per usarli in ambito binario (Kilo = 1.024, perché 2<sup>10</sup> è la potenza di due più vicina a 1000). Questo ha creato caos: quando compri un disco da "1 Terabyte", il produttore calcola 10<sup>12</sup> byte (sistema decimale). Ma il computer, lavorando in base 2, ne conta molti meno (circa 0.9 TiB).
+      <br><br>Per risolvere questa confusione, sono stati introdotti i <strong>Prefissi Binari (KiB, MiB, GiB...)</strong> che tolgono ogni ambiguità.
+    </p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <!-- Sistema Decimale (KB) -->
+      <div class="card" style="border-top: 4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:8px;">Sistema Decimale (KB, MB)</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Basato sulle potenze di 10. Si usa <strong>sempre</strong> per misurare le velocità di rete (Mbit/s), le frequenze (GHz) o per vendere hard disk commerciali.</p>
+        <ul style="font-size:13px; color:var(--text); padding-left:16px; margin:0; line-height:1.6;">
+          <li><strong>KB</strong> (Kilobyte) = 10<sup>3</sup> = 1.000 B</li>
+          <li><strong>MB</strong> (Megabyte) = 10<sup>6</sup> = 1.000.000 B</li>
+          <li><strong>GB</strong> (Gigabyte) = 10<sup>9</sup> = 1.000.000.000 B</li>
+          <li><strong>TB</strong> (Terabyte) = 10<sup>12</sup> B</li>
+          <li><strong>PB</strong> (Petabyte) = 10<sup>15</sup> B</li>
+        </ul>
+      </div>
+
+      <!-- Sistema Binario (KiB) -->
+      <div class="card" style="border-top: 4px solid var(--purple);">
+        <h4 style="font-size:16px; color:var(--purple); margin-bottom:8px;">Sistema Binario (KiB, MiB)</h4>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Basato sulle potenze di 2. Si usa per misurare la <strong>RAM</strong>, la grandezza dei file nel computer (es. Windows) o lo spazio reale allocabile in memoria.</p>
+        <ul style="font-size:13px; color:var(--text); padding-left:16px; margin:0; line-height:1.6;">
+          <li><strong>KiB</strong> (Kibibyte) = 2<sup>10</sup> = 1.024 B</li>
+          <li><strong>MiB</strong> (Mebibyte) = 2<sup>20</sup> = 1.048.576 B</li>
+          <li><strong>GiB</strong> (Gibibyte) = 2<sup>30</sup> = 1.073.741.824 B</li>
+          <li><strong>TiB</strong> (Tebibyte) = 2<sup>40</sup> B</li>
+          <li><strong>PiB</strong> (Pebibyte) = 2<sup>50</sup> B</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout amber" style="margin-bottom:32px;">
+      <strong>Attenzione agli esercizi:</strong><br>
+      Molti professori usano ancora la vecchia notazione abusata, scrivendo <code>KB</code> per intendere <code>1024 Byte</code>. Controlla sempre il contesto! Regola d'oro:
+      <ul style="margin:8px 0 0 0; padding-left:20px;">
+        <li>Se si parla di <strong>Memoria RAM, Cache o Dimensione File</strong>, la CPU ragiona a fette di bit, quindi si usa la base 2 (1024).</li>
+        <li>Se si parla di <strong>Rete o Frequenza di Clock</strong>, il cavo o il quarzo "pulsano" elettricamente, quindi si usa la base 10.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="section" id="s42">
+    <div class="section-header">
+      <div class="section-num">42</div>
+      <h2>I/O e Rete: <span class="accent">Mbit vs MB</span></h2>
+    </div>
+
+    <p class="lead">C'è una differenza monumentale, spesso sottovalutata, tra la <strong>b minuscola (bit)</strong> e la <strong>B maiuscola (Byte)</strong>. Un errore qui fa sballare i calcoli di 8 volte!</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <!-- Bit vs Byte -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">La regola fondamentale</h4>
+        <ul style="font-size:14px; color:var(--text); line-height:1.5; padding-left:16px; margin:0;">
+          <li style="margin-bottom:12px;"><strong>Il bit (b minuscola):</strong> È l'unità più piccola dell'informatica. Può valere solo 0 oppure 1.</li>
+          <li><strong>Il Byte (B maiuscola):</strong> È il classico "cassetto" di memoria, ed è formato esattamente da <strong>8 bit</strong>.</li>
+        </ul>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; margin-top:16px; font-family:'DM Mono',monospace; color:var(--accent); font-size:14px; text-align:center;">
+          1 B = 8 b
+        </div>
+      </div>
+
+      <!-- Mbit vs MB -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">Attenzione alle velocità di rete</h4>
+        <ul style="font-size:14px; color:var(--text); line-height:1.5; padding-left:16px; margin:0;">
+          <li style="margin-bottom:8px;"><strong>100 Mbit/s</strong> = 100 <em>Megabit</em> al secondo.</li>
+          <li><strong>100 MB/s</strong> = 100 <em>Megabyte</em> al secondo.</li>
+        </ul>
+        <p style="font-size:13px; color:var(--muted); margin:12px 0 0;">Dato che ogni Byte sono 8 bit, una rete da 100 MB/s in realtà viaggia a <strong>800 Mbit/s</strong>! Cioè è 8 volte più veloce di una rete da 100 Mbit/s.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">Esercizio pratico: Il Frame Buffer</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:16px;">Il <strong>frame buffer</strong> è una speciale zona di memoria che contiene la fotografia esatta dell'immagine da proiettare sullo schermo. Per <em>ogni</em> singolo pixel dello schermo, il frame buffer deve memorizzare le sue informazioni di colore.</p>
+    
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:24px; margin-bottom:32px;">
+      <h4 style="color:var(--text); margin-bottom:12px; font-size:16px;">1. Calcolo del Frame Buffer in Byte</h4>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Se lo schermo ha risoluzione <code>1280 &times; 1024</code>, e ogni pixel ha 3 componenti (Rosso, Verde, Blu) da 8 bit l'una:</p>
+      <ul style="font-size:13px; color:var(--text); line-height:1.6; padding-left:16px; margin-bottom:12px;">
+        <li>Dimensione di un pixel: <code>8 + 8 + 8 = 24 bit</code></li>
+        <li>In byte (dividendo per 8): <code>24 bit = 3 Byte</code></li>
+        <li>Dimensione totale (pixel &times; 3 Byte): <code>1280 &times; 1024 &times; 3 = 3.932.160 Byte</code></li>
+      </ul>
+
+      <h4 style="color:var(--text); margin-top:24px; margin-bottom:12px; font-size:16px;">2. Trasferimento sulla Rete (Il trucco dei Mbit)</h4>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Immagina di dover trasferire questo frame buffer in rete. L'esercizio ti dice che la rete viaggia a <strong>100 Mbit/s</strong>. Dato che la velocità è in <em>bit</em>, devi convertire obbligatoriamente il frame buffer prima di fare la divisione!</p>
+      <ol style="font-size:13px; color:var(--text); line-height:1.6; padding-left:20px;">
+        <li style="margin-bottom:8px;">Converti i Byte in bit moltiplicando per 8: <code style="color:var(--green)">3.932.160 Byte &times; 8 = 31.457.280 bit</code></li>
+        <li>Calcola il tempo dividendo per la velocità di rete: <code style="color:var(--amber)">31.457.280 bit / (100 &times; 10⁶ bit/s) &approx; 0.314 secondi</code></li>
+      </ol>
+      <div style="margin-top:16px; padding:12px; background:rgba(255,100,100,0.1); border-left:3px solid var(--red); border-radius:4px;">
+        <p style="font-size:13px; margin:0; color:var(--text);"><strong>Se non avessi moltiplicato per 8</strong>, avresti diviso erroneamente <em>Byte</em> per <em>bit</em>, ottenendo un risultato completamente sballato. La regola d'oro è: <strong>uniformare sempre le unità di misura prima di dividere!</strong></p>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

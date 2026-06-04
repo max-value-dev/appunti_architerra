@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Procedure e Convenzioni</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="03_procedure.html#s6">
+    <div class="nav-dot"></div> Chiamata di funzione
+    <span class="nav-num">06</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 03 — PROCEDURE</div>
+    <h1>Procedure e Stack Frame<br><em>Controllo del flusso e Convenzioni</em></h1>
+    <p>Salti condizionati e incondizionati, la convenzione dei registri caller-saved e callee-saved, lo stack in RAM, il record di attivazione e le 7 fasi di invocazione.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 6 ══════════════ -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2>Chiamata di <span class="accent">funzione e Stack</span></h2>
+    </div>
+
+    <p class="lead">Ogni chiamata a funzione costruisce uno "stack frame" in RAM. Lo stack cresce verso indirizzi bassi: SP diminuisce quando si aggiunge roba, aumenta quando si libera.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:28px 0 12px">L'Enigma della RAM: Stack e Heap</h3>
+    <p>Perché l'area dello Stack "cresce" numericamente verso il basso, mentre tutto il resto della RAM (Heap, Dati, Codice) cresce verso l'alto? Questa dinamica dipende dalle modalità opposte con cui i due spazi vengono gestiti e letti:</p>
+    
+    <div class="card-grid cols2" style="margin-bottom:24px">
+      <div class="card amber">
+        <div class="card-title">L'Heap (La Discarica Dinamica)</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          L'Heap è uno spazio non strutturato che usi quando chiami <code>malloc()</code> o <code>new</code>. Quando chiedi spazio, il Sistema Operativo cerca il primo buco libero procedendo <strong>verso l'alto</strong> (indirizzi crescenti).
+          <br><br>
+          <em>Perché verso l'alto?</em> Perché quando allochi un array nell'Heap, l'hardware impone (regola Little-Endian) che il byte 0 debba stare all'indirizzo più basso, e i byte successivi ad indirizzi via via crescenti.
+        </p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Lo Stack (La Pila LIFO)</div>
+        <p style="font-size:13px;margin:5px 0 0;line-height:1.5">
+          Lo Stack obbedisce rigorosamente alla regola <strong>LIFO</strong> (Last In, First Out). La CPU ha bisogno che il "fondo" della pila (la prima cosa inserita) non venga mai spostato. L'unico posto sicuro per piantare le fondamenta del fondo è il <strong>tetto massimo della RAM</strong> (es. 0xFFFFFFFF).
+          <br><br>
+          Da lì, impilando oggetti uno sopra l'altro, lo spazio può solo crescere scendendo <strong>verso il basso</strong> (verso indirizzi numericamente più piccoli).
+        </p>
+      </div>
+    </div>
+
+    <div id="stk-wrap">
+      <div class="stk-layout">
+        <!-- Stack visual -->
+        <div class="stk-col">
+          <div class="stk-col-title">Stack (RAM)</div>
+          <div class="stk-addr-hi">0x1018 ↑ indirizzi alti</div>
+          <div class="stk-cells" id="stk-cells"></div>
+          <div class="stk-addr-lo">↓ indirizzi bassi</div>
+          <div class="stk-ptrs" id="stk-ptrs"></div>
+        </div>
+        <!-- Info panel -->
+        <div class="info-col">
+          <div class="stk-dots" id="stk-dots"></div>
+          <div class="step-badge" id="stk-badge"></div>
+          <div class="step-title" id="stk-title"></div>
+          <div class="step-body" id="stk-body"></div>
+          <div class="stk-asm" id="stk-asm"></div>
+          <div class="stk-ctrls">
+            <button class="stk-btn" id="stk-prev" onclick="stkPrev()">← Indietro</button>
+            <button class="stk-btn s-primary" id="stk-next" onclick="stkNext()">Avanti →</button>
+            <button class="stk-btn" onclick="stkGoto(0)">Ricomincia</button>
+          </div>
+          <div class="stk-legend">
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(245,166,35,.15);border-color:rgba(245,166,35,.4)"></div>ra salvato</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(167,139,250,.13);border-color:rgba(167,139,250,.35)"></div>s0 salvato</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:rgba(91,156,246,.13);border-color:rgba(91,156,246,.35)"></div>variabile locale</div>
+            <div class="stk-leg"><div class="stk-lbox" style="background:var(--surface3);border-color:var(--border2)"></div>frame chiamante</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      var STEPS = [
+        {
+          badge:'Situazione iniziale', badgeColor:'#888',
+          title:'Lo stack prima della chiamata',
+          body:'Il programma <strong>chiamante</strong> (es. main) sta girando normalmente. Lo stack contiene il suo frame. SP punta alla cima. FP punta alla base del frame corrente.<br><br>Tra poco chiamerà la funzione <code>somma(a0, a1)</code>.',
+          asm:'<span style="color:var(--dim)"># main sta girando...</span>\n<span style="color:var(--dim)"># SP = 0x1000, FP = 0x1000</span>\n<span style="color:var(--dim)"># a0 = 5,  a1 = 3  (argomenti pronti)</span>',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame', sp:false, fp:false}
+          ],
+          sp:'0x1000', fp:'0x1000'
+        },
+        {
+          badge:'Passo 1 · Prologo', badgeColor:'#185FA5',
+          title:'addi sp, sp, -16 — alloca il frame',
+          body:'La prima cosa che fa <code>somma</code> è <strong>decrementare SP di 16</strong> (4 word × 4 byte). Questo "prenota" spazio in RAM per salvare i registri. I byte ci sono già ma non hanno ancora un valore significativo — li riempiremo nei passi successivi.',
+          asm:'<span class="hl">addi sp, sp, -16</span>   <span style="color:var(--dim)"># SP: 0x1000 → 0x0FF0</span>\nsw   ra, 12(sp)\nsw   s0,  8(sp)\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'(vuoto)',        addr:'0x0FF0', cls:'c-ra',    dim:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 2 · Prologo', badgeColor:'#185FA5',
+          title:'sw ra, 12(sp) — salva il return address',
+          body:'<code>ra</code> contiene l\'indirizzo a cui tornare nel main dopo che <code>somma</code> finisce. <strong>Dobbiamo salvarlo</strong> perché se somma chiama un\'altra funzione con <code>jal</code>, <code>ra</code> verrebbe sovrascritto e perderemmo il filo per tornare al main.',
+          asm:'addi sp, sp, -16\n<span class="hl">sw   ra, 12(sp)</span>   <span style="color:var(--dim)"># Mem[0x0FF0+12] = ra = 0x80</span>\nsw   s0,  8(sp)\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra',    new:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 3 · Prologo', badgeColor:'#185FA5',
+          title:'sw s0, 8(sp) — salva il registro s0',
+          body:'<code>s0</code> è un registro "saved" — il chiamante (main) si aspetta di trovarlo intatto dopo il ritorno. Se <code>somma</code> lo usa, deve salvarlo prima e ripristinarlo dopo. Lo scriviamo in RAM all\'indirizzo <code>sp+8 = 0x0FF8</code>.',
+          asm:'addi sp, sp, -16\nsw   ra, 12(sp)\n<span class="hl">sw   s0,  8(sp)</span>   <span style="color:var(--dim)"># Mem[0x0FF0+8] = s0</span>\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(vuoto)',        addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(vuoto)',        addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'s0 salvato',    addr:'0x0FF4', cls:'c-s0',    new:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 4 · Corpo', badgeColor:'#3B6D11',
+          title:'Corpo della funzione — usa i registri liberamente',
+          body:'Ora <code>somma</code> fa il suo lavoro: usa <code>a0</code>, <code>a1</code>, <code>s0</code>, ecc. Può anche allocare variabili locali ulteriori decrementando ancora SP. Il frame è "congelato" — FP resta a 0x1000, SP può muoversi.',
+          asm:'...\nadd  s0, a0, a1   <span style="color:var(--dim)"># s0 = a + b</span>\n<span class="hl">addi s0, s0, 2    <span style="color:var(--dim)"># s0 = a+b+2  (corpo)</span></span>\naddi a0, s0, 0   <span style="color:var(--dim)"># a0 = risultato</span>\n...',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'locale rst',    addr:'0x0FFC', cls:'c-local', new:true},
+            {label:'locale tmp',    addr:'0x0FF8', cls:'c-local', new:true},
+            {label:'s0 salvato',    addr:'0x0FF4', cls:'c-s0'},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FE8', fp:'0x1000'
+        },
+        {
+          badge:'Passo 5 · Epilogo', badgeColor:'#BA7517',
+          title:'lw s0, 8(sp) — ripristina s0',
+          body:'La funzione ha finito. Ora deve <strong>ripristinare tutto</strong> com\'era. Prima ricarica <code>s0</code> dal suo posto nello stack. Il main ritroverà s0 esattamente con il valore che aveva prima della chiamata — come promesso dalla convenzione.',
+          asm:'...\n<span class="hl">lw   s0,  8(sp)</span>   <span style="color:var(--dim)"># s0 ← Mem[0x0FF4]</span>\nlw   ra, 12(sp)\naddi sp, sp, 16\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(liberato)',     addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(liberato)',     addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'s0 ← riprist.', addr:'0x0FF4', cls:'c-s0',    new:true},
+            {label:'ra = 0x80',     addr:'0x0FF0', cls:'c-ra'},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 6 · Epilogo', badgeColor:'#BA7517',
+          title:'lw ra, 12(sp) — ripristina ra',
+          body:'Ricarica il return address originale del main. Ora <code>ra</code> punta di nuovo all\'istruzione del main da eseguire dopo la call. Senza questo passo, <code>ret</code> salterebbe all\'indirizzo sbagliato.',
+          asm:'...\nlw   s0,  8(sp)\n<span class="hl">lw   ra, 12(sp)</span>   <span style="color:var(--dim)"># ra ← 0x80 (main)</span>\naddi sp, sp, 16\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+            {label:'(liberato)',     addr:'0x0FFC', cls:'c-local', dim:true},
+            {label:'(liberato)',     addr:'0x0FF8', cls:'c-local', dim:true},
+            {label:'(letto)',        addr:'0x0FF4', cls:'c-s0',    dim:true},
+            {label:'ra ← riprist.', addr:'0x0FF0', cls:'c-ra',    new:true},
+          ],
+          sp:'0x0FF0', fp:'0x1000'
+        },
+        {
+          badge:'Passo 7 · Epilogo', badgeColor:'#BA7517',
+          title:'addi sp, sp, 16 — dealloca il frame',
+          body:'SP torna a 0x1000: il frame di <code>somma</code> è "deallocato". I dati fisici in RAM ci sono ancora, ma non appartengono più a nessuno — verranno sovrascritti dalle prossime chiamate. Basta spostare SP.',
+          asm:'...\nlw   ra, 12(sp)\n<span class="hl">addi sp, sp, 16</span>   <span style="color:var(--dim)"># SP: 0x0FF0 → 0x1000</span>\nret',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+          ],
+          sp:'0x1000', fp:'0x1000'
+        },
+        {
+          badge:'Passo 8 · Ritorno', badgeColor:'#A32D2D',
+          title:'ret — torna al chiamante',
+          body:'<code>ret</code> è la pseudoistruzione per <code>jalr x0, 0(ra)</code>: salta all\'indirizzo in <code>ra</code>. Il main riprende dall\'istruzione successiva alla <code>jal somma</code>, e trova <code>a0</code> con il risultato e <code>s0</code> intatto. <strong>Lo stack è esattamente come prima!</strong>',
+          asm:'...\naddi sp, sp, 16\n<span class="hl">ret</span>   <span style="color:var(--dim)"># jalr x0, 0(ra) → salta a 0x80 (main)</span>',
+          cells:[
+            {label:'frame main',    addr:'0x1018–0x1000', cls:'caller-frame'},
+          ],
+          sp:'0x1000', fp:'0x1000'
+        }
+      ];
+
+      var cur = 0;
+
+      function render(idx, direction) {
+        var s = STEPS[idx];
+        var dd = document.getElementById('stk-dots');
+        dd.innerHTML = '';
+        STEPS.forEach(function(_, i) {
+          var d = document.createElement('div');
+          d.className = 'stk-dot' + (i < idx ? ' d-done' : i === idx ? ' d-active' : '');
+          d.onclick = (function(ii){ return function(){ stkGoto(ii); }; })(i);
+          dd.appendChild(d);
+        });
+        var b = document.getElementById('stk-badge');
+        b.textContent = s.badge;
+        b.style.background = s.badgeColor + '22';
+        b.style.color = s.badgeColor;
+        b.style.border = '1px solid ' + s.badgeColor + '55';
+        document.getElementById('stk-title').innerHTML = s.title;
+        document.getElementById('stk-body').innerHTML  = s.body;
+        document.getElementById('stk-asm').innerHTML   = s.asm;
+        var cc = document.getElementById('stk-cells');
+        cc.innerHTML = '';
+        s.cells.forEach(function(c) {
+          var el = document.createElement('div');
+          el.className = 'stk-cell ' + (c.cls||'') + (c.new?' entering':'') + (c.dim?' ':'');
+          if (c.dim) el.style.opacity = '.4';
+          el.innerHTML = '<span class="sc-name">' + c.label + '</span><span class="sc-addr">' + c.addr + '</span>';
+          cc.appendChild(el);
+        });
+        var pp = document.getElementById('stk-ptrs');
+        pp.innerHTML =
+          '<div class="stk-ptr p-sp"><span>SP</span><b>' + s.sp + '</b></div>' +
+          '<div class="stk-ptr p-fp"><span>FP</span><b>' + s.fp + '</b></div>';
+        document.getElementById('stk-prev').disabled = idx === 0;
+        var nb = document.getElementById('stk-next');
+        nb.disabled = idx === STEPS.length - 1;
+        nb.textContent = idx === STEPS.length - 1 ? 'Fine ✓' : 'Avanti →';
+      }
+
+      window.stkNext = function() { if (cur < STEPS.length-1) { cur++; render(cur,'fwd'); } };
+      window.stkPrev = function() { if (cur > 0)              { cur--; render(cur,'bck'); } };
+      window.stkGoto = function(i) { cur = i; render(cur,'fwd'); };
+
+      render(0);
+    })();
+    </script>
+
+    <div class="callout red" style="margin-top:20px">
+      <strong>Funzione leaf (foglia):</strong> se una funzione non chiama nessun'altra funzione, non sovrascrive mai <code>ra</code> da sola. Quindi non deve salvarlo. Se usa solo registri <code>t</code>, non salva nulla in RAM — zero accessi, massima velocità.
+    </div>
+  </section>
+
+  </main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

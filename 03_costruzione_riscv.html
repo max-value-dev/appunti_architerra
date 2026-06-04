@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Costruzione RISC V</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Carousel CSS */
+    .carousel-wrapper {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 32px 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .carousel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .carousel-title {
+      font-family: 'DM Mono', monospace;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--accent);
+      margin: 0;
+    }
+    .carousel-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .carousel-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .carousel-btn:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .carousel-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .carousel-indicator {
+      font-family: 'DM Mono', monospace;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .carousel-slides-container {
+      display: flex;
+      transition: transform 0.4s ease-in-out;
+      width: 600%; /* 6 slides */
+    }
+    .carousel-slide {
+      width: 16.666%; /* 100% / 6 */
+      padding: 24px;
+      display: flex;
+      gap: 24px;
+      align-items: stretch;
+    }
+    .carousel-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .carousel-image {
+      flex: 2;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .carousel-image img {
+      width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+    }
+    @media (max-width: 768px) {
+      .carousel-slide { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="03_costruzione_riscv.html#s27">
+    <div class="nav-dot"></div> Il Ciclo FDE
+    <span class="nav-num">27</span>
+  </a>
+  <a class="nav-item" href="03_costruzione_riscv.html#s28">
+    <div class="nav-dot"></div> La Gestione del Tempo
+    <span class="nav-num">28</span>
+  </a>
+  <a class="nav-item" href="03_costruzione_riscv.html#s29">
+    <div class="nav-dot"></div> Elementi Fondamentali
+    <span class="nav-num">29</span>
+  </a>
+  <a class="nav-item" href="03_costruzione_riscv.html#s30">
+    <div class="nav-dot"></div> I Datapath Completi
+    <span class="nav-num">30</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 07 — COSTRUZIONE RISC V</div>
+    <h1>L'Architettura del Tempo<br><em>Costruzione della CPU</em></h1>
+    <p>Le regole inflessibili su come il computer gestisce il tempo per evitare che i dati si accavallino o si corrompano, e gli elementi logici fondamentali per far scorrere il programma.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 27 ══════════════ -->
+  <section class="section" id="s27">
+    <div class="section-header">
+      <div class="section-num">27</div>
+      <h2>Il Ciclo <span class="accent">Fetch, Decode, Execute</span></h2>
+    </div>
+
+    <p class="lead">Ogni processore, dal più semplice microcontrollore al più potente Apple Silicon, esiste per fare una sola cosa: eseguire all'infinito un balletto diviso in tre movimenti (il Ciclo Macchina).</p>
+
+    <div class="card-grid cols3" style="margin-bottom:24px;">
+      <div class="card blue" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; color:var(--blue); margin-bottom:12px;">1. Fetch (Recupero)</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0;">La CPU guarda il <strong>Program Counter (PC)</strong> per sapere qual è l'indirizzo della prossima riga di codice da eseguire. Viaggia verso la <strong>Memoria Istruzioni</strong> a quell'indirizzo esatto e "pesca" (recupera) la parola a 32 bit che rappresenta l'istruzione in linguaggio macchina.</p>
+      </div>
+      <div class="card amber" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; color:var(--amber); margin-bottom:12px;">2. Decode (Decodifica)</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Quei 32 bit vengono dati in pasto all'Unità di Controllo, che funge da traduttore. Li "fa a fette" per estrarre l'Opcode (cosa fare) e gli indirizzi dei registri coinvolti. Subito dopo, la CPU si affaccia sul <strong>Register File</strong> per leggere i dati contenuti in quei registri.</p>
+      </div>
+      <div class="card green" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; color:var(--green); margin-bottom:12px;">3. Execute (Esecuzione)</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Con i dati e l'istruzione pronti, entra in scena l'azione reale: la <strong>ALU</strong> esegue il calcolo matematico, la <strong>Memoria Dati</strong> viene eventualmente aggiornata (se è una Store) o letta (se è una Load), e il risultato viene infine archiviato nel registro di destinazione.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 28 ══════════════ -->
+  <section class="section" id="s28">
+    <div class="section-header">
+      <div class="section-num">28</div>
+      <h2>La Gestione <span class="accent">del Tempo</span></h2>
+    </div>
+
+    <p class="lead">Per far funzionare il ciclo Fetch-Decode-Execute senza che l'elettricità si accavalli, serve una rigida "Costituzione". Questo testo definisce le regole assolute per la gestione del tempo in una CPU moderna.</p>
+
+    <div class="card-grid cols1" style="gap:24px; margin-bottom:32px;">
+      
+      <!-- Regola 1 -->
+      <div class="card" style="border-left: 4px solid var(--blue);">
+        <h3 style="font-size:18px; color:var(--blue); margin-bottom:8px; font-weight:600;">1. Il Metronomo e la Macchina Fotografica (Edge-Triggered)</h3>
+        <div class="callout" style="background:rgba(255,255,255,0.02); border-left-color:var(--muted); margin:12px 0; font-style:italic; font-size:13px;">
+          "Temporizzazione sensibile ai fronti (edge-triggered): [...] tutti i cambiamenti di stato avvengono su un fronte del segnale di clock"
+        </div>
+        <p style="font-size:14px; margin:0; line-height:1.6; color:var(--text);">Nei sistemi sincroni, il Clock non è un interruttore che "accende" e "spegne" la CPU. È più simile al flash di una macchina fotografica. La tecnica <strong>edge-triggered</strong> (sensibile al fronte) significa che la memoria (i registri, i Flip-Flop) ignora tutto ciò che succede per il 99,9% del tempo. Accetta di memorizzare un nuovo dato <strong>solo ed esclusivamente nell'istante infinitesimale in cui il segnale di clock scatta verso l'alto</strong> (fronte di salita). Nel resto del tempo, i registri sono chiusi a chiave.</p>
+      </div>
+
+      <!-- Regola 2 -->
+      <div class="card" style="border-left: 4px solid var(--amber);">
+        <h3 style="font-size:18px; color:var(--amber); margin-bottom:8px; font-weight:600;">2. La Regola della Posa (Dato stabile)</h3>
+        <div class="callout" style="background:rgba(255,255,255,0.02); border-left-color:var(--muted); margin:12px 0; font-style:italic; font-size:13px;">
+          "Gli ingressi a un elemento di stato devono raggiungere un valore stabile prima che il fronte attivo del clock provochi l’aggiornamento"
+        </div>
+        <p style="font-size:14px; margin:0; line-height:1.6; color:var(--text);">Siccome il registro scatta la fotografia in un nanosecondo esatto (il fronte di salita), tutto deve essere pronto <em>prima</em> di quel momento. I segnali elettrici ci mettono un po' di tempo a viaggiare nei fili e ad attraversare le porte logiche (si creano dei picchi e delle fluttuazioni di corrente). Se il fronte di clock arriva mentre il segnale elettrico sta ancora "ballando" tra 0 e 1, il registro memorizzerà un dato corrotto. La regola è: <strong>quando arriva il fronte di salita, il dato deve essere già fermo e stabile sulla porta d'ingresso.</strong></p>
+      </div>
+
+      <!-- Regola 3 -->
+      <div class="card" style="border-left: 4px solid var(--purple);">
+        <h3 style="font-size:18px; color:var(--purple); margin-bottom:8px; font-weight:600;">3. La Magia: Leggere e Scrivere nello stesso momento</h3>
+        <div class="callout" style="background:rgba(255,255,255,0.02); border-left-color:var(--muted); margin:12px 0; font-style:italic; font-size:13px;">
+          "La metodologia sensibile ai fronti permette di leggere e scrivere un elemento di stato nello stesso ciclo di clock"
+        </div>
+        <p style="font-size:14px; margin-bottom:12px; line-height:1.6; color:var(--text);">Questo è il vero superpotere spiegato nel testo, e si ricollega esattamente a quello che ci dicevamo prima sui Multiplexer! Immagina l'istruzione: <code>ADD x1, x1, x2</code> (Prendi x1, sommaci x2, e salva il risultato <em>di nuovo</em> in x1). Come fa la CPU a leggere da x1 e sovrascrivere x1 nello stesso ciclo senza far esplodere tutto?</p>
+        <ol style="font-size:14px; margin:0; padding-left:20px; line-height:1.6; color:var(--text)">
+          <li style="margin-bottom:8px;"><strong>La Lettura è asincrona (continua):</strong> All'inizio del ciclo di clock, i MUX "leggono" il vecchio valore di <code>x1</code> istantaneamente e lo mandano alla calcolatrice (ALU).</li>
+          <li style="margin-bottom:8px;"><strong>Il Calcolo prende tempo:</strong> La calcolatrice fa la somma. I segnali elettrici viaggiano e il nuovo risultato arriva davanti alla porta d'ingresso del registro <code>x1</code>.</li>
+          <li><strong>La Scrittura è istantanea (fronte di salita):</strong> Alla fine del ciclo, arriva il "flash" del clock. Solo in quel preciso istante il registro <code>x1</code> si apre e memorizza il nuovo risultato.</li>
+        </ol>
+        <div style="margin-top:16px; padding:12px; background:rgba(255,255,255,0.03); border-radius:6px; border-left:2px solid var(--purple);">
+          <p style="font-size:13px; margin:0; color:var(--text); font-weight:500;">Visto che la scrittura avviene solo in quell'istante finale, il vecchio dato ha avuto tutto il tempo di essere letto e usato in sicurezza durante il ciclo.</p>
+        </div>
+      </div>
+
+      <!-- Regola 4 -->
+      <div class="card" style="border-left: 4px solid var(--red);">
+        <h3 style="font-size:18px; color:var(--red); margin-bottom:8px; font-weight:600;">4. Il Limite di Velocità (La durata del ciclo)</h3>
+        <div class="callout" style="background:rgba(255,255,255,0.02); border-left-color:var(--muted); margin:12px 0; font-style:italic; font-size:13px;">
+          "Il ciclo di clock deve avere una durata sufficiente a garantire che gli ingressi siano stabili quando arriva il fronte attivo"
+        </div>
+        <p style="font-size:14px; margin:0; line-height:1.6; color:var(--text);">Questa riga spiega <strong>perché non possiamo avere processori a 100 GHz</strong>. La durata di un ciclo di clock (la distanza tra due "flash") deve essere per forza <strong>più lunga del percorso più lento all'interno della CPU</strong>. Se l'elettricità ci mette 2 nanosecondi per uscire dal registro, attraversare i MUX, farsi sommare dalla ALU e tornare all'ingresso del registro, il ciclo di clock <strong>deve</strong> durare almeno 2 nanosecondi. Se facessi battere il clock più velocemente (es. ogni 1 nanosecondo), il registro scatterebbe la "fotografia" quando l'elettricità è ancora a metà strada, memorizzando spazzatura.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 29 ══════════════ -->
+  <section class="section" id="s29">
+    <div class="section-header">
+      <div class="section-num">29</div>
+      <h2>Elementi <span class="accent">Fondamentali</span></h2>
+    </div>
+
+    <p class="lead">Per costruire materialmente le basi di questa autostrada di dati (il Datapath), la CPU fa affidamento su tre componenti essenziali che gestiscono le primissime fasi del ciclo.</p>
+
+    <div class="card-grid cols3" style="margin-bottom:24px;">
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--text);">1. Program Counter (PC)</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height:1.5;">È il "dito che segue la riga" nel libro. Il PC è un registro speciale a 32 bit che memorizza l'<strong>indirizzo</strong> dell'istruzione che la CPU deve eseguire. Ad ogni colpo di clock (fronte di salita), il PC si aggiorna istantaneamente per puntare alla riga di codice successiva o a un salto.</p>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--text);">2. Memoria Istruzioni</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height:1.5;">È la cassaforte dove risiede il tuo programma compilato. Riceve in ingresso in modo continuo l'indirizzo proveniente dal Program Counter e "sputa" fuori sul bus i 32 bit di quell'istruzione, pronti per essere passati all'Unità di Controllo per la decodifica.</p>
+      </div>
+
+      <div class="card" style="display:flex; flex-direction:column;">
+        <h3 style="font-size:16px; font-weight:600; margin-bottom:12px; color:var(--text);">3. L'Adder (Sommatore)</h3>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height:1.5;">È una minuscola calcolatrice specializzata. A differenza della mastodontica ALU che può fare di tutto, l'Adder fa una sola cosa: l'addizione pura. Il suo scopo principale è calcolare all'istante l'indirizzo della prossima istruzione (facendo <code>PC + 4</code>) senza sprecare il prezioso tempo dell'ALU.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">Approfondimento: Dove vivono fisicamente le istruzioni?</h3>
+    <p style="font-size:14px; line-height:1.6; color:var(--text);">Sappiamo che le istruzioni di un programma risiedono nella famosa sezione <strong>.text</strong>. Ma attenzione: dire <code>.text</code> non significa automaticamente dire "RAM"! Il termine <code>.text</code> indica semplicemente <em>la porzione del programma che contiene le istruzioni macchina</em>. Il flusso logico è sempre lo stesso:</p>
+    
+    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:12px; text-align:center; font-family:'DM Mono',monospace; color:var(--accent); margin-bottom:16px;">
+      PC &rarr; Instruction Memory &rarr; Istruzione &rarr; Control Unit / Datapath
+    </div>
+    
+    <p style="font-size:14px; line-height:1.6; color:var(--text); margin-bottom:24px;">Il <strong>PC</strong> fornisce l'indirizzo (es. <code>0x00000000</code> per l'istruzione 0, <code>0x00000004</code> per l'istruzione 1, e così via). La <strong>Instruction Memory</strong> prende quell'indirizzo e restituisce l'istruzione corrispondente. Ma dove si trova fisicamente questa memoria? Tutto dipende dall'architettura del sistema:</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">Architettura Harvard</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5;">Nell'architettura Harvard, istruzioni e dati sono tenuti rigorosamente separati in <strong>due memorie fisicamente distinte</strong>. Il processore ha due percorsi isolati: uno per leggere la <code>.text</code> (Instruction Memory) e uno per la lettura/scrittura di variabili e stack (Data Memory).<br><br>
+        Il Datapath del RISC-V che vedi negli schemi seguenti è disegnato esattamente così: a sinistra c'è la memoria istruzioni, a destra la memoria dati. È un approccio molto usato a scopo didattico e nei microcontrollori perché evita "ingorghi", permettendo di leggere un'istruzione e accedere a un dato in memoria contemporaneamente e in modo ordinato.</p>
+      </div>
+      <div class="card" style="border-left:4px solid var(--purple);">
+        <h4 style="font-size:16px; color:var(--purple); margin-bottom:12px;">Architettura Von Neumann</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5;">Nei computer "normali" si usa l'architettura Von Neumann, dove <strong>istruzioni e dati coabitano nella stessa immensa RAM</strong>. L'unica memoria principale contiene sia la sezione <code>.text</code> che le sezioni dei dati (<code>.data</code>, stack, heap).<br><br>
+        Quando avvii un programma dal disco, il sistema operativo lo carica in RAM, marcando la porzione <code>.text</code> come <em>"read-only ed executable"</em> per evitare modifiche accidentali. Di conseguenza, il processore leggerà sia le istruzioni col PC, sia le variabili con la ALU, attingendo dallo stesso blocco di RAM principale.</p>
+      </div>
+    </div>
+
+    <div class="callout amber" style="margin-top:24px;">
+      <strong>Il caso specifico del tuo Circuito Hardware</strong><br>
+      Nel circuito logico reale che hai costruito, l'Instruction Memory è fisicamente composta da <strong>4 chip EEPROM</strong> indipendenti. Perché quattro? Perché una singola EEPROM restituisce solo 8 bit di dati alla volta. Poiché un'istruzione RISC-V è lunga 32 bit, hai dovuto affiancare 4 EEPROM (<code>4 chip &times; 8 bit = 32 bit</code>) per comporre la parola intera ad ogni colpo di clock!<br>
+      (EEPROM 1 = bit 0-7, EEPROM 2 = bit 8-15, ecc).
+      <br><br>
+      <strong>In conclusione:</strong> La <em>Instruction Memory</em> è il componente logico da cui il PC legge la sezione <code>.text</code>. In un'architettura Harvard (o nel tuo circuito didattico) è una memoria fisicamente separata (es. ROM/EEPROM); in un'architettura Von Neumann (come un PC moderno), istruzioni e dati condividono la stessa RAM fisica.
+    </div>
+
+  </section>
+
+  <!-- ══════════════ SEZIONE 30 ══════════════ -->
+  <section class="section" id="s30">
+    <div class="section-header">
+      <div class="section-num">30</div>
+      <h2>I Datapath <span class="accent">Completi</span></h2>
+    </div>
+
+    <p class="lead">Uniamo i pezzi e guardiamo come l'elettricità attraversa la CPU durante l'esecuzione: dall'avanzamento del PC fino ai percorsi seguiti per i calcoli, le letture in memoria (Load) e i salti (Branch).</p>
+
+    <div class="carousel-wrapper">
+      <div class="carousel-header">
+        <h3 class="carousel-title" id="carouselTitle">1. L'Avanzamento del PC</h3>
+        <div class="carousel-controls">
+          <button class="carousel-btn" id="prevBtn" disabled>&#8592; Indietro</button>
+          <span class="carousel-indicator" id="carouselIndicator">1 / 4</span>
+          <button class="carousel-btn" id="nextBtn">Avanti &#8594;</button>
+        </div>
+      </div>
+      <div class="carousel-slides-container" id="slidesContainer">
+        
+        <!-- Slide 1: PC -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--blue); font-size:18px; margin-bottom:12px;">Fase 1: Avanzamento del Program Counter</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:12px; line-height:1.5;">Il primissimo blocco di ogni ciclo è identico per qualsiasi istruzione: bisogna capire quale riga di codice eseguire.</p>
+            <ul style="font-size:13px; color:var(--text); padding-left:16px; margin:0; line-height:1.5;">
+              <li style="margin-bottom:8px;">Il <strong>Program Counter (PC)</strong> invia l'indirizzo attuale alla <em>Instruction Memory</em> (Memoria Istruzioni) per estrarre la parola a 32 bit dell'istruzione.</li>
+              <li style="margin-bottom:8px;">Contemporaneamente, l'indirizzo sale verso un <strong>Sommatore Dedicato (Adder)</strong> che esegue un'unica operazione hardware fissa: <code>PC + 4</code>.</li>
+              <li>Il nuovo indirizzo (successivo) generato dal sommatore torna all'ingresso del registro PC, mettendosi in attesa del prossimo fronte di salita del clock per aggiornarsi (a meno che un salto non decida diversamente!).</li>
+            </ul>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/circuito-PC.png" alt="Circuito Program Counter">
+          </div>
+        </div>
+
+        <!-- Slide 2: R-Type -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--green); font-size:18px; margin-bottom:12px;">Fase 2: Istruzioni Tipo R (Aritmetica)</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:6px; line-height:1.4; font-weight:600;"><code>add <span style="color:var(--green)">rd</span>, <span style="color:var(--blue)">rs1</span>, <span style="color:var(--amber)">rs2</span></code> (Calcoli tra registri)</p>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px; font-style:italic;">"Esegui l'operazione matematica tra <span style="color:var(--blue)">rs1</span> e <span style="color:var(--amber)">rs2</span> e salva il risultato in <span style="color:var(--green)">rd</span>".</p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--blue);">
+                <strong style="color:var(--text); font-size:13px;">1. Fetch & Decode</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Il <strong>PC</strong> estrae l'istruzione. L'Unità di Controllo attiva la lettura simultanea dei sorgenti <code style="color:var(--blue)">rs1</code> e <code style="color:var(--amber)">rs2</code> dal Register File.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">2. Esecuzione (ALU)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">I due valori entrano nell'ALU. L'Unità di Controllo (<code>ALUOp = 10</code>) comanda all'ALU di effettuare l'operazione richiesta.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--purple);">
+                <strong style="color:var(--text); font-size:13px;">3. Percorso di ritorno</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Il risultato calcolato bypassa la RAM (non necessaria in R-Type) e si dirige verso l'ingresso <em>Dato da scrivere</em>.</span>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:rgba(255,100,100,0.1); border-radius:6px; border:1px solid rgba(255,100,100,0.2);">
+              <strong style="color:var(--red); font-size:13px; display:block;">Al fronte di salita del clock:</strong>
+              <span style="font-size:12px; color:var(--text);">Con <strong>RegWrite = 1</strong>, il Register File si aggiorna sovrascrivendo il registro destinazione <code style="color:var(--green)">rd</code> col nuovo valore!</span>
+            </div>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/datapath-R.png" alt="Datapath R-Type">
+          </div>
+        </div>
+
+        <!-- Slide 3: I-Type (Load) -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--amber); font-size:18px; margin-bottom:12px;">Fase 3: Istruzione lw (Load)</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:6px; line-height:1.4; font-weight:600;"><code>lw <span style="color:var(--green)">x1</span>, offset(<span style="color:var(--blue)">x2</span>)</code> (Dalla RAM al Registro)</p>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px; font-style:italic;">"Prendi il valore in <span style="color:var(--blue)">x2</span>, sommaci l'offset, leggi il dato in RAM e salvalo in <span style="color:var(--green)">x1</span>".</p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--blue);">
+                <strong style="color:var(--text); font-size:13px;">1. Lettura registro base</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'indirizzo di <code style="color:var(--blue)">x2</code> entra nel <em>Registro 1</em> ed esce il <em>Dato letto 1</em>.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">2. Generazione offset</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'Imm Gen estende a 32 bit i 12 bit dell'immediato.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">3. Calcolo indirizzo (ALU)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Valore <code style="color:var(--blue)">x2</code> + offset = <em>Indirizzo del dato in RAM</em>.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--purple);">
+                <strong style="color:var(--text); font-size:13px;">4. Lettura RAM e Preparazione</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'indirizzo entra nella Data Memory (<code>MemRead = 1</code>). Il <em>Dato letto</em> viaggia fino al <em>Dato da scrivere</em> del Register File. <code style="color:var(--green)">x1</code> attende in ingresso.</span>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:rgba(255,100,100,0.1); border-radius:6px; border:1px solid rgba(255,100,100,0.2);">
+              <strong style="color:var(--red); font-size:13px; display:block;">Al fronte di salita del clock:</strong>
+              <span style="font-size:12px; color:var(--text);">Poiché l'Unità di Controllo ha impostato <strong>RegWrite = 1</strong>, il dato dalla RAM viene scritto dentro <code style="color:var(--green)">x1</code>.</span>
+            </div>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/datapath-I.png" alt="Datapath I-Type Load">
+          </div>
+        </div>
+
+        <!-- Slide 4: S-Type (Store) -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--amber); font-size:18px; margin-bottom:12px;">Fase 4: Istruzione sw (Store)</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:6px; line-height:1.4; font-weight:600;"><code>sw <span style="color:var(--green)">x1</span>, offset(<span style="color:var(--blue)">x2</span>)</code> (Dal Registro alla RAM)</p>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px; font-style:italic;">"Prendi il valore in <span style="color:var(--green)">x1</span> e scrivilo nella RAM, all'indirizzo <span style="color:var(--blue)">x2</span> + offset".</p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--blue);">
+                <strong style="color:var(--text); font-size:13px;">1. Lettura in parallelo</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Base <code style="color:var(--blue)">x2</code> entra nel <em>Registro 1</em>. Dato da salvare <code style="color:var(--green)">x1</code> entra nel <em>Registro 2</em> ed esce su <em>Dato letto 2</em>.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">2. Offset & ALU</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Si genera l'offset a 32 bit e l'ALU lo somma a <code style="color:var(--blue)">x2</code> calcolando la destinazione.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--purple);">
+                <strong style="color:var(--text); font-size:13px;">3. Inscatolamento del dato</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'indirizzo ALU va in <em>Indirizzo dato</em> RAM. Il valore <code style="color:var(--green)">x1</code> va in <strong>Dato scritto</strong> RAM. (<code>MemWrite = 1</code>).</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--muted);">
+                <strong style="color:var(--text); font-size:13px;">4. Nel Register File</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Niente! La store non modifica i registri (<code>RegWrite = 0</code>).</span>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:rgba(255,100,100,0.1); border-radius:6px; border:1px solid rgba(255,100,100,0.2);">
+              <strong style="color:var(--red); font-size:13px; display:block;">Al fronte di salita del clock:</strong>
+              <span style="font-size:12px; color:var(--text);">La RAM vede MemWrite attivo e memorizza definitivamente il valore di <code style="color:var(--green)">x1</code>.</span>
+            </div>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/datapath-I.png" alt="Datapath I-Type e S-Type">
+          </div>
+        </div>
+
+        <!-- Slide 5: SB-Type (Branch) -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--purple); font-size:18px; margin-bottom:12px;">Fase 5: Istruzioni di Salto (Branch)</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:6px; line-height:1.4; font-weight:600;"><code>beq <span style="color:var(--blue)">rs1</span>, <span style="color:var(--green)">rs2</span>, offset</code> (Branch if Equal)</p>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px; font-style:italic;">"Se il valore in <span style="color:var(--blue)">rs1</span> è uguale a <span style="color:var(--green)">rs2</span>, salta all'indirizzo calcolato, altrimenti prosegui".</p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--blue);">
+                <strong style="color:var(--text); font-size:13px;">1. Fetch & Decode</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Il <strong>PC</strong> estrae l'istruzione e l'Adder calcola provvisoriamente <code>PC + 4</code>. I registri da confrontare vengono letti simultaneamente.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">2. Binario 1 (Target Adder)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'offset viene espanso dall'Imm Gen, moltiplicato per 2 e sommato al PC iniziale, calcolando l'<em>Indirizzo di salto</em>.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--purple);">
+                <strong style="color:var(--text); font-size:13px;">3. Binario 2 (La Verifica)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">L'ALU esegue la sottrazione tra <code style="color:var(--blue)">rs1</code> e <code style="color:var(--green)">rs2</code>. Se la differenza è 0, accende elettricamente il <strong>Flag Zero</strong>.</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--green);">
+                <strong style="color:var(--text); font-size:13px;">4. La Scelta (Porta AND)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Se siamo in una beq (<code>Branch=1</code>) E i registri sono uguali (<code>Zero=1</code>), la porta AND spara 1 al Multiplexer.</span>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:rgba(255,100,100,0.1); border-radius:6px; border:1px solid rgba(255,100,100,0.2);">
+              <strong style="color:var(--red); font-size:13px; display:block;">Al fronte di salita del clock:</strong>
+              <span style="font-size:12px; color:var(--text);">Il PC ignora il PC+4 provvisorio e memorizza definitivamente il nuovo <strong>Indirizzo di salto</strong>!</span>
+            </div>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/datapath-SB.png" alt="Datapath SB-Type Branch">
+          </div>
+        </div>
+
+        <!-- Slide 6: Datapath Completo -->
+        <div class="carousel-slide">
+          <div class="carousel-text">
+            <h4 style="color:var(--blue); font-size:18px; margin-bottom:12px;">Fase 6: Il Datapath Completo</h4>
+            <p style="font-size:14px; color:var(--text); margin-bottom:6px; line-height:1.4; font-weight:600;">L'Unione di Tutti i Circuiti</p>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px; font-style:italic;">"I circuiti visti finora coesistono. È la Control Unit (il Regista) che posiziona gli scambi giusti sui Multiplexer."</p>
+            
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--blue);">
+                <strong style="color:var(--text); font-size:13px;">ALUSrc (Ingresso ALU)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Questo Multiplexer decide il 2° operando dell'ALU: passa il registro <code>rs2</code> (per R-Type/Branch) oppure la costante dell'Imm Gen (per Load/Store).</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--amber);">
+                <strong style="color:var(--text); font-size:13px;">MemtoReg (Verso il Register File)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">Decide cosa salvare in <code>rd</code>: il risultato matematico dell'ALU (per R-Type) o il dato appena estratto dalla RAM (per Load).</span>
+              </div>
+              <div style="background:rgba(255,255,255,0.03); padding:8px 12px; border-radius:6px; border-left:3px solid var(--purple);">
+                <strong style="color:var(--text); font-size:13px;">Controllo ALU (a 2 livelli)</strong>
+                <span style="font-size:12px; color:var(--muted); display:block;">La Control Unit invia <code>ALUOp</code> (2 bit) per dire "somma sempre", "sottrai sempre" o "guarda i funct". Il piccolo controllore ALU esegue.</span>
+              </div>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:rgba(255,100,100,0.1); border-radius:6px; border:1px solid rgba(255,100,100,0.2);">
+              <strong style="color:var(--red); font-size:13px; display:block;">La magia del Clock (Il Tic Finale):</strong>
+              <span style="font-size:12px; color:var(--text);">La corrente scorre ovunque, ma i dati non si sovrascrivono per caso. Solo se la Control Unit attiva <code>RegWrite</code> o <code>MemWrite</code> i dati vengono salvati definitivamente sul fronte di salita!</span>
+            </div>
+          </div>
+          <div class="carousel-image">
+            <img src="assets/risc-V/datapath-completo.png" alt="Datapath Completo">
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- S31: Il Controllo della ALU -->
+  <section id="s31" class="section-card fade-in">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">⚙️ Il Controllo della ALU a Due Livelli</h2>
+        <span class="badge">S31</span>
+      </div>
+      <div class="card-body">
+        <p class="lead" style="margin-bottom: 24px;">Il controllo della ALU è organizzato a <strong>due livelli</strong> per rendere il circuito più semplice e modulare.</p>
+        
+        <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:32px;">
+          
+          <div style="flex: 1 1 300px;">
+            <div class="card-content" style="background: var(--surface); padding: 20px; border-radius: 12px; margin-bottom: 16px; border-left: 4px solid var(--blue);">
+              <h3 style="color:var(--text); font-size: 18px; margin-bottom: 12px;">1. I 4 bit di comando (L'obiettivo)</h3>
+              <p style="color:var(--muted); font-size: 14px; margin-bottom: 12px;">La ALU riceve un segnale fisso a <strong>4 bit</strong> (<em>Operazione ALU</em>) che accende fisicamente il circuito interno:</p>
+              <ul style="font-size:14px; color:var(--text); padding-left: 20px; margin:0;">
+                <li><code>0000</code>: esegue un <strong>AND</strong> logico.</li>
+                <li><code>0001</code>: esegue un <strong>OR</strong> logico.</li>
+                <li><code>0010</code>: esegue una <strong>somma</strong> (add).</li>
+                <li><code>0110</code>: esegue una <strong>sottrazione</strong> (sub).</li>
+              </ul>
+            </div>
+
+            <div class="card-content" style="background: var(--surface); padding: 20px; border-radius: 12px; border-left: 4px solid var(--purple);">
+              <h3 style="color:var(--text); font-size: 18px; margin-bottom: 12px;">2. Il controllo a due livelli</h3>
+              <p style="color:var(--muted); font-size: 14px; margin-bottom: 12px;">Invece di generare questi 4 bit dalla Control Unit principale, si usa un piccolo <strong>Controllore ALU</strong> che riceve informazioni da due fonti:</p>
+              <ol style="font-size:14px; color:var(--text); padding-left: 20px; margin:0;">
+                <li style="margin-bottom:6px;"><strong>Dall'Unità di Controllo principale:</strong> riceve un segnale di soli 2 bit chiamato <code>ALUOp</code>.</li>
+                <li><strong>Dall'istruzione stessa:</strong> va a leggere i bit dei campi <code>funct3</code> (bit 14-12) e <code>funct7</code> (bit 30) dell'istruzione in corso.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div style="flex: 1 1 300px;">
+            <div class="card-content" style="background: var(--surface); padding: 20px; border-radius: 12px; height: 100%; border-left: 4px solid var(--amber);">
+              <h3 style="color:var(--text); font-size: 18px; margin-bottom: 12px;">3. Come funziona il segnale ALUOp (I 2 bit magici)</h3>
+              <p style="color:var(--muted); font-size: 14px; margin-bottom: 12px;">L'Unità di Controllo principale dà una prima "macro-indicazione" tramite i 2 bit di <code>ALUOp</code> basandosi solo sull'Opcode:</p>
+              <ul style="font-size:14px; color:var(--text); padding-left: 20px; margin:0;">
+                <li style="margin-bottom:12px;">
+                  <strong style="color:var(--amber);">ALUOp = 00:</strong> <em>"Fai una somma"</em>.<br>
+                  <span style="color:var(--muted); font-size:13px;">Usato per Load e Store, dove bisogna sommare Registro + Offset. I bit funct vengono ignorati. L'uscita è <code>0010</code>.</span>
+                </li>
+                <li style="margin-bottom:12px;">
+                  <strong style="color:var(--amber);">ALUOp = 01:</strong> <em>"Fai una sottrazione"</em>.<br>
+                  <span style="color:var(--muted); font-size:13px;">Usato per Branch if Equal (beq), dove il confronto avviene per sottrazione. I bit funct vengono ignorati. L'uscita è <code>0110</code>.</span>
+                </li>
+                <li>
+                  <strong style="color:var(--amber);">ALUOp = 10:</strong> <em>"Guarda l'istruzione!"</em>.<br>
+                  <span style="color:var(--muted); font-size:13px;">Usato per il Tipo R (add, sub, and, or). Il controllore ALU deve esaminare <code>funct3</code> e <code>funct7</code> per tradurli nei famosi 4 bit finali.</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+        
+        <div style="text-align:center; margin-bottom:24px;">
+          <img src="assets/risc-V/control_unit.png" alt="ALU Control Unit e Tabella Verità" style="max-width: 100%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- S32: La Control Unit -->
+  <section id="s32" class="section-card fade-in">
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">🧠 La Control Unit Principale</h2>
+        <span class="badge">S32</span>
+      </div>
+      <div class="card-body">
+        <p class="lead">Il "Regista" della CPU: come il processore decide quali percorsi attivare leggendo i 7 bit dell'Opcode.</p>
+
+        <div class="card-grid" style="grid-template-columns: 1fr; margin-bottom:24px;">
+          <div class="card-content" style="background: var(--surface); padding: 24px; border-radius: 12px;">
+            <h3 style="color:var(--blue); font-size: 20px; margin-bottom: 16px;">1. I 9 Segnali di Controllo</h3>
+            <p style="color:var(--text); line-height: 1.6; margin-bottom: 16px;">
+              Nello schema completo, l'Unità di Controllo deve pilotare esattamente 9 fili elettrici (segnali) per configurare i multiplexer e le memorie.
+            </p>
+            <ul style="color:var(--text); line-height: 1.6; padding-left: 20px; margin-bottom: 0;">
+              <li><strong style="color:var(--purple);">Branch:</strong> Si attiva (1) solo per le istruzioni di salto (come <code>beq</code>).</li>
+              <li><strong style="color:var(--amber);">MemRead / MemWrite:</strong> Dicono alla RAM di aprirsi in lettura (<code>lw</code>) o di scrivere un dato (<code>sw</code>).</li>
+              <li><strong style="color:var(--green);">MemtoReg:</strong> Il multiplexer finale. Se è 1 manda ai registri il dato della RAM (<code>lw</code>); se è 0 manda il risultato della ALU (Tipo R).</li>
+              <li><strong style="color:var(--blue);">ALUOp (2 bit):</strong> Il macro-comando per l'ALU. Dice se sommare, sottrarre o "guardare i bit funct".</li>
+              <li><strong style="color:var(--blue);">ALUSrc:</strong> Decide il secondo operando ALU. Se 0 usa il registro <code>rs2</code> (Tipo R, Branch); se 1 usa la costante immediata (Load, Store).</li>
+              <li><strong style="color:var(--red);">RegWrite:</strong> Autorizza il Register File a salvare un dato nel registro <code>rd</code> al fronte di clock (Tipo R, Load).</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="color:var(--text); font-size: 22px; margin-bottom: 16px;">2. La Tabella di Verità: I 4 Casi Fondamentali</h3>
+        
+        <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+          <!-- Caso 1 -->
+          <div class="card-content" style="border-left: 4px solid var(--green);">
+            <h4 style="color:var(--green); margin-bottom: 8px;">Caso 1: Formato R (add, sub)</h4>
+            <ul style="font-size:14px; color:var(--muted); padding-left: 16px; margin:0; line-height:1.5;">
+              <li><strong>ALUSrc = 0</strong> (usa due registri)</li>
+              <li><strong>MemtoReg = 0</strong> (salva il risultato ALU)</li>
+              <li><strong>RegWrite = 1</strong> (scrivi in <code>rd</code>)</li>
+              <li><strong>MemRead/Write = 0</strong> (RAM spenta)</li>
+              <li><strong>Branch = 0</strong></li>
+              <li><strong>ALUOp = 10</strong> (guarda i bit funct per l'operazione esatta)</li>
+            </ul>
+          </div>
+
+          <!-- Caso 2 -->
+          <div class="card-content" style="border-left: 4px solid var(--amber);">
+            <h4 style="color:var(--amber); margin-bottom: 8px;">Caso 2: Load Word (lw)</h4>
+            <ul style="font-size:14px; color:var(--muted); padding-left: 16px; margin:0; line-height:1.5;">
+              <li><strong>ALUSrc = 1</strong> (usa l'offset per l'indirizzo)</li>
+              <li><strong>MemtoReg = 1</strong> (salva il dato della RAM)</li>
+              <li><strong>RegWrite = 1</strong> (scrivi in <code>rd</code>)</li>
+              <li><strong>MemRead = 1</strong> (leggi la RAM)</li>
+              <li><strong>MemWrite / Branch = 0</strong></li>
+              <li><strong>ALUOp = 00</strong> (somma per calcolare l'indirizzo)</li>
+            </ul>
+          </div>
+
+          <!-- Caso 3 -->
+          <div class="card-content" style="border-left: 4px solid var(--blue);">
+            <h4 style="color:var(--blue); margin-bottom: 8px;">Caso 3: Store Word (sw)</h4>
+            <ul style="font-size:14px; color:var(--muted); padding-left: 16px; margin:0; line-height:1.5;">
+              <li><strong>ALUSrc = 1</strong> (usa l'offset per l'indirizzo)</li>
+              <li><strong>RegWrite = 0</strong> (NON scrivere nei registri)</li>
+              <li><strong>MemtoReg = X</strong> (indifferente, tanto RegWrite è 0)</li>
+              <li><strong>MemWrite = 1</strong> (scrivi nella RAM)</li>
+              <li><strong>MemRead / Branch = 0</strong></li>
+              <li><strong>ALUOp = 00</strong> (somma per calcolare l'indirizzo)</li>
+            </ul>
+          </div>
+
+          <!-- Caso 4 -->
+          <div class="card-content" style="border-left: 4px solid var(--purple);">
+            <h4 style="color:var(--purple); margin-bottom: 8px;">Caso 4: Branch (beq)</h4>
+            <ul style="font-size:14px; color:var(--muted); padding-left: 16px; margin:0; line-height:1.5;">
+              <li><strong>ALUSrc = 0</strong> (confronta due registri)</li>
+              <li><strong>RegWrite = 0</strong> (NON scrivere nei registri)</li>
+              <li><strong>MemtoReg = X</strong> (indifferente)</li>
+              <li><strong>MemRead/Write = 0</strong> (RAM spenta)</li>
+              <li><strong>Branch = 1</strong> (attiva la porta AND col flag Zero)</li>
+              <li><strong>ALUOp = 01</strong> (forza una sottrazione per il confronto)</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+<script>
+  // Logica per il Carousel Datapath
+  const slidesContainer = document.getElementById('slidesContainer');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const indicator = document.getElementById('carouselIndicator');
+  const title = document.getElementById('carouselTitle');
+
+  const titles = [
+    "1. L'Avanzamento del PC",
+    "2. Il Datapath R-Type",
+    "3. Il Datapath I-Type (Load)",
+    "4. Il Datapath S-Type (Store)",
+    "5. Il Datapath SB-Type (Salto)",
+    "6. Il Datapath Completo"
+  ];
+
+  let currentSlide = 0;
+  const totalSlides = 6;
+
+  function updateCarousel() {
+    slidesContainer.style.transform = `translateX(-${currentSlide * 16.666}%)`;
+    indicator.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    title.textContent = titles[currentSlide];
+    
+    prevBtn.disabled = currentSlide === 0;
+    nextBtn.disabled = currentSlide === totalSlides - 1;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (currentSlide < totalSlides - 1) {
+      currentSlide++;
+      updateCarousel();
+    }
+  });
+
+  prevBtn.addEventListener('click', () => {
+    if (currentSlide > 0) {
+      currentSlide--;
+      updateCarousel();
+    }
+  });
+</script>
+</body>
+</html>

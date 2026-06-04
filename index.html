@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V Guide — Dashboard di Apprendimento</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dash-container">
+
+  <!-- DASH HERO -->
+  <div class="dash-hero">
+    <div class="dash-hero-title">RISC-V <em>Fondamentali</em></div>
+    <div class="dash-hero-desc">
+      Una guida interattiva e modulare all'architettura dei calcolatori e al linguaggio assembly RISC-V. Scegli un capitolo o usa la ricerca istantanea per iniziare.
+    </div>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="search-input" class="search-input" placeholder="Cerca istruzioni, concetti, registri o fasi (es: stack, branch, ra)..." oninput="doSearch()">
+  </div>
+
+  <!-- SEARCH RESULTS -->
+  <div id="search-results-box" class="search-results-box">
+    <div class="search-results-title">Risultati di ricerca (<span id="results-count">0</span>)</div>
+    <div id="results-list" class="results-list"></div>
+  </div>
+
+  <!-- CHAPTERS GRID -->
+  <div id="chapters-grid" class="cat-grid">
+
+    <!-- CAPITOLO 1 -->
+    <a href="01_fondamenti.html" class="cat-card c1">
+      <div class="cat-header">
+        <div class="cat-icon">01</div>
+        <div class="cat-badge">Il Grande Viaggio</div>
+      </div>
+      <div class="cat-title">Dalla Cucina all'Hardware</div>
+      <p class="cat-desc">Narrazione completa: ciclo di clock, gerarchia della memoria, architettura 32/64 bit, Little Endian, segmenti RAM e formati delle istruzioni.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Il Motore del Computer <span class="cat-topic-num">S01</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Ciclo e Registri <span class="cat-topic-num">S02</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> L'Organizzazione dello Spazio <span class="cat-topic-num">S03</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> 32/64 bit e Little Endian <span class="cat-topic-num">S04</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Bus e Allineamento <span class="cat-topic-num">S05</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> I Processi nella RAM <span class="cat-topic-num">S06</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Software e Traduzione <span class="cat-topic-num">S07</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Anatomia di un'istruzione <span class="cat-topic-num">S08</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 2 -->
+    <a href="02_circuiti.html" class="cat-card c1">
+      <div class="cat-header">
+        <div class="cat-icon">02</div>
+        <div class="cat-badge">Hardware Logico</div>
+      </div>
+      <div class="cat-title">Circuiti e ALU</div>
+      <p class="cat-desc">Laboratorio interattivo: costruzione dell'ALU a 1 bit, porte logiche, operazione slt e centralina di controllo.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> I Mattoni Logici <span class="cat-topic-num">S23</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Laboratorio ALU <span class="cat-topic-num">S24</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Sottrazione e B-negate <span class="cat-topic-num">S25</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Il magico slt e Overflow <span class="cat-topic-num">S26</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> La Centralina a 4 bit <span class="cat-topic-num">S27</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 3 -->
+    <a href="03_costruzione_riscv.html" class="cat-card c2">
+      <div class="cat-header">
+        <div class="cat-icon">03</div>
+        <div class="cat-badge">Costruzione CPU</div>
+      </div>
+      <div class="cat-title">Costruzione RISC V</div>
+      <p class="cat-desc">Il ciclo Fetch-Decode-Execute, la Costituzione del tempo (edge-triggered) e gli elementi logici fondamentali.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Il Ciclo FDE <span class="cat-topic-num">S27</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> La Gestione del Tempo <span class="cat-topic-num">S28</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Elementi Fondamentali <span class="cat-topic-num">S29</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 4 -->
+    <a href="04_bus.html" class="cat-card c3">
+      <div class="cat-header">
+        <div class="cat-icon">04</div>
+        <div class="cat-badge">Hardware Avanzato</div>
+      </div>
+      <div class="cat-title">Il Bus</div>
+      <p class="cat-desc">Il sistema nervoso centrale: architetture condivise, arbitraggio, e temporizzazione sincrona/asincrona.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Il Sistema dei Bus <span class="cat-topic-num">S33</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 5 -->
+    <a href="05_cache.html" class="cat-card c1">
+      <div class="cat-header">
+        <div class="cat-icon">05</div>
+        <div class="cat-badge">Gerarchia Memoria</div>
+      </div>
+      <div class="cat-title">La Cache</div>
+      <p class="cat-desc">Il principio di località, l'illusione della memoria infinita, hit e miss, e le strategie di archiviazione.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> La Memoria Cache <span class="cat-topic-num">S34</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 6 -->
+    <a href="06_io.html" class="cat-card c2">
+      <div class="cat-header">
+        <div class="cat-icon">06</div>
+        <div class="cat-badge">Periferiche</div>
+      </div>
+      <div class="cat-title">Input / Output</div>
+      <p class="cat-desc">Interfacciamento con il mondo esterno: Polling, Interrupts, DMA e Memory Mapped I/O.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Principi di I/O <span class="cat-topic-num">S35</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 7 -->
+    <a href="07_livello_assembly.html" class="cat-card c5">
+      <div class="cat-header">
+        <div class="cat-icon">07</div>
+        <div class="cat-badge">Codice &rightarrow; Macchina</div>
+      </div>
+      <div class="cat-title">Livello Assembly e Java</div>
+      <p class="cat-desc">Il viaggio del codice: dal C o Java al file eseguibile. Il ruolo di Compilatore, Linker, Loader e della Java Virtual Machine.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> La Sequenza di Traduzione <span class="cat-topic-num">S36</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> La Compilazione JIT <span class="cat-topic-num">S37</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 8 -->
+    <a href="08_manuale_assembly.html" class="cat-card c4">
+      <div class="cat-header">
+        <div class="cat-icon">08</div>
+        <div class="cat-badge">Reference</div>
+      </div>
+      <div class="cat-title">Manuale Pratico Assembly</div>
+      <p class="cat-desc">Riferimento completo: operazioni aritmetiche, istruzioni logiche, salti (branch), gestione RAM e registri caller/callee-saved.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Istruzioni aritmetiche <span class="cat-topic-num">S10</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Accesso alla memoria <span class="cat-topic-num">S11</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Operazioni logiche e shift <span class="cat-topic-num">S12</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Salti e controllo flusso <span class="cat-topic-num">S14</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Procedure e convenzioni <span class="cat-topic-num">S15</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Le 7 fasi di invocazione <span class="cat-topic-num">S16</span></div>
+      </div>
+    </a>
+
+    <!-- CAPITOLO 9 -->
+    <a href="09_prestazioni.html" class="cat-card c1">
+      <div class="cat-header">
+        <div class="cat-icon">09</div>
+        <div class="cat-badge">Prestazioni</div>
+      </div>
+      <div class="cat-title">Prestazioni e Clock</div>
+      <p class="cat-desc">Calcolare le prestazioni della CPU e il trasferimento dati: MIPS, MFLOPS, Cicli, ed esercizi su Mbit/MB.</p>
+      <div class="cat-topics-list">
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Metriche Base <span class="cat-topic-num">S38</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Esercizi sul Clock <span class="cat-topic-num">S39</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> MIPS e MFLOPS <span class="cat-topic-num">S40</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Grandezze e Prefissi <span class="cat-topic-num">S41</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Megabit vs Megabyte <span class="cat-topic-num">S42</span></div>
+      </div>
+    </a>
+
+  </div> <!-- End chapters-grid -->
+
+</div> <!-- End dash-container -->
+
+<script>
+const SECTIONS = [
+  { id: "s1", num: "01", title: "Il Motore del Computer", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "motore computer clock metronomo ghz gigahertz core" },
+  { id: "s2", num: "02", title: "Il Lavoro Quotidiano: Ciclo e Registri", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "lavoro quotidiano ciclo fetch decode execute registri pc mar mdr cir" },
+  { id: "s3", num: "03", title: "L'Organizzazione dello Spazio (Gerarchia Memoria)", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "organizzazione spazio gerarchia memoria cache ram stack heap thrashing risc cisc" },
+  { id: "s4", num: "04", title: "32 vs 64 bit e Little Endian", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "32 64 bit little endian verso stack" },
+  { id: "s5", num: "05", title: "Bus di Sistema e Allineamento", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "bus sistema allineamento address data control" },
+  { id: "s06_f", num: "06", title: "I Processi nella RAM", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "processi ram text data bss heap stack" },
+  { id: "s07_f", num: "07", title: "Software e Traduzione", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "software traduzione compilatore assemblatore linker illusione variabili" },
+  { id: "s08_f", num: "08", title: "Anatomia di un'istruzione a 32 bit", file: "01_fondamenti.html", chapter: "Fondamenti", keywords: "anatomia istruzione formati r i s j limite offset lui addi" },
+  { id: "s10", num: "10", title: "Istruzioni aritmetiche", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "istruzioni aritmetiche add sub addi operandi" },
+  { id: "s11", num: "11", title: "Accesso alla memoria (Load / Store)", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "accesso memoria load store lw sw lh lb sh sb" },
+  { id: "s12", num: "12", title: "Operazioni logiche e shift", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "operazioni logiche shift and or xor sll srl sra visualizer" },
+  { id: "s14", num: "14", title: "Salti e controllo flusso", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "salti controllo flusso branch jal jalr beq bne blt bge" },
+  { id: "s15", num: "15", title: "Procedure e convenzioni registri", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "procedure convenzioni caller-saved callee-saved temporanei" },
+  { id: "s16", num: "16", title: "Le 7 fasi di invocazione", file: "08_manuale_assembly.html", chapter: "Manuale Assembly", keywords: "7 fasi invocazione prologo epilogo chiamante chiamato" },
+  { id: "s23", num: "23", title: "I Mattoni Logici", file: "02_circuiti.html", chapter: "Circuiti e ALU", keywords: "circuiti logici mattoni porte and or xor decoder mux multiplexer" },
+  { id: "s24", num: "24", title: "Gli Addizionatori", file: "02_circuiti.html", chapter: "Circuiti e ALU", keywords: "laboratorio alu interattivo 1 bit calcolatrice carryin carryout" },
+  { id: "s25", num: "25", title: "ALU a 32 bit e Sottrazione", file: "02_circuiti.html", chapter: "Circuiti e ALU", keywords: "sottrazione b-negate complemento due not" },
+  { id: "s26", num: "26", title: "Il magico slt e Overflow", file: "02_circuiti.html", chapter: "Circuiti e ALU", keywords: "slt set less than overflow segno cavo" },
+  { id: "s27_alu", num: "27", title: "La Centralina a 4 Bit", file: "02_circuiti.html", chapter: "Circuiti e ALU", keywords: "centralina 4 bit operation controllo simbolo v" },
+  { id: "s27", num: "27", title: "Il Ciclo FDE", file: "03_costruzione_riscv.html", chapter: "Costruzione RISC V", single: "ciclo fetch decode execute macchina" },
+  { id: "s28", num: "28", title: "La Gestione del Tempo", file: "03_costruzione_riscv.html", chapter: "Costruzione RISC V", single: "tempo edge triggered clock lettura scrittura asincrona" },
+  { id: "s29", num: "29", title: "Elementi Fondamentali", file: "03_costruzione_riscv.html", chapter: "Costruzione RISC V", single: "program counter pc memoria istruzioni adder sommatore" },
+  { id: "s33", num: "33", title: "Il Bus di Sistema", file: "04_bus.html", chapter: "Il Bus", single: "bus indirizzi dati controllo fili condiviso master slave sincrono asincrono arbitraggio" },
+  { id: "s34", num: "34", title: "La Memoria Cache", file: "05_cache.html", chapter: "La Cache", single: "cache memoria gerarchia livello località hit miss" },
+  { id: "s35", num: "35", title: "Input / Output", file: "06_io.html", chapter: "Input/Output", single: "input output periferiche dispositivi i/o interfacce" },
+  { id: "s38", num: "38", title: "Metriche Base", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "frequenza clock prestazioni mito" },
+  { id: "s39", num: "39", title: "Esercizi sul Clock", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "tempo esecuzione formula cpi n f" },
+  { id: "s40", num: "40", title: "MIPS e MFLOPS", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "mips mflops milioni istruzioni floating point operazioni" },
+  { id: "s41", num: "41", title: "Grandezze e Prefissi", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "kilo mega giga tera peta kib mib gib decimale binario" },
+  { id: "s42", num: "42", title: "Megabit vs Megabyte", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "megabit megabyte mbit mb frame buffer rete" }
+];
+
+function doSearch() {
+  const query = document.getElementById('search-input').value.toLowerCase().trim();
+  const resultsBox = document.getElementById('search-results-box');
+  const resultsList = document.getElementById('results-list');
+  const chaptersGrid = document.getElementById('chapters-grid');
+  const countEl = document.getElementById('results-count');
+
+  if (query === '') {
+    resultsBox.style.display = 'none';
+    chaptersGrid.style.display = 'grid';
+    return;
+  }
+
+  const filtered = SECTIONS.filter(s => {
+    return s.title.toLowerCase().includes(query) ||
+           s.chapter.toLowerCase().includes(query) ||
+           s.keywords.toLowerCase().includes(query) ||
+           s.num.includes(query);
+  });
+
+  resultsList.innerHTML = '';
+  countEl.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    resultsList.innerHTML = '<div style="color:var(--muted);font-size:14px;padding:12px 0">Nessun risultato trovato. Prova con altre parole chiave.</div>';
+  } else {
+    filtered.forEach(s => {
+      const item = document.createElement('a');
+      item.className = 'result-item';
+      item.href = s.file + '#' + s.id;
+      item.innerHTML = `
+        <span class="result-chapter-badge">${s.chapter}</span>
+        <strong style="font-size:14px">${s.num}. ${s.title}</strong>
+        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-left:auto">${s.file}</span>
+      `;
+      resultsList.appendChild(item);
+    });
+  }
+
+  resultsBox.style.display = 'block';
+  chaptersGrid.style.display = 'none';
+}
+</script>
+
+</body>
+</html>

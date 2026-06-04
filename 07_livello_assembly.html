@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Livello del Linguaggio Assembly - Architettura dei Calcolatori</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .mermaid {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 48px;
+      display: flex;
+      justify-content: center;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+    }
+    .mermaid svg {
+        max-width: 100%;
+    }
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--background);
+      font-weight: bold;
+      font-size: 16px;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+    .key-term {
+      font-family: var(--font-mono);
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item active" href="07_livello_assembly.html#s1-traduzione">
+    <div class="nav-dot"></div> 1. Sequenza Traduzione
+    <span class="nav-num">I</span>
+  </a>
+  <a class="nav-item" href="07_livello_assembly.html#s2-compilatore">
+    <div class="nav-dot"></div> 2. Il Compilatore
+    <span class="nav-num">II</span>
+  </a>
+  <a class="nav-item" href="07_livello_assembly.html#s3-assembler">
+    <div class="nav-dot"></div> 3. L'Assemblatore
+    <span class="nav-num">III</span>
+  </a>
+  <a class="nav-item" href="07_livello_assembly.html#s4-linker">
+    <div class="nav-dot"></div> 4. Il Linker
+    <span class="nav-num">IV</span>
+  </a>
+  <a class="nav-item" href="07_livello_assembly.html#s5-loader">
+    <div class="nav-dot"></div> 5. Il Loader
+    <span class="nav-num">V</span>
+  </a>
+</nav>
+
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 12</div>
+    <h1>Livello Assembly<br><em>Dall'Alto Livello al Binario</em></h1>
+    <p>Il viaggio del codice: da un linguaggio ad alto livello fino ai bit eseguiti dal processore, passando per la macchina virtuale e la compilazione JIT.</p>
+  </div>>
+
+  <!-- SEZIONE 1 -->
+  <section class="section" id="s1-traduzione" style="background:var(--surface2); border:1px solid var(--border); padding:40px; border-radius:24px;">
+    <div class="section-header" style="align-items:center; margin-bottom:24px;">
+      <div class="section-num" style="background:var(--surface3); color:var(--text); padding:4px 8px; border-radius:4px; padding-top:4px;">1</div>
+      <h2 style="margin:0;">La sequenza di <span class="accent">traduzione</span></h2>
+    </div>
+    <p class="lead">Come fa un programma scritto in <strong>C</strong> (linguaggio ad alto livello, Livello 4) a diventare un insieme di segnali elettrici (Livello 1 / ISA)? È un viaggio a tappe, gestito da diversi programmi che trasformano gradualmente il codice.</p>
+
+    <div class="mermaid">
+flowchart LR
+    A["📄 Sorgente C<br/><small>(Livello 4)</small>"] -->|Compilatore| B["🛠️ Assembly RISC-V<br/><small>(Livello 3)</small>"]
+    B -->|Assembler| C["📦 Modulo Oggetto<br/><small>(Binario Macchina)</small>"]
+    Librerie["📚 Librerie<br/>Esterne"] -->|Linker| D
+    C -->|Linker| D["🚀 Eseguibile<br/><small>(Livello 1)</small>"]
+    D -->|Loader| E["🧠 Memoria RAM<br/><small>(Pronto per la CPU)</small>"]
+
+    style A fill:#4CAF50,stroke:#2E7D32,color:#fff,stroke-width:2px
+    style B fill:#2196F3,stroke:#1565C0,color:#fff,stroke-width:2px
+    style C fill:#FF9800,stroke:#EF6C00,color:#fff,stroke-width:2px
+    style Librerie fill:#9E9E9E,stroke:#424242,color:#fff,stroke-width:2px
+    style D fill:#E91E63,stroke:#C2185B,color:#fff,stroke-width:2px
+    style E fill:#9C27B0,stroke:#6A1B9A,color:#fff,stroke-width:2px
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <a href="#s2-compilatore" class="card" style="border-top:4px solid #2196F3; text-decoration:none; display:block; cursor:pointer;">
+        <h4 style="color:#2196F3; margin:0 0 8px 0;">Il Compilatore</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Legge il tuo codice C e lo trasforma in istruzioni <strong>Assembly RISC-V</strong>, che sono molto più vicine a come "pensa" la macchina hardware.</p>
+      </a>
+      <a href="#s3-assembler" class="card" style="border-top:4px solid #FF9800; text-decoration:none; display:block; cursor:pointer;">
+        <h4 style="color:#FF9800; margin:0 0 8px 0;">L'Assembler</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Prende il testo Assembly e lo converte in un "modulo oggetto": una sequenza di zeri e uni (linguaggio macchina) non ancora eseguibile.</p>
+      </a>
+      <a href="#s4-linker" class="card" style="border-top:4px solid #E91E63; text-decoration:none; display:block; cursor:pointer;">
+        <h4 style="color:#E91E63; margin:0 0 8px 0;">Il Linker</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Cuce assieme il tuo modulo oggetto con le funzioni di libreria già compilate (es. <code>printf</code>), creando l'unico file <strong>Eseguibile</strong>.</p>
+      </a>
+      <a href="#s5-loader" class="card" style="border-top:4px solid #9C27B0; text-decoration:none; display:block; cursor:pointer;">
+        <h4 style="color:#9C27B0; margin:0 0 8px 0;">Il Loader</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Il sistema operativo incarica il Loader di copiare il file eseguibile dal disco fisso direttamente alla <strong>Memoria RAM</strong>, dove sarà letto dalla CPU.</p>
+      </a>
+    </div>
+
+    <!-- Link a Java -->
+    <a href="#extra-java" onclick="document.getElementById('extra-java').open = true;" style="display:flex; align-items:center; justify-content:space-between; background:rgba(0, 150, 136, 0.05); border:1px solid rgba(0, 150, 136, 0.2); border-left:4px solid #009688; padding:16px 20px; border-radius:12px; text-decoration:none; transition:transform 0.2s; margin-bottom:16px;">
+      <div>
+        <h4 style="color:#009688; margin:0 0 4px 0; font-size:16px;">E se usassi Java? (Approfondimento)</h4>
+        <p style="font-size:14px; color:var(--muted); margin:0; line-height:1.5;">Java cambia le regole del gioco ed evita del tutto i problemi di incompatibilità Hardware. Scopri come fa usando una Macchina Virtuale.</p>
+      </div>
+      <span style="color:#009688; font-size:20px; font-weight:bold;">&rarr;</span>
+    </a>
+
+  </section>
+
+  <!-- SEZIONE 2: COMPILATORE E COMPRESSIONE -->
+  <section class="section" style="background:rgba(33, 150, 243, 0.04); border:1px solid rgba(33, 150, 243, 0.15); padding:40px; border-radius:24px;">
+    <details id="s2-compilatore" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#2196F3; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px;">2</div>
+          <h2 style="margin:0;">Il <span style="color:#2196F3;">Compilatore</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+
+    <p class="lead">C'è un dettaglio che spesso spiazza chi studia il RISC-V: se l'autostrada interna del processore (il datapath) è progettata per far viaggiare dati a 32 bit, <strong>perché il compilatore GCC si prende la briga di generare istruzioni grandi la metà (16 bit)?</strong></p>
+
+    <!-- INTRO E DOMANDA -->
+    <div style="display:flex; gap:20px; align-items:flex-start; background:var(--surface2); border:1px solid var(--border); padding:24px; border-radius:12px; margin-bottom:40px;">
+      <div style="min-width:48px; width:48px; height:48px; background:linear-gradient(135deg, #2196F3, #9C27B0); border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:28px; font-weight:bold; font-family:var(--font-serif); box-shadow:0 4px 12px rgba(33, 150, 243, 0.2);">
+        ?
+      </div>
+      <div>
+        <h3 style="color:var(--text); font-size:18px; margin:0 0 8px 0;">Un'apparente contraddizione</h3>
+        <p style="font-size:15px; color:var(--muted); line-height:1.6; margin:0;">
+          Se l'autostrada interna del processore (il datapath) viaggia a 32 bit, perché GCC genera istruzioni grandi la metà (16 bit)? La risposta si basa su due concetti fondamentali: la <strong style="color:#2196F3;">densità del codice</strong> e un geniale <strong style="color:#9C27B0;">trucco hardware</strong>.
+        </p>
+      </div>
+    </div>
+
+    <!-- 1. LA DENSITA' DEL CODICE E I CRITERI -->
+    <h3 style="font-size:18px; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+      <span style="background:var(--surface3); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;">1</span>
+      La Densità del Codice (Il "Perché")
+    </h3>
+    <p style="font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:20px;">
+      Comprimere le istruzioni fa sì che ne entrino il doppio nella Cache. Meno volte la CPU si ferma a caricare dati, più gira veloce. GCC applica la compressione <strong>RVC</strong> solo a tre pattern frequentissimi:
+    </p>
+    
+    <div class="card-grid cols3" style="margin-bottom:48px;">
+      <div class="card" style="border-top:3px solid var(--green); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--green); font-size:15px; margin:0 0 8px 0;">Numeri piccoli</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Uso frequente di costanti numeriche piccolissime (es. incrementi di +1).</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--cyan); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--cyan); font-size:15px; margin:0 0 8px 0;">I "Soliti" Registri</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Uso massiccio di un piccolo sottoinsieme degli 32 registri (es. da <code>x8</code> a <code>x15</code>).</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--amber); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--amber); font-size:15px; margin:0 0 8px 0;">Sovrascrittura</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Operazioni in cui destinazione e sorgente coincidono (es. <code>A = A + B</code>).</p>
+      </div>
+    </div>
+
+    <!-- Immagine fornita dall'utente per le istruzioni compresse -->
+    <div style="margin-bottom:48px; text-align:center;">
+      <img src="assets/extra/compressed_instruction.png" alt="Formato Compressed Instructions RVC" style="max-width:100%; border-radius:12px; border:1px solid var(--border); box-shadow:0 8px 24px rgba(0,0,0,0.2);">
+      <div style="font-size:13px; color:var(--muted); margin-top:12px; text-align:center;">Panoramica del formato delle istruzioni compresse</div>
+    </div>
+
+    <!-- 2. IL TRUCCO HARDWARE -->
+    <h3 style="font-size:18px; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+      <span style="background:var(--surface3); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;">2</span>
+      L'espansione "al volo" (Il "Come")
+    </h3>
+    <p style="font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:24px;">
+      Come fa il datapath a 32 bit a digerirle senza andare in crash? La magia avviene all'ingresso della CPU, nel primissimo stadio di <strong>Decodifica</strong>:
+    </p>
+
+    <!-- Visualizzazione flusso -->
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:32px; display:flex; flex-direction:column; gap:32px; position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:linear-gradient(to bottom, #9C27B0, #4CAF50);"></div>
+      
+      <div style="display:flex; align-items:stretch; gap:16px; justify-content:space-between; flex-wrap:wrap;">
+        
+        <!-- Blocco 1: Memoria -->
+        <div style="flex:1; min-width:180px; background:var(--surface2); padding:16px; border-radius:8px; border:1px solid var(--border); text-align:center; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Dalla Memoria RAM</div>
+          <div style="background:rgba(156, 39, 176, 0.1); color:#E040FB; padding:12px; border-radius:6px; font-family:var(--font-mono); border:1px solid rgba(156, 39, 176, 0.3);">
+            <div style="font-size:12px; margin-bottom:4px;">Istruzione "Zippata"</div>
+            <strong style="font-size:20px;">16 BIT</strong>
+          </div>
+        </div>
+
+        <!-- Freccia -->
+        <div style="display:flex; align-items:center; color:var(--muted); font-size:24px;">
+          &rightarrow;
+        </div>
+
+        <!-- Blocco 2: Decodificatore -->
+        <div style="flex:1.2; min-width:200px; background:rgba(33, 150, 243, 0.05); padding:16px; border-radius:8px; border:1px solid rgba(33, 150, 243, 0.2); text-align:center; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-size:11px; color:#64B5F6; text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Decodificatore CPU</div>
+          <div style="color:var(--text); font-size:13px; line-height:1.5;">
+            Legge le ultime 2 cifre e la <strong>decomprime</strong> in hardware in tempo zero.
+          </div>
+        </div>
+
+        <!-- Freccia -->
+        <div style="display:flex; align-items:center; color:var(--muted); font-size:24px;">
+          &rightarrow;
+        </div>
+
+        <!-- Blocco 3: Datapath -->
+        <div style="flex:1; min-width:180px; background:var(--surface2); padding:16px; border-radius:8px; border:1px solid var(--border); text-align:center; display:flex; flex-direction:column; justify-content:center;">
+          <div style="font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Verso l'ALU</div>
+          <div style="background:rgba(76, 175, 80, 0.1); color:#69F0AE; padding:12px; border-radius:6px; font-family:var(--font-mono); border:1px solid rgba(76, 175, 80, 0.3);">
+            <div style="font-size:12px; margin-bottom:4px;">Istruzione Standard</div>
+            <strong style="font-size:20px;">32 BIT</strong>
+          </div>
+        </div>
+
+      </div>
+
+      <div style="background:var(--background); padding:16px 20px; border-radius:8px; border-left:3px solid var(--accent); font-size:14px; color:var(--text); line-height:1.6; margin-bottom:12px;">
+        <strong style="color:var(--accent);">In sintesi:</strong> L'hardware interno (l'ALU e i registri) non vedrà <em>mai</em> i 16 bit. Quel formato compresso esiste solo nella RAM per risparmiare spazio, e viene "aperto" una frazione di secondo prima dell'esecuzione.
+      </div>
+
+      <div style="background:rgba(244, 67, 54, 0.05); padding:16px 20px; border-radius:8px; border-left:3px solid #F44336; font-size:14px; color:var(--text); line-height:1.6;">
+        <strong style="color:#F44336;">Attenzione al base set (RV32I):</strong> Un processore che implementa <em>solo</em> il set di istruzioni base <strong>RV32I</strong> non può in alcun modo eseguire istruzioni a 16 bit. Essendo sprovvisto del componente "espansore" hardware nel decodificatore, il datapath andrebbe in errore irreversibile. Affinché il trucco funzioni, la CPU deve supportare esplicitamente l'estensione <strong>RVC</strong>.
+      </div>
+    </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- SEZIONE 3: APPROFONDIMENTO ASSEMBLER -->
+  <section class="section" style="background:rgba(255, 152, 0, 0.04); border:1px solid rgba(255, 152, 0, 0.15); padding:40px; border-radius:24px;">
+    <details id="s3-assembler" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#FF9800; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px;">3</div>
+          <h2 style="margin:0;">L'<span style="color:#FF9800;">Assemblatore</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+
+    <p class="lead">L'Assemblatore è il traduttore ufficiale dal testo ai bit. Ma non legge solo istruzioni "pure" dirette al processore. Il file sorgente è un mix di elementi diversi che l'assemblatore deve interpretare, organizzare e risolvere.</p>
+
+    <!-- 1. GLI INGREDIENTI -->
+    <h3 style="font-size:18px; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+      <span style="background:var(--surface3); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;">1</span>
+      Gli ingredienti del codice sorgente
+    </h3>
+    <p style="font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:20px;">L'assemblatore non lavora solo con le canoniche istruzioni. Trova e gestisce 4 ingredienti diversi:</p>
+
+    <div class="card-grid cols2" style="margin-bottom:48px;">
+      <div class="card" style="border-top:3px solid var(--accent); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--accent); font-size:15px; margin:0 0 8px 0;">1. Istruzioni ISA</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">I comandi reali del processore (come <span class="key-term">add</span> o <span class="key-term">sw</span>). Vengono convertiti direttamente nel loro equivalente binario.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--cyan); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--cyan); font-size:15px; margin:0 0 8px 0;">2. Pseudo-istruzioni</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">"Trucchi" per il programmatore. L'assemblatore traduce silenziosamente <span class="key-term">mv a, b</span> nella sua forma reale hardware <span class="key-term">addi a, b, 0</span>.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--purple); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--purple); font-size:15px; margin:0 0 8px 0;">3. Direttive</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Comandi per l'assemblatore (es. <span class="key-term">.data</span> o <span class="key-term">.text</span>) per gestire la memoria. Non diventeranno mai codice binario.</p>
+      </div>
+      <div class="card" style="border-top:3px solid var(--amber); padding:20px; background:var(--surface2);">
+        <h4 style="color:var(--amber); font-size:15px; margin:0 0 8px 0;">4. Macro</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0;">Blocchi predefiniti. L'assemblatore effettua un vero e proprio "copia e incolla" fisico delle istruzioni prima di tradurle.</p>
+      </div>
+    </div>
+
+    <!-- 2. IL PROBLEMA CRITICO -->
+    <h3 style="font-size:18px; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+      <span style="background:var(--surface3); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;">2</span>
+      Il problema critico: le "Forward Reference"
+    </h3>
+
+    <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:stretch; margin-bottom:48px;">
+      <!-- Spiegazione -->
+      <div style="flex:1; min-width:300px; background:rgba(244, 67, 54, 0.05); border:1px solid rgba(244, 67, 54, 0.2); border-left:4px solid var(--red); border-radius:12px; padding:24px;">
+        <p style="font-size:15px; color:var(--text); line-height:1.7; margin-top:0;">Se l'assemblatore traducesse il file ciecamente riga per riga, si schianterebbe al primo "salto in avanti" (Forward Reference).</p>
+        <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:0;">Nell'esempio qui a fianco, quando legge l'istruzione <code>bgt</code>, l'assemblatore non ha ancora incontrato l'etichetta <code>.L20</code>. Senza conoscerne l'indirizzo reale in memoria, calcolare l'offset binario per completare l'istruzione è matematicamente impossibile.</p>
+      </div>
+      
+      <!-- Codice -->
+      <div style="flex:1; min-width:300px; background:#1e1e1e; padding:24px; border-radius:12px; font-family:var(--font-mono); font-size:13px; line-height:1.6; box-shadow:inset 0 2px 8px rgba(0,0,0,0.5); border:1px solid var(--border);">
+        <span style="color:#6a9955;">// L'assemblatore traduce in bit...</span><br>
+        <span style="color:#569cd6;">bgt</span> a2, a3, <span style="color:#c586c0;">.L20</span>  <span style="color:#f44336; font-weight:bold;">&lt;-- ERRORE! Dov'è .L20?</span><br>
+        <br>
+        ... <span style="color:#6a9955;">// (20 righe dopo nel file)</span><br>
+        <span style="color:#c586c0;">.L20:</span><br>
+        <span style="color:#569cd6;">add</span> a0, a1, a2
+      </div>
+    </div>
+
+    <!-- 3. LA SOLUZIONE: DUE PASSI -->
+    <h3 style="font-size:18px; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:12px;">
+      <span style="background:var(--surface3); border:1px solid var(--border); color:var(--text); width:28px; height:28px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px; font-weight:bold;">3</span>
+      La soluzione: Architettura a Due Passi
+    </h3>
+    <p style="font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:24px;">Per risolvere questo stallo logico, l'assemblatore esegue due scansioni complete (passi) del file sorgente.</p>
+    
+    <div style="background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:32px; display:flex; flex-direction:column; gap:40px;">
+      
+      <!-- Passo 1 -->
+      <div>
+        <h4 style="color:var(--blue); font-size:16px; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--blue);"></span>
+          Il Primo Passo (La Mappatura)
+        </h4>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">In questa fase, l'assemblatore non genera ancora il file binario, ma prepara il terreno. Scorre il codice riga per riga e consulta la <strong>Opcode Table</strong> (il dizionario delle istruzioni) per riconoscere il comando scritto dal programmatore e capire esattamente quanti byte occuperà in memoria. Grazie a questo, aggiorna con precisione geometrica un contatore interno chiamato <strong>ILC (Instruction Location Counter)</strong>. Quando incontra un'etichetta (label), associa il nome all'indirizzo attuale dell'ILC e la salva nella <strong>Symbol Table</strong>.</p>
+        
+        <div style="display:flex; flex-wrap:wrap; gap:20px; align-items:center;">
+          <!-- ILC Code -->
+          <div style="flex:1.2; min-width:280px; background:#1e1e1e; padding:16px; border-radius:8px; border-left:3px solid var(--blue); font-family:var(--font-mono); font-size:13px; line-height:1.6; box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);">
+            <div style="color:#858585; border-bottom:1px solid #444; padding-bottom:8px; margin-bottom:8px; font-family:var(--font-sans); font-size:12px; text-transform:uppercase; letter-spacing:1px;">Codice con Contatore ILC</div>
+            <span style="color:#858585;">[ILC: 100]</span> &nbsp; <span style="color:#c586c0;">loop:</span><br>
+            <span style="color:#858585;">[ILC: 100]</span> &nbsp; addi x5, x5, 1<br>
+            <span style="color:#858585;">[ILC: 104]</span> &nbsp; bgt  x5, x6, <span style="color:#c586c0;">fine</span><br>
+            <span style="color:#858585;">[ILC: 108]</span> &nbsp; j    <span style="color:#c586c0;">loop</span><br>
+            <span style="color:#858585;">[ILC: 112]</span> &nbsp; <span style="color:#c586c0;">fine:</span><br>
+            <span style="color:#858585;">[ILC: 112]</span> &nbsp; mv   a0, x5
+          </div>
+          
+          <div style="font-size:24px; color:var(--muted); text-align:center;">&rightarrow;</div>
+          
+          <!-- Symbol Table -->
+          <div style="flex:1; min-width:240px; background:var(--surface2); padding:16px; border-radius:8px; border:1px solid var(--green);">
+            <div style="color:var(--green); font-size:12px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid rgba(76, 175, 80, 0.2); padding-bottom:8px; margin-bottom:8px; font-weight:bold;">Symbol Table</div>
+            <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:12px; margin-bottom:4px;"><span>Etichetta</span><span>Memoria</span></div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px dashed var(--border); padding:6px 0; font-family:var(--font-mono); font-size:13px;"><span style="color:#c586c0;">loop</span><span style="color:var(--accent);">100</span></div>
+            <div style="display:flex; justify-content:space-between; padding:6px 0; font-family:var(--font-mono); font-size:13px;"><span style="color:#c586c0;">fine</span><span style="color:var(--accent);">112</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Passo 2 -->
+      <div style="border-top:1px dashed var(--border); padding-top:24px;">
+        <h4 style="color:var(--pink); font-size:16px; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--pink);"></span>
+          Il Secondo Passo (La Traduzione Binaria)
+        </h4>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">
+          L'assemblatore riparte dall'inizio e procede alla vera e propria traduzione in bit. Consulta nuovamente la <strong>Opcode Table</strong> per generare le sequenze binarie esatte di ogni istruzione. Ora, quando incontra un salto verso l'etichetta <code>fine</code> all'ILC 104, non si blocca più: interroga la <strong>Symbol Table</strong> (completata nel passo precedente) e scopre che <code>fine</code> si trova al byte 112. Calcola la distanza esatta <span style="color:var(--muted); font-family:var(--font-mono); font-size:12px; background:rgba(255,255,255,0.05); padding:2px 4px; border-radius:4px;">(112 - 104 = +8 byte)</span> e la inserisce nell'istruzione.
+        </p>
+
+        <!-- Schema Riassuntivo -->
+        <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px;">
+          <div style="font-size:13px; font-weight:600; color:var(--text); text-transform:uppercase; letter-spacing:1px; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:8px;">Schema Generale: Il Ruolo delle Tabelle</div>
+          <div style="display:flex; flex-wrap:wrap; gap:24px;">
+            <div style="flex:1; min-width:200px;">
+              <strong style="color:var(--blue); font-size:14px; display:block; margin-bottom:8px;">1ª Passata (Mappatura)</strong>
+              <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin:0; line-height:1.6;">
+                <li><strong style="color:var(--text);">Opcode Table:</strong> Riconosce le istruzioni e la loro dimensione per incrementare il Location Counter.</li>
+                <li><strong style="color:var(--text);">Symbol Table:</strong> Registra e salva gli indirizzi reali di tutte le etichette.</li>
+              </ul>
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <strong style="color:var(--pink); font-size:14px; display:block; margin-bottom:8px;">2ª Passata (Generazione)</strong>
+              <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin:0; line-height:1.6;">
+                <li><strong style="color:var(--text);">Opcode Table:</strong> Genera fisicamente i bit dell'opcode (traduzione in codice macchina).</li>
+                <li><strong style="color:var(--text);">Symbol Table:</strong> Interrogata per risolvere le label mancanti e le <em>forward reference</em>.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- SEZIONE 4: IL LINKER -->
+  <section class="section" style="background:rgba(233, 30, 99, 0.04); border:1px solid rgba(233, 30, 99, 0.15); padding:40px; border-radius:24px;">
+    <details id="s4-linker" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#E91E63; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px;">4</div>
+          <h2 style="margin:0;">Il <span style="color:#E91E63;">Linker</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+        
+        <p class="lead">Il <strong>linking</strong> (o collegamento) è la fase in cui i singoli pezzi di un puzzle software vengono uniti per formare un disegno completo e funzionante: il file <strong>eseguibile</strong>.</p>
+
+        <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--accent); padding:24px; border-radius:8px; margin-bottom:48px;">
+          <p style="font-size:15px; color:var(--text); line-height:1.7; margin:0;">
+            Quando compili un progetto composto da più file sorgente C, l'assemblatore genera dei file separati chiamati <strong>moduli oggetto</strong>. Lo stesso vale per le funzioni standard come <code>printf()</code>: sono contenute in librerie di sistema che, in realtà, non sono altro che <em>file oggetto già pre-compilati</em> pronti all'uso. Ognuno di questi moduli (tuoi o di libreria) è inizialmente "cieco": è convinto di essere l'unico al mondo, parte dall'indirizzo di memoria <code>0</code> e non sa dove si trovino le funzioni scritte negli altri file. Il Linker prende tutti questi file oggetto sparsi e li fonde in un'unica sequenza lineare, "aggiustando" tutti i collegamenti.
+          </p>
+        </div>
+
+        <!-- PASSO 1: RILOCAZIONE -->
+        <h3 style="font-size:20px; color:var(--text); margin-bottom:24px; display:flex; align-items:center; gap:12px;">
+          <span style="background:rgba(233, 30, 99, 0.1); color:#E91E63; width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold;">1</span>
+          Costruzione della mappa e Rilocazione
+        </h3>
+        
+        <p style="font-size:15px; color:var(--muted); line-height:1.7; margin-bottom:24px;">
+          Il linker unisce tutti i segmenti dello stesso tipo (es. tutti i <code>.text</code> per il codice, tutti i <code>.data</code> per le variabili). Questo avviene in tre step progressivi:
+        </p>
+
+        <div class="card-grid cols3" style="margin-bottom:48px;">
+          <div class="card" style="border-top:3px solid var(--blue); padding:20px; background:var(--surface2);">
+            <h4 style="color:var(--blue); font-size:15px; margin:0 0 8px 0;">1. Calcolo Lunghezze</h4>
+            <p style="font-size:13px; color:var(--muted); margin:0;">Misura esattamente quanto spazio occupa in memoria ciascun modulo oggetto.</p>
+          </div>
+          <div class="card" style="border-top:3px solid var(--amber); padding:20px; background:var(--surface2);">
+            <h4 style="color:var(--amber); font-size:15px; margin:0 0 8px 0;">2. Indirizzo Base</h4>
+            <p style="font-size:13px; color:var(--muted); margin:0;">Posiziona i moduli uno dietro l'altro. Se A finisce a <code>0x00400100</code>, B partirà esattamente da lì.</p>
+          </div>
+          <div class="card" style="border-top:3px solid var(--pink); padding:20px; background:var(--surface2);">
+            <h4 style="color:var(--pink); font-size:15px; margin:0 0 8px 0;">3. Costante di Rilocazione</h4>
+            <p style="font-size:13px; color:var(--muted); margin:0;">Poiché B non parte più da zero, tutti i suoi indirizzi interni vengono aggiornati sommandogli l'offset.</p>
+          </div>
+        </div>
+
+        <!-- PASSO 2: RISOLUZIONE -->
+        <h3 style="font-size:20px; color:var(--text); margin-bottom:24px; display:flex; align-items:center; gap:12px;">
+          <span style="background:rgba(233, 30, 99, 0.1); color:#E91E63; width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:14px; font-weight:bold;">2</span>
+          Risoluzione dei Simboli (Symbol Resolution)
+        </h3>
+        
+        <div class="card-grid cols2" style="margin-bottom:32px;">
+          <!-- Salti Locali -->
+          <div class="card" style="border-top:3px solid var(--accent); padding:20px; background:var(--surface2);">
+            <h4 style="color:var(--accent); font-size:15px; margin:0 0 8px 0;">1. Salti Locali (Risolti dall'Assemblatore)</h4>
+            <p style="font-size:13px; color:var(--text); margin:0 0 12px 0; line-height:1.6;">
+              Se un salto (es. <code>bne</code> o <code>j</code>) punta a un'etichetta <strong>nello stesso file sorgente</strong>, l'Assemblatore calcola l'offset definitivo e lo inserisce subito nel codice macchina.
+            </p>
+            <div style="background:rgba(33, 150, 243, 0.1); padding:12px; border-radius:6px; border-left:3px solid var(--accent);">
+              <strong style="color:var(--accent); font-size:12px; display:block; margin-bottom:4px; text-transform:uppercase;">Cosa fa il Linker: Nulla.</strong>
+              <span style="font-size:12px; color:var(--muted); line-height:1.5; display:block;">Poiché l'intero blocco di codice viene spostato interamente dal Linker, la distanza relativa tra il salto e la destinazione locale rimane identica. Nessun ricalcolo necessario.</span>
+            </div>
+          </div>
+          
+          <!-- Salti Esterni -->
+          <div class="card" style="border-top:3px solid var(--pink); padding:20px; background:var(--surface2);">
+            <h4 style="color:var(--pink); font-size:15px; margin:0 0 8px 0;">2. Salti Esterni (Risolti dal Linker)</h4>
+            <p style="font-size:13px; color:var(--text); margin:0 0 12px 0; line-height:1.6;">
+              Se il salto (es. <code>jal</code> o <code>call</code>) punta a una funzione in <strong>un altro file</strong>, l'Assemblatore non sa dove si troverà. Inserisce un offset temporaneo (0) e lascia un appunto.
+            </p>
+            <div style="background:rgba(233, 30, 99, 0.1); padding:12px; border-radius:6px; border-left:3px solid var(--pink);">
+              <strong style="color:var(--pink); font-size:12px; display:block; margin-bottom:4px; text-transform:uppercase;">Cosa fa il Linker: Risolve.</strong>
+              <span style="font-size:12px; color:var(--muted); line-height:1.5; display:block;">Prende l'appunto, calcola la distanza esatta (offset) tra l'indirizzo finale dell'istruzione e quello della funzione, e sostituisce lo zero iniziale con il valore reale.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- MATH BLOCK -->
+        <div style="background:#1e1e1e; border:1px solid #333; border-radius:12px; padding:32px; margin-bottom:48px; box-shadow:inset 0 4px 12px rgba(0,0,0,0.4);">
+          <h4 style="color:#E91E63; font-size:16px; margin:0 0 16px 0;">Il calcolo matematico dei salti relativi (PC-Relative)</h4>
+          <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">
+            In RISC-V, l'istruzione <code>jal</code> (Jump and Link) non usa indirizzi assoluti. Dice alla CPU quanti byte saltare in avanti o all'indietro rispetto a dove si trova (Program Counter). La formula del Linker è:
+          </p>
+          
+          <div style="background:rgba(255,255,255,0.05); padding:16px; border-radius:8px; text-align:center; font-family:var(--font-mono); font-size:16px; color:#4CAF50; margin-bottom:24px; border:1px solid rgba(76, 175, 80, 0.3);">
+            Offset = Indirizzo Destinazione - Indirizzo Istruzione di Salto
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:24px;">
+            <div style="flex:1; min-width:260px;">
+              <strong style="color:var(--accent); font-size:13px; text-transform:uppercase;">Esempio: Salto in Avanti</strong>
+              <ul style="font-size:13px; color:#bbb; line-height:1.6; padding-left:16px; margin:8px 0;">
+                <li><code>jal</code> (Modulo A): <span style="color:#fff;">0x00400004</span></li>
+                <li>Destinazione (Modulo B): <span style="color:#fff;">0x00400100</span></li>
+                <li>Matematica: <span style="color:#fff;">0x00400100 - 0x00400004 = 0xFC</span></li>
+              </ul>
+              <div style="background:rgba(33, 150, 243, 0.1); padding:8px 12px; border-radius:4px; font-family:var(--font-mono); font-size:13px; color:#64B5F6;">
+                0xFC = +252 dec &rightarrow; <code>jal x1, 252</code>
+              </div>
+            </div>
+            
+            <div style="flex:1; min-width:260px;">
+              <strong style="color:var(--accent); font-size:13px; text-transform:uppercase;">Esempio: Salto all'Indietro</strong>
+              <ul style="font-size:13px; color:#bbb; line-height:1.6; padding-left:16px; margin:8px 0;">
+                <li><code>jal</code> (Modulo B): <span style="color:#fff;">0x00400104</span></li>
+                <li>Destinazione (Modulo A): <span style="color:#fff;">0x00400000</span></li>
+                <li>Matematica: <span style="color:#fff;">0x00400000 - 0x00400104 = -0x104</span></li>
+              </ul>
+              <div style="background:rgba(244, 67, 54, 0.1); padding:8px 12px; border-radius:4px; font-family:var(--font-mono); font-size:13px; color:#E57373;">
+                -0x104 = -260 dec &rightarrow; <code>jal x1, -260</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- IL PROBLEMA DEL LIMITE DI JAL (Pseudoistruzione CALL) -->
+        <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--amber); border-radius:12px; padding:24px; margin-bottom:48px;">
+          <h4 style="color:var(--amber); font-size:16px; margin:0 0 12px 0; display:flex; align-items:center; gap:8px;">
+            ⚠️ Il limite fisico di JAL e la magia di CALL
+          </h4>
+          <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 16px 0;">
+            C'è un dettaglio tecnico fondamentale: l'istruzione nativa <code>jal</code> ha uno spazio limitato per memorizzare l'offset (usa solo 20 bit), il che significa che può saltare al massimo di circa <strong>±1 MB</strong> in avanti o all'indietro. E se la libreria esterna da collegare si trovasse a 2 GB di distanza?
+          </p>
+          <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 16px 0;">
+            Per risolvere questo problema architetturale, il compilatore genera quasi sempre la <strong>pseudo-istruzione <code>call</code></strong> invece di usare un semplice <code>jal</code>. L'assemblatore prende la <code>call</code> e la espande in una coppia di istruzioni reali che lavorano in tandem:
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:16px;">
+            <div style="flex:1; min-width:200px; background:#1e1e1e; padding:12px 16px; border-radius:8px; border:1px solid #333; font-family:var(--font-mono); font-size:13px; box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);">
+              <span style="color:#569cd6;">auipc</span> x1, &lt;offset_alto&gt;<br>
+              <span style="color:#6a9955;">// Carica i 20 bit superiori</span>
+            </div>
+            <div style="flex:1; min-width:200px; background:#1e1e1e; padding:12px 16px; border-radius:8px; border:1px solid #333; font-family:var(--font-mono); font-size:13px; box-shadow:inset 0 2px 8px rgba(0,0,0,0.5);">
+              <span style="color:#569cd6;">jalr</span> x1, &lt;offset_basso&gt;(x1)<br>
+              <span style="color:#6a9955;">// Aggiunge i 12 bit inferiori e salta</span>
+            </div>
+          </div>
+          <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:16px 0 0 0;">
+            Grazie a questa accoppiata vincente (<code>auipc</code> + <code>jalr</code>), il Linker ha a disposizione <strong>32 bit completi</strong> per calcolare l'offset. In questo modo può collegare funzioni e librerie situate in qualsiasi punto della memoria, coprendo letteralmente l'intero spazio di <strong>4 Gigabyte</strong>!
+          </p>
+        </div>
+
+        <!-- SIMULATORE INTERATTIVO -->
+        <h4 style="font-size:18px; color:var(--text); margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:8px;">🕹️ Simulatore Interattivo del Linker</h4>
+        <p style="font-size:14px; color:var(--muted); margin-bottom:24px;">Modifica i parametri di partenza per osservare in tempo reale come vengono calcolate le costanti di rilocazione e gli offset dei salti in esadecimale e decimale.</p>
+        
+        <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:24px; font-family:var(--font-sans);">
+          <div style="display:flex; flex-wrap:wrap; gap:24px;">
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:12px; color:var(--muted); margin-bottom:8px; text-transform:uppercase;">Indirizzo <code>jal</code> (Esadecimale)</label>
+              <input type="text" id="sim-jump" value="0x00400004" style="width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:6px; font-family:var(--font-mono); font-size:14px;">
+            </div>
+            <div style="flex:1; min-width:200px;">
+              <label style="display:block; font-size:12px; color:var(--muted); margin-bottom:8px; text-transform:uppercase;">Indirizzo Destinazione (Esadecimale)</label>
+              <input type="text" id="sim-dest" value="0x00400100" style="width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:10px; border-radius:6px; font-family:var(--font-mono); font-size:14px;">
+            </div>
+          </div>
+          
+          <div style="margin-top:24px; padding-top:24px; border-top:1px dashed var(--border);">
+            <div style="font-size:12px; color:var(--muted); margin-bottom:12px; text-transform:uppercase;">Risultato calcolato dal Linker</div>
+            <div id="sim-result" style="background:#1e1e1e; padding:16px; border-radius:8px; border-left:4px solid #4CAF50; font-family:var(--font-mono); font-size:16px; color:#fff;">
+              Offset = <span style="color:#4CAF50; font-weight:bold;">0xFC</span> (+252)<br><span style="font-size:13px; color:#888; margin-top:8px; display:block;">Istruzione: jal x1, 252</span>
+            </div>
+          </div>
+        </div>
+
+        <script>
+          const simJump = document.getElementById('sim-jump');
+          const simDest = document.getElementById('sim-dest');
+          const simResult = document.getElementById('sim-result');
+
+          function updateSimulator() {
+            try {
+              let j = parseInt(simJump.value, 16);
+              let d = parseInt(simDest.value, 16);
+              if (isNaN(j) || isNaN(d)) throw "Valore non valido";
+              
+              let offset = d - j;
+              let isNeg = offset < 0;
+              let hexOffset = isNeg ? "-0x" + Math.abs(offset).toString(16).toUpperCase() : "0x" + offset.toString(16).toUpperCase();
+              let decStr = offset > 0 ? "+" + offset : offset;
+              
+              let color = isNeg ? "#F44336" : "#4CAF50";
+              simResult.style.borderLeftColor = color;
+              simResult.innerHTML = `Offset = <span style="color:${color}; font-weight:bold;">${hexOffset}</span> (${decStr}) <br><span style="font-size:13px; color:#888; margin-top:8px; display:block;">Istruzione: jal x1, ${offset}</span>`;
+            } catch(e) {
+              simResult.innerHTML = "<span style='color:#F44336;'>Inserisci valori esadecimali validi (es. 0x00400000)</span>";
+              simResult.style.borderLeftColor = "#F44336";
+            }
+          }
+
+          simJump.addEventListener('input', updateSimulator);
+          simDest.addEventListener('input', updateSimulator);
+        </script>
+
+        <div style="margin-top:40px; padding:16px; background:rgba(233, 30, 99, 0.05); border-left:4px solid var(--pink); border-radius:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+          <span style="font-size:14px; color:var(--text); line-height:1.5;">L'Eseguibile finale appena generato dal Linker viene formattato secondo il modello standard <strong>ELF</strong>.</span>
+          <a href="#s5-elf" onclick="document.getElementById('s5-elf').open = true;" style="color:var(--pink); font-size:14px; font-weight:bold; text-decoration:none; white-space:nowrap; background:rgba(233, 30, 99, 0.1); padding:8px 16px; border-radius:6px;">Scopri cos'è il formato ELF &rarr;</a>
+        </div>
+
+      </div>
+    </details>
+  </section>
+
+  
+
+  
+<!-- SEZIONE 5: IL LOADER -->
+  <section class="section" style="background:rgba(156, 39, 176, 0.04); border:1px solid rgba(156, 39, 176, 0.15); padding:40px; border-radius:24px;">
+    <details id="s5-loader" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#9C27B0; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px;">5</div>
+          <h2 style="margin:0;">Il <span style="color:#9C27B0;">Loader</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+        
+        <p class="lead">L'eseguibile è finalmente pronto, ma si trova ancora parcheggiato sul disco fisso. Per poter girare ed essere processato, deve essere trasferito nella <strong>Memoria RAM</strong>. È qui che entra in scena il <strong>Loader</strong> (Caricatore), un componente fondamentale del Sistema Operativo.</p>
+
+        <h3 style="font-size:18px; color:var(--text); margin-bottom:16px;">Le 6 azioni fondamentali del Loader</h3>
+        
+        <div style="display:flex; flex-direction:column; gap:16px; margin-bottom:32px;">
+          
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">1</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Lettura dell'Header</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Il Loader legge l'intestazione del file eseguibile per determinare esattamente quanto spazio occorrerà per ospitare il segmento del codice (<code>.text</code>) e quello dei dati (<code>.data</code>).</span>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">2</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Allocazione Memoria</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Richiede al sistema operativo la creazione di uno spazio di indirizzamento virtuale/fisico in RAM abbastanza capiente da contenere l'intero programma.</span>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">3</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Copia Fisica (Il Trasferimento)</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Copia fisicamente le istruzioni e i dati dal disco fisso all'interno dello spazio appena allocato nella memoria RAM.</span>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">4</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Copia dei Parametri nello Stack</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Se il programma è stato lanciato dal terminale con degli argomenti (es. <code>./programma file.txt</code>), il Loader copia questi parametri in cima alla memoria Stack affinché il programma possa leggerli.</span>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">5</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Inizializzazione dei Registri</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Inizializza i registri principali della CPU. In particolare, imposta lo <strong>Stack Pointer (sp)</strong> facendolo puntare alla prima locazione libera della pila appena creata.</span>
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--purple); padding:16px 20px; border-radius:8px; display:flex; gap:16px; align-items:flex-start;">
+            <div style="background:var(--purple); color:#fff; width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:14px; flex-shrink:0;">6</div>
+            <div>
+              <strong style="color:var(--purple); display:block; margin-bottom:4px; font-size:15px;">Il Lancio (Jump to Start-up)</strong>
+              <span style="color:var(--muted); font-size:14px; line-height:1.6;">Il Loader esegue un salto a una routine di "start-up" fornita dal sistema. Questa routine carica i parametri passati nei registri argomenti (<code>a0</code>, <code>a1</code>) e finalmente chiama la tua funzione <code>main()</code>. Quando il main termina, la routine di start-up cattura il valore di ritorno e invoca la system call <code>exit</code> per chiudere il processo in modo pulito.</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:8px; padding:16px; background:rgba(156, 39, 176, 0.05); border-left:4px solid var(--purple); border-radius:8px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px;">
+          <span style="font-size:14px; color:var(--text); line-height:1.5;">Il file che il Loader legge dal disco e carica in memoria è strutturato secondo il modello <strong>ELF</strong>.</span>
+          <a href="#s5-elf" onclick="document.getElementById('s5-elf').open = true;" style="color:var(--purple); font-size:14px; font-weight:bold; text-decoration:none; white-space:nowrap; background:rgba(156, 39, 176, 0.1); padding:8px 16px; border-radius:6px;">Ripassa il formato ELF &rarr;</a>
+        </div>
+
+        <div style="margin-top:16px; padding:24px; background:rgba(255, 152, 0, 0.06); border:1px solid rgba(255, 152, 0, 0.2); border-left:6px solid #FF9800; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+          <div>
+            <h4 style="color:#FF9800; margin:0 0 8px 0; font-size:16px;">Collegamento Dinamico</h4>
+            <span style="font-size:14px; color:var(--text); line-height:1.5;">Al di là del caricamento classico, le funzioni di libreria possono essere caricate al momento dell'esecuzione tramite il <strong>Lazy Linking</strong>.</span>
+          </div>
+          <a href="#extra-binding" onclick="document.getElementById('extra-binding').open = true;" style="color:#FF9800; font-size:14px; font-weight:bold; text-decoration:none; white-space:nowrap; background:rgba(255, 152, 0, 0.15); padding:10px 20px; border-radius:8px;">Scopri le Librerie Dinamiche (DLL) &rarr;</a>
+        </div>
+
+        <div style="margin-top:16px; padding:24px; background:rgba(33, 150, 243, 0.06); border:1px solid rgba(33, 150, 243, 0.2); border-left:6px solid #2196F3; border-radius:12px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:16px; box-shadow:0 4px 12px rgba(0,0,0,0.05);">
+          <div>
+            <h4 style="color:#2196F3; margin:0 0 8px 0; font-size:16px;">Il pezzo finale del puzzle</h4>
+            <span style="font-size:14px; color:var(--text); line-height:1.5;">Il Linker e il Loader creano un'illusione perfetta che funziona solo grazie all'intervento della <strong>Memoria Virtuale</strong>.</span>
+          </div>
+          <a href="#extra-mmu" onclick="document.getElementById('extra-mmu').open = true;" style="color:#2196F3; font-size:14px; font-weight:bold; text-decoration:none; white-space:nowrap; background:rgba(33, 150, 243, 0.15); padding:10px 20px; border-radius:8px;">Scopri la Memoria Virtuale &rarr;</a>
+        </div>
+
+      </div>
+    </details>
+  </section>
+
+  <!-- SEZIONE EXTRA -->
+  <div style="margin: 64px 0 32px 0; border-bottom: 2px solid var(--border); padding-bottom: 16px;">
+    <h2 style="font-size:28px; color:var(--text); margin:0;">Sezioni EXTRA</h2>
+    <p style="font-size:15px; color:var(--muted); margin-top:8px;">Approfondimenti tecnici per completare il quadro generale.</p>
+  </div>
+
+<!-- EXTRA: JAVA -->
+  <section class="section" style="background:rgba(0, 150, 136, 0.04); border:1px solid rgba(0, 150, 136, 0.15); padding:40px; border-radius:24px;">
+    <details id="extra-java" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#009688; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px; font-size:14px;">★</div>
+          <h2 style="margin:0;">Extra: Il caso <span style="color:#009688;">Java</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+    <p class="lead">I linguaggi come il C o il C++ vengono compilati nativamente, ovvero tradotti direttamente per una <strong>CPU specifica</strong> (es. ARM, x86, RISC-V). Questo crea un problema di incompatibilità: un programma compilato per Windows su x86 non girerà mai su un Mac con Apple Silicon. <strong>Java cambia radicalmente le regole del gioco</strong>: non compila il codice per una CPU fisica, lo compila per una <em>CPU Immaginaria</em> chiamata <strong>JVM</strong>.</p>
+
+    <div class="mermaid">
+flowchart TD
+    A["☕ Codice Java<br/><small>(Sorgente)</small>"] -->|Compilatore Java (javac)| B["🧩 Bytecode<br/><small>(File delle Classi .class)</small>"]
+    B --> C{"🌐 JVM<br/><small>(Java Virtual Machine)</small>"}
+    
+    C -->|Interprete Standard| D["🐢 Esecuzione lenta<br/><small>(Interprete puro)</small>"]
+    C -->|Compilatore JIT| E["⚡ Traduzione 'Al Volo'<br/><small>(Linguaggio Macchina)</small>"]
+    E --> F["💻 Esecuzione NATIVA<br/><small>(Sull'Hardware specifico)</small>"]
+
+    style A fill:#FF9800,stroke:#EF6C00,color:#fff,stroke-width:2px
+    style B fill:#9C27B0,stroke:#7B1FA2,color:#fff,stroke-width:2px
+    style C fill:#2196F3,stroke:#1565C0,color:#fff,stroke-width:3px
+    style E fill:#4CAF50,stroke:#2E7D32,color:#fff,stroke-width:2px
+    style F fill:#607D8B,stroke:#455A64,color:#fff,stroke-width:2px
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:24px; margin-bottom:48px; margin-top:32px;">
+      
+      <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--accent); padding:20px 24px; border-radius:8px;">
+        <h4 style="color:var(--accent); font-size:18px; margin:0 0 12px 0;">1. Write Once, Run Anywhere (Il Bytecode e la JVM)</h4>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;">
+          Quando sviluppi in Java e compili il progetto, il codice non viene tradotto nell'Assembly della tua macchina reale, bensì nel cosiddetto <strong>Bytecode</strong> (i famosi file <code>.class</code>). Il Bytecode è essenzialmente un "linguaggio macchina universale", progettato per essere letto esclusivamente da un software: la <strong>Java Virtual Machine (JVM)</strong>.
+        </p>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">
+          È la JVM a fare da "interprete universale". Tu devi solo preoccuparti che sul computer finale sia installata la JVM giusta (che si tratti di Windows, macOS, Linux, o perfino uno smartphone Android). Se c'è la JVM, il tuo Bytecode girerà in modo identico, risolvendo per sempre il problema della portabilità hardware.
+        </p>
+      </div>
+
+      <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid #4CAF50; padding:20px 24px; border-radius:8px;">
+        <h4 style="color:#4CAF50; font-size:18px; margin:0 0 12px 0;">2. Il Miracolo del JIT Compiler (Le Prestazioni)</h4>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;">
+          Storicamente, l'interpretazione pura ha un grosso difetto: <em>è molto lenta</em>. Leggere il Bytecode riga per riga e tradurlo in tempo reale per l'hardware richiede tempo. Per risolvere questo problema, Java ha introdotto il <strong>Just-In-Time Compiler (JIT)</strong>, una delle tecnologie più brillanti dell'informatica moderna.
+        </p>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">
+          Mentre il programma è in esecuzione, il JIT "spia" segretamente quali blocchi di codice (o funzioni) vengono eseguiti più spesso (i cosiddetti <em>Hotspots</em>). Appena individua una funzione molto usata, <strong>la compila istantaneamente</strong> nel vero linguaggio macchina del processore reale. Dalla volta successiva, quel blocco non sarà più "interpretato", ma girerà a una <strong>velocità fulminea pari a quella del codice nativo C</strong>. 
+        </p>
+      </div>
+
+    </div>
+      </div>
+    </details>
+  </section>
+
+<!-- SEZIONE 5: IL FORMATO ELF -->
+  <section class="section" style="background:rgba(96, 125, 139, 0.04); border:1px solid rgba(96, 125, 139, 0.15); padding:40px; border-radius:24px;">
+    <details id="s5-elf" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#607D8B; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px; font-size:14px;">★</div>
+          <h2 style="margin:0;">Extra: Il Formato <span style="color:#607D8B;">ELF</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+        
+        <p class="lead" style="margin-bottom:32px;">È comunissimo fare confusione tra <strong>File Oggetto</strong> e <strong>File Eseguibile</strong>, soprattutto perché condividono lo stesso identico formato strutturale (come <strong>ELF</strong> su Linux o <strong>PE</strong> su Windows). Per chiarire definitivamente questo concetto, usiamo l'analogia della pubblicazione di una rivista.</p>
+        
+        <div style="text-align:center; margin-bottom:32px;">
+          <img src="assets/ELF.png" alt="Struttura del formato ELF" style="max-width:100%; border-radius:12px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.15);">
+        </div>
+        
+        <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:24px; font-family:var(--font-sans);">
+          
+          <div style="margin-bottom:24px; padding-bottom:24px; border-bottom:1px dashed var(--border);">
+            <strong style="color:var(--text); font-size:16px; display:block; margin-bottom:8px;">Il "Formato" (ELF o PE) = Il Modello di Impaginazione</strong>
+            <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0;">
+              Puoi pensare a <strong>ELF</strong> (<em>Executable and Linkable Format</em>) proprio come a un "modello di impaginazione" o a un contenitore standardizzato per organizzare i dati. Non è il codice in sé, ma è la struttura rigida che dice al sistema operativo (o al linker) dove trovare esattamente le varie parti del programma.
+            </p>
+          </div>
+
+          <div style="display:flex; flex-wrap:wrap; gap:24px;">
+            <!-- File Oggetto -->
+            <div style="flex:1; min-width:280px; background:rgba(255, 152, 0, 0.05); border:1px solid rgba(255, 152, 0, 0.2); border-left:4px solid var(--amber); padding:20px; border-radius:8px;">
+              <h5 style="color:var(--amber); font-size:15px; margin:0 0 12px 0;">1. Nel File Oggetto (La scatola "Linkable")</h5>
+              <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;"><strong>L'impaginazione del singolo pezzo di puzzle.</strong></p>
+              <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 12px 0;">Quando l'assemblatore finisce di tradurre il tuo singolo file C, "impagina" il risultato incompleto usando il formato ELF. La sua struttura prevede dei <em>cassetti specifici</em>:</p>
+              <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0 0 16px 0;">
+                <li style="margin-bottom:6px;"><strong>Object File Header:</strong> descrive la dimensione e la posizione degli altri segmenti del file oggetto stesso.</li>
+                <li style="margin-bottom:6px;"><strong>Text Segment:</strong> contiene il codice tradotto in linguaggio macchina.</li>
+                <li style="margin-bottom:6px;"><strong>Static Data Segment:</strong> contiene i dati allocati per tutta la durata del programma (sia dati statici, sia dinamici che possono crescere o diminuire).</li>
+                <li style="margin-bottom:6px;"><strong>Relocation Information:</strong> identificano istruzioni e dati che, quando il programma verrà posto in memoria, dipenderanno da indirizzi assoluti ancora da calcolare.</li>
+                <li style="margin-bottom:6px;"><strong>Symbol Table:</strong> contiene le etichette di cui non è stata trovata una definizione locale (es. funzioni di moduli esterni).</li>
+                <li><strong>Debugging Information:</strong> dati extra per il debugger, che permettono di associare le nude istruzioni macchina alle righe del codice sorgente C originale.</li>
+              </ul>
+              <div style="font-size:13px; color:#bbb; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; font-style:italic;">
+                Questa scatola ELF esce dall'assemblatore. Il processore non può ancora leggerla perché mancano i collegamenti verso altre librerie.
+              </div>
+            </div>
+
+            <!-- File Eseguibile -->
+            <div style="flex:1; min-width:280px; background:rgba(233, 30, 99, 0.05); border:1px solid rgba(233, 30, 99, 0.2); border-left:4px solid var(--pink); padding:20px; border-radius:8px;">
+              <h5 style="color:var(--pink); font-size:15px; margin:0 0 12px 0;">2. Nel File Eseguibile (La scatola "Executable")</h5>
+              <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;"><strong>L'impaginazione del quadro finale.</strong></p>
+              <p style="font-size:13px; color:var(--muted); line-height:1.6; margin:0 0 12px 0;">Anche il Linker, dopo aver unito tutti i file oggetto (i pezzi del puzzle) e sistemato gli indirizzi, usa lo <strong>stesso identico</strong> tipo di impaginazione ELF per creare il file finale.</p>
+              <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0 0 16px 0;">
+                <li>La struttura a cassetti (Header, Testo, Dati) <strong>rimane identica</strong>.</li>
+                <li>Le <em>Informazioni di Rilocazione</em> spariscono perché i buchi sono stati riempiti.</li>
+                <li>Viene introdotto un <strong>Entry Point</strong> per dire al sistema operativo da dove cominciare l'esecuzione.</li>
+              </ul>
+              <div style="font-size:13px; color:#bbb; background:rgba(0,0,0,0.2); padding:10px; border-radius:6px; font-style:italic;">
+                Il contenuto ora è completo, unito assieme, e perfettamente pronto per essere caricato in RAM dal Loader.
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top:24px; padding:16px; background:rgba(255,255,255,0.03); border-radius:8px; text-align:center; font-size:14px; color:var(--text);">
+            L'impaginazione ELF è quindi lo <strong>standard universale</strong> che fa da "busta" per il tuo codice in quasi tutte le sue fasi di vita: sia quando è un <em>"pezzo di puzzle"</em> (File Oggetto), sia quando è il <em>"puzzle completato"</em> (File Eseguibile).
+          </div>
+        </div>
+
+      </div>
+    </details>
+  </section>
+
+  <!-- EXTRA: BINDING E DLL -->
+  <section class="section" style="background:rgba(255, 152, 0, 0.04); border:1px solid rgba(255, 152, 0, 0.15); padding:40px; border-radius:24px;">
+    <details id="extra-binding" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#FF9800; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px; font-size:14px;">★</div>
+          <h2 style="margin:0;">Extra: Binding e Librerie Dinamiche <span style="color:#FF9800;">(DLL)</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+        
+        <div class="card-grid cols2" style="margin-bottom:32px;">
+          <!-- Collegamento Statico -->
+          <div class="card" style="border-top:4px solid #F44336;">
+            <h4 style="color:#F44336; margin:0 0 12px 0;">Collegamento Statico</h4>
+            <ul style="font-size:14px; color:var(--text); line-height:1.6; padding-left:16px; margin:0;">
+              <li style="margin-bottom:8px;">Le funzioni di libreria diventano <strong>fisicamente parte</strong> del codice eseguibile.</li>
+              <li style="margin-bottom:8px;">Se viene rilasciata una nuova versione della libreria, il programma caricato staticamente continuerà ostinatamente a usare la vecchia versione.</li>
+              <li>Poiché le librerie possono essere enormi rispetto al programma stesso, i file binari diventano <strong>eccessivamente grossi</strong>.</li>
+            </ul>
+          </div>
+          <!-- Collegamento Dinamico -->
+          <div class="card" style="border-top:4px solid #4CAF50;">
+            <h4 style="color:#4CAF50; margin:0 0 12px 0;">Collegamento Dinamico</h4>
+            <ul style="font-size:14px; color:var(--text); line-height:1.6; padding-left:16px; margin:0;">
+              <li style="margin-bottom:8px;">Usa le <strong>DLL</strong> (Dynamically Linked Libraries).</li>
+              <li style="margin-bottom:8px;">Le funzioni di libreria <strong>non</strong> vengono collegate e caricate finché non si inizia effettivamente l'esecuzione del programma.</li>
+              <li>Sfrutta il <strong>collegamento lazy</strong> (pigro): ogni procedura di libreria viene caricata e risolta solo ed esclusivamente dopo la sua prima chiamata.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; color:var(--text); margin-bottom:16px;">Il trucco del Lazy Linking e la Rimappatura</h3>
+        <p style="font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:16px;">
+          Nel collegamento lazy, il Linker non sa dove sarà la libreria, quindi si limita a piazzare un "Dummy" (un piccolo salto temporaneo fittizio) al posto della vera chiamata alla funzione.
+        </p>
+
+        <div style="margin-bottom:24px;">
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid var(--amber); padding:16px 20px; border-radius:8px; margin-bottom:16px;">
+            <p style="font-size:14px; color:var(--text); line-height:1.6; margin-top:0; margin-bottom:16px;"><strong>Alla Prima Chiamata:</strong> Il programma salta al Dummy. Questo innesca l'intervento del Sistema Operativo che cerca la DLL, la carica nella RAM e, soprattutto, <strong>la RIMAPPA in memoria</strong>: sovrascrive fisicamente l'indirizzo fittizio del Dummy con l'indirizzo reale della funzione appena caricata!</p>
+            <div style="text-align:center;">
+              <img src="assets/DDL_1.png" alt="Prima chiamata nel DLL" style="max-width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            </div>
+          </div>
+
+          <div style="background:var(--surface2); border:1px solid var(--border); border-left:4px solid #4CAF50; padding:16px 20px; border-radius:8px;">
+            <p style="font-size:14px; color:var(--text); line-height:1.6; margin-top:0; margin-bottom:16px;"><strong>Alle Chiamate Successive:</strong> Il programma salta di nuovo al Dummy, ma ora l'indirizzo è già stato corretto dalla prima chiamata. Il salto alla libreria avviene <strong>istantaneamente</strong>, senza alcun ulteriore intervento del Sistema Operativo.</p>
+            <div style="text-align:center;">
+              <img src="assets/DDL_2.png" alt="Chiamate successive nel DLL" style="max-width:100%; border-radius:8px; border:1px solid var(--border); box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </details>
+  </section>
+
+  <!-- EXTRA: MEMORIA VIRTUALE -->
+  <section class="section" style="background:rgba(33, 150, 243, 0.04); border:1px solid rgba(33, 150, 243, 0.15); padding:40px; border-radius:24px;">
+    <details id="extra-mmu" style="width:100%; scroll-margin-top:40px;">
+      <summary style="list-style:none; cursor:pointer; outline:none;">
+        <div class="section-header" style="align-items:center; margin-bottom:24px;">
+          <div class="section-num" style="background-color:#2196F3; color:#fff; padding:4px 8px; border-radius:4px; padding-top:4px; font-size:14px;">★</div>
+          <h2 style="margin:0;">Extra: L'Illusione della <span style="color:#2196F3;">Memoria Virtuale</span></h2>
+        </div>
+      </summary>
+      <div class="section-content" style="padding-top:16px;">
+        
+        <p class="lead" style="margin-bottom:32px;">Questo è il <strong>"pezzo finale del puzzle"</strong> ed è la chiave di volta per capire come funzionano i computer moderni. Mettiamo insieme tutto quello che abbiamo visto (Assemblatore, Linker, ELF) e scopriamo perché senza la <strong>Memoria Virtuale</strong> il tuo computer andrebbe in crash appena tenti di aprire due programmi contemporaneamente.</p>
+
+        <div style="display:flex; flex-wrap:wrap; gap:24px; margin-bottom:48px;">
+          <!-- Illusione -->
+          <div style="flex:1; min-width:300px; background:var(--surface2); border:1px solid var(--border); border-top:4px solid #F44336; padding:24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <h4 style="color:#F44336; font-size:18px; margin:0 0 12px 0;">L'Illusione del Linker</h4>
+            <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;">
+              Quando il Linker crea il tuo file eseguibile finale, si comporta in modo molto ingenuo. Organizza l'intero codice convinto che il tuo programma sia <strong>l'unico padrone assoluto del computer</strong>.
+            </p>
+            <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0;">
+              Se ricordi dal nostro simulatore, il Linker decide arbitrariamente di far partire il codice dall'indirizzo <code>0x00400000</code>. L'incredibile realtà è che <strong>ogni singolo programma</strong> che apri sul tuo PC (il Browser, Spotify, il tuo codice C) crede fermamente di trovarsi a quell'indirizzo e di avere tutta la RAM a sua completa disposizione!
+            </p>
+          </div>
+          <!-- Realtà -->
+          <div style="flex:1; min-width:300px; background:var(--surface2); border:1px solid var(--border); border-top:4px solid #4CAF50; padding:24px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+            <h4 style="color:#4CAF50; font-size:18px; margin:0 0 12px 0;">La Dura Realtà Fisica</h4>
+            <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0 0 12px 0;">
+              Ovviamente, questa è un'illusione fantastica. Se tutti i programmi cercassero fisicamente di scrivere nei cavi elettrici in corrispondenza del chip <code>0x00400000</code> sulla tua scheda madre, si sovrascriverebbero l'uno con l'altro all'istante, distruggendo i dati.
+            </p>
+            <p style="font-size:14px; color:var(--muted); line-height:1.6; margin:0;">
+              La vera memoria RAM fisica è un "condominio" estremamente caotico e disordinato, dove il Sistema Operativo incastra pezzi di programmi qua e là in base a dove c'è spazio libero.
+            </p>
+          </div>
+        </div>
+
+        <h3 style="font-size:18px; color:var(--text); margin-bottom:16px;">La MMU: L'Intercettatore Segreto</h3>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">
+          Come si risolve questo inevitabile scontro frontale? Tramite un potentissimo pezzo di hardware dedicato che vive dentro la CPU chiamato <strong>MMU (Memory Management Unit)</strong>, il quale collabora strettamente con il Sistema Operativo per gestire le traduzioni degli indirizzi "al volo".
+        </p>
+
+        <div style="background:var(--surface); border:1px solid var(--border); border-left:4px solid #2196F3; border-radius:8px; padding:24px; margin-bottom:48px;">
+          <ol style="font-size:14px; color:var(--muted); line-height:1.8; margin:0; padding-left:20px;">
+            <li style="margin-bottom:12px;"><strong>L'Ordine Ignaro:</strong> Il tuo programma in esecuzione dice ingenuamente alla CPU: <em>"Ehi, vai a leggere l'istruzione al mio indirizzo esclusivo <code>0x00400000</code>!"</em>.</li>
+            <li style="margin-bottom:12px;"><strong>L'Intercettazione:</strong> Prima che questo indirizzo arrivi fisicamente ai cavi della memoria RAM, la MMU lo intercetta.</li>
+            <li style="margin-bottom:12px;"><strong>La Traduzione (Mapping):</strong> La MMU consulta una tabella segreta gestita dal Sistema Operativo (chiamata <em>Page Table</em>). In questa tabella trova scritto: <em>"Attenzione: per il Programma 1, l'indirizzo virtuale <code>0x00400000</code> in questo momento corrisponde in realtà al cassetto fisico <code>0x08F2A000</code>"</em>.</li>
+            <li><strong>L'Accesso Reale:</strong> La MMU cambia istantaneamente i bit dell'indirizzo e va a leggere o scrivere nello spazio fisico corretto. Il programma riceve il suo dato ed è felicemente convinto di aver letto da <code>0x00400000</code>, senza mai accorgersi dell'inganno!</li>
+          </ol>
+        </div>
+
+        <div class="mermaid">
+flowchart LR
+    A["💻 Il tuo Programma<br/><small>(Spazio Virtuale)</small>"] -->|Richiede<br/>0x00400000| B{"🛡️ MMU<br/><small>(Hardware CPU)</small>"}
+    
+    subgraph SO["Sistema Operativo"]
+        C[("📄 Page Table<br/>(Mappa Segreta)")]
+    end
+    
+    B -.->|Consulta la| C
+    C -.->|Risponde| B
+    B -->|Traduce in<br/>0x08F2A000| D["💾 RAM Fisica<br/><small>(Chip Reale)</small>"]
+
+    style A fill:#F44336,stroke:#D32F2F,color:#fff,stroke-width:2px
+    style B fill:#2196F3,stroke:#1565C0,color:#fff,stroke-width:3px
+    style C fill:#9E9E9E,stroke:#424242,color:#fff,stroke-width:1px
+    style D fill:#4CAF50,stroke:#2E7D32,color:#fff,stroke-width:2px
+        </div>
+
+        <h3 style="font-size:18px; color:var(--text); margin-bottom:16px;">I 2 vantaggi colossali del Sistema</h3>
+        <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">In breve: il Linker crea l'illusione perfetta, e la Memoria Virtuale fa in modo che l'illusione diventi realtà senza causare disastri. Questo porta benefici inestimabili:</p>
+        <div class="card-grid cols2">
+          <div class="card" style="border-top:3px solid #E91E63;">
+            <h4 style="color:#E91E63; margin:0 0 8px 0;">🛡️ Sicurezza e Isolamento totale</h4>
+            <p style="font-size:13px; color:var(--muted); margin:0;">
+              Il Programma A non conosce né ha accesso agli indirizzi fisici del Programma B. Se un malware tenta di leggere un indirizzo virtuale che punta fuori dalla sua area di competenza, la MMU si accorge che non c'è una mappatura valida e blocca istantaneamente la CPU (sollevando il famoso "Segmentation Fault"), impedendo al programma di rubare dati bancari o mandare in crash il sistema.
+            </p>
+          </div>
+          <div class="card" style="border-top:3px solid #00BCD4;">
+            <h4 style="color:#00BCD4; margin:0 0 8px 0;">🧩 L'Indipendenza del Linker</h4>
+            <p style="font-size:13px; color:var(--muted); margin:0;">
+              Il Linker può fare tutto il suo complesso lavoro di rilocazione (salti, costanti e funzioni di libreria) prima ancora che il programma venga eseguito. Tutti i salti che ha calcolato funzioneranno perfettamente nella logica dello spazio virtuale, a prescindere da dove il Sistema Operativo trovi effettivamente spazio nella RAM fisica.
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </details>
+  </section>
+  
+
+</main>
+</div>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, theme: 'dark', fontFamily: 'DM Sans, sans-serif' });
+</script>
+<script>
+const sections = document.querySelectorAll('section');
+const navItems = document.querySelectorAll('.sidebar .nav-item');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.clientHeight;
+    if (pageYOffset >= (sectionTop - 150)) {
+      const details = section.querySelector('details');
+      current = details ? details.getAttribute('id') : section.getAttribute('id');
+    }
+  });
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href').includes(current)) {
+      item.classList.add('active');
+    }
+  });
+});
+</script>
+<script src="shared.js"></script>
+</body>
+</html>

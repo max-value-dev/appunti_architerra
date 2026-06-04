@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Manuale Pratico Assembly</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="#s0">
+    <div class="nav-dot"></div> Teoria dell'Overflow
+    <span class="nav-num">00</span>
+  </a>
+  <a class="nav-item" href="#s1">
+    <div class="nav-dot"></div> Registri e Memoria
+    <span class="nav-num">01</span>
+  </a>
+  <a class="nav-item" href="#s2">
+    <div class="nav-dot"></div> Formati Istruzioni
+    <span class="nav-num">02</span>
+  </a>
+  <a class="nav-item" href="#s3">
+    <div class="nav-dot"></div> Istruzioni Aritmetiche
+    <span class="nav-num">03</span>
+  </a>
+  <a class="nav-item" href="#s4">
+    <div class="nav-dot"></div> Accesso Memoria (L/S)
+    <span class="nav-num">04</span>
+  </a>
+  <a class="nav-item" href="#s5">
+    <div class="nav-dot"></div> Logica e Shift (Interattivo)
+    <span class="nav-num">05</span>
+  </a>
+  <a class="nav-item" href="#s6">
+    <div class="nav-dot"></div> Salti e Cicli (IF, FOR, WHILE)
+    <span class="nav-num">06</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 08 — MANUALE PRATICO ASSEMBLY</div>
+    <h1>Manuale Pratico Assembly<br><em>Reference Interattiva RISC-V</em></h1>
+    <p>La guida completa e interattiva basata sulle specifiche ISA. Dalle istruzioni aritmetiche al controllo del flusso, con simulatori visivi integrati per shift e memoria.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 0: Overflow ══════════════ -->
+  <section class="section" id="s0">
+    <div class="section-header">
+      <div class="section-num">00</div>
+      <h2>La Teoria: <span class="accent">L'Overflow</span> nell'Aritmetica con Segno</h2>
+    </div>
+
+    <p class="lead">Prima di immergerci nelle istruzioni specifiche, è fondamentale comprendere come il processore tratta i numeri internamente.</p>
+    
+    <p>Nei calcolatori, e in particolare nell'architettura RISC-V a 32 bit, i numeri interi con segno vengono rappresentati sfruttando la geniale matematica del <strong>Complemento a Due</strong>. In questa struttura rigorosa, il bit posizionato più all'estrema sinistra (chiamato <strong>Bit Più Significativo</strong> o <em>MSB - Most Significant Bit</em>) agisce come un interruttore che rivela la natura del numero:</p>
+    
+    <ul>
+      <li>Se l'MSB è <strong><code class="t-green" style="font-size:16px">0</code></strong>, il numero è matematicamente <strong>positivo</strong> e si legge normalmente in binario. (Es: <code>00101010</code> = 32 + 8 + 2 = +42).</li>
+      <li>Se l'MSB è <strong><code class="t-red" style="font-size:16px">1</code></strong>, il numero è matematicamente <strong>negativo</strong>.</li>
+    </ul>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">L'evoluzione dei numeri negativi</h3>
+    <p>Nella storia dell'informatica, gli ingegneri hanno inventato tre metodi principali per rappresentare i numeri negativi in binario, prima di eleggere il Complemento a Due come standard assoluto:</p>
+    
+    <div class="card-grid cols3" style="margin-bottom:24px;">
+      <div class="card red">
+        <div class="card-title">1. Modulo e Segno</div>
+        <p style="font-size:13px; margin:8px 0 0; line-height:1.5;">Il metodo più "umano". Il primo bit fa solo da segno (0 = +, 1 = -) e il resto dei bit indica il valore (modulo).<br><br>
+        <strong>Problemi:</strong> Esistono due zeri (+0 e -0) e fare i calcoli richiede circuiti complessi (l'ALU deve prima controllare i segni e poi decidere se usare l'addizionatore o il sottrattore).</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">2. Complemento a 1</div>
+        <p style="font-size:13px; margin:8px 0 0; line-height:1.5;">Per fare un numero negativo, prendi il positivo e <strong>inverti tutti i bit</strong> (0 diventa 1, 1 diventa 0).<br><br>
+        <strong>Problemi:</strong> I calcoli per la ALU diventano più semplici, ma persiste l'orribile problema del "doppio zero" (00000000 = +0, 11111111 = -0), che costringe la CPU a sprecare tempo per controlli extra.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">3. Complemento a 2</div>
+        <p style="font-size:13px; margin:8px 0 0; line-height:1.5;">Il vincitore definitivo usato in RISC-V. Si ottiene prendendo il Complemento a 1 e <strong>aggiungendo 1</strong>.<br><br>
+        <strong>Vantaggi:</strong> Elimina il doppio zero (esiste solo 00000000). E la magia vera? L'ALU usa <em>esattamente lo stesso circuito</em> sia per fare 2+3 che per fare 2-3. L'addizione funziona a prescindere dal segno, risparmiando miliardi di transistor.</p>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:24px; margin:24px 0;">
+      <h4 style="color:var(--accent); margin-bottom:12px; font-size:16px;">Come leggere un numero negativo (Inizia con 1)</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:16px;">Esistono due metodi infallibili per capire il valore di un numero negativo in Complemento a 2. Prendiamo come esempio l'8 bit <code>11010110</code>.</p>
+      
+      <div class="card-grid cols2" style="margin-bottom:16px;">
+        <div class="card amber">
+          <div class="card-title">Metodo 1: Quello Veloce (Consigliato)</div>
+          <p style="font-size:13px; margin:8px 0 0; line-height:1.5;">Converti il numero in decimale come se fosse <em>senza segno</em>, poi sottrai <code>2^N</code> (dove N è il numero di bit a disposizione. Per 8 bit sottrai <code>2^8 = 256</code>).
+          <br><br>
+          1) <code>11010110</code> senza segno = 128+64+16+4+2 = <strong>214</strong><br>
+          2) Sottrai: <code>214 - 256</code> = <strong>-42</strong></p>
+        </div>
+        <div class="card blue">
+          <div class="card-title">Metodo 2: Inverti e aggiungi 1</div>
+          <p style="font-size:13px; margin:8px 0 0; line-height:1.5;">Il metodo matematico "scolastico":<br>
+          1) <strong>Inverti i bit</strong>: <code>11010110</code> &rightarrow; <code>00101001</code><br>
+          2) <strong>Aggiungi 1</strong>: <code>00101001</code> + <code>1</code> = <code>00101010</code><br>
+          3) Converti e aggiungi il "meno": <code>00101010</code> = 42 &rightarrow; <strong>-42</strong></p>
+        </div>
+      </div>
+
+      <h4 style="color:var(--text); margin-top:24px; margin-bottom:12px; font-size:15px;">Come rappresentare un numero negativo</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:12px;">Se devi scrivere <strong>-42</strong> in binario su 8 bit, fai il processo del "Metodo 2":</p>
+      <ol style="font-size:13px; color:var(--text); line-height:1.6; padding-left:20px; margin-bottom:16px;">
+        <li>Scrivi il corrispondente positivo: <code>+42 = 00101010</code></li>
+        <li>Inverti tutti i bit: <code>11010101</code></li>
+        <li>Aggiungi 1: <code>11010110</code></li>
+      </ol>
+
+      <div class="callout purple" style="margin-top:16px; margin-bottom:0;">
+        <strong>La Regola Pratica per gli Esercizi (su 8 bit)</strong><br>
+        Se il primo bit è <strong>0</strong>, leggi il numero normalmente.<br>
+        Se il primo bit è <strong>1</strong>, calcola: <code>(Valore binario senza segno) - 256</code>.<br><br>
+        <em>Esempio fondamentale:</em> <code>11111111</code> non vale 255 in complemento a due! Vale <code>255 - 256 = -1</code>.
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">I Limiti del Contenitore (Formule)</h3>
+    <p>Dato un sistema a <strong>N bit</strong>, il calcolo per trovare il numero più grande (positivo) e il più piccolo (negativo) che possiamo rappresentare segue queste formule assolute:</p>
+    <ul>
+      <li><strong>Numero Minimo (Negativo):</strong> <code>-(2<sup>N-1</sup>)</code></li>
+      <li><strong>Numero Massimo (Positivo):</strong> <code>+(2<sup>N-1</sup> - 1)</code></li>
+    </ul>
+    <p>Essendo in un'architettura RISC-V a <strong>32 bit</strong> (quindi N = 32), la capienza esatta sarà:</p>
+    <div class="card-grid cols2" style="margin:16px 0 24px">
+      <div class="card red">
+        <div class="card-title">Valore Minimo Assoluto</div>
+        <p style="font-size:14px; margin:5px 0 0"><code>-(2<sup>31</sup>)</code> = <strong>-2.147.483.648</strong></p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Valore Massimo Assoluto</div>
+        <p style="font-size:14px; margin:5px 0 0"><code>+(2<sup>31</sup> - 1)</code> = <strong>+2.147.483.647</strong></p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Cos'è esattamente l'Overflow?</h3>
+    <p>Avendo a disposizione un "contenitore" rigido e non elastico di soli 32 bit, l'architettura impone dei limiti fisici. L'<strong>Overflow</strong> (in italiano "traboccamento") si verifica quando il risultato di un'operazione matematica diventa <em>troppo grande</em> (supera il limite massimo) o <em>troppo piccolo e negativo</em> (infrange il limite minimo) per poter essere stipato nei 32 bit a disposizione.</p>
+
+    <div class="callout red">
+      <strong>La Regola d'Oro dell'Addizione</strong><br>
+      Quando esegui un'addizione tra due registri, esiste una regola empirica e infallibile adottata a livello hardware per smascherare un overflow:<br><br>
+      <em>C'è overflow <strong>se e solo se</strong> stai sommando due numeri che condividono lo <strong>stesso segno</strong> (entrambi positivi o entrambi negativi) e, inaspettatamente, ottieni un risultato che ha il <strong>segno opposto</strong>.</em>
+    </div>
+    
+    <p style="font-size:14px;color:var(--muted);margin-top:12px">Nota logica: Se provi a sommare due numeri di segno opposto (uno positivo e uno negativo), il risultato si troverà sempre a "metà strada" tra i due, rendendo matematicamente impossibile il superamento dei limiti strutturali a 32 bit. In questo caso l'overflow non può mai verificarsi.</p>
+
+  </section>
+
+  <!-- ══════════════ SEZIONE 1: Registri e Memoria ══════════════ -->
+  <section class="section" id="s1">
+    <div class="section-header">
+      <div class="section-num">01</div>
+      <h2>Registri e <span class="accent">Memoria</span></h2>
+    </div>
+
+    <p class="lead">L'architettura RISC-V opera su due livelli di memorizzazione principali: i <strong>registri interni veloci</strong> (nella CPU) e la <strong>memoria centrale (RAM)</strong>. Capire la distinzione tra word, byte e gli indirizzi è il primo passo.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Dimensioni dei Dati</h3>
+    <ul>
+      <li><strong>Parola (Word):</strong> 32 bit (4 byte). È l'unità fondamentale del RV32I.</li>
+      <li><strong>Parola doppia (Doubleword):</strong> 64 bit (8 byte). Disponibile nell'architettura a 64 bit (RV64I).</li>
+      <li><strong>Half-word:</strong> 16 bit (2 byte).</li>
+      <li><strong>Byte:</strong> 8 bit. Unità minima indirizzabile in memoria.</li>
+    </ul>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">I 32 Registri Interi</h3>
+    <p>Il processore RV32I contiene 32 registri da 32 bit per operazioni generiche, denotati da <code>x0</code> a <code>x31</code>. (RV64I usa 64 bit).</p>
+    <table style="font-size:13px; line-height:1.4; margin-bottom:24px;">
+      <tr><th>Registro</th><th>Nome Logico</th><th>Descrizione / Ruolo (Calling Convention)</th></tr>
+      <tr><td><code class="t-red">x0</code></td><td><code>zero</code></td><td><strong>Zero costante.</strong> Il suo valore è sempre cablato a 0 a livello hardware. Non può essere sovrascritto.</td></tr>
+      <tr><td><code class="t-green">x1</code></td><td><code>ra</code></td><td><strong>Return Address.</strong> Salva l'indirizzo di ritorno nelle chiamate a funzione.</td></tr>
+      <tr><td><code class="t-green">x2</code></td><td><code>sp</code></td><td><strong>Stack Pointer.</strong> Punta alla cima dello stack in memoria.</td></tr>
+      <tr><td><code class="t-green">x3, x4</code></td><td><code>gp, tp</code></td><td>Global pointer e Thread pointer.</td></tr>
+      <tr><td><code class="t-blue">x5-x7, x28-x31</code></td><td><code>t0-t2, t3-t6</code></td><td><strong>Temporanei (Caller-saved).</strong> Registri liberi usati per calcoli intermedi; non vengono preservati nelle chiamate a procedure.</td></tr>
+      <tr><td><code class="t-amber">x8</code></td><td><code>fp/s0</code></td><td><strong>Frame Pointer / Saved register.</strong> Preservato.</td></tr>
+      <tr><td><code class="t-amber">x9, x18-x27</code></td><td><code>s1, s2-s11</code></td><td><strong>Registri Salvati (Callee-saved).</strong> Devono essere preservati se una funzione li modifica (salvati nello stack).</td></tr>
+      <tr><td><code class="t-purple">x10-x17</code></td><td><code>a0-a7</code></td><td><strong>Argomenti (a0-a7).</strong> Usati per passare parametri alle funzioni. <code>a0</code> e <code>a1</code> contengono anche i valori di ritorno.</td></tr>
+    </table>
+
+    <div class="callout blue">
+      <strong>Program Counter (PC):</strong> Esiste un registro speciale aggiuntivo, il PC, che contiene l'indirizzo in memoria dell'istruzione in esecuzione. Non è accessibile direttamente come x0-x31, ma viene modificato dai salti (Branch/Jump).
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 2: Formati ══════════════ -->
+  <section class="section" id="s2">
+    <div class="section-header">
+      <div class="section-num">02</div>
+      <h2>I Formati delle <span class="accent">Istruzioni</span></h2>
+    </div>
+
+    <p class="lead">Ogni singola istruzione assembly si traduce in <strong>esattamente 32 bit</strong> in linguaggio macchina. I progettisti hanno definito solo 6 layout (formati) per semplificare l'hardware (regolarità = velocità).</p>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Tipo R (Registro-Registro)</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Usato per operazioni aritmetico/logiche tra due registri (es: <code>add</code>, <code>sub</code>, <code>and</code>, <code>or</code>, <code>sll</code>).</p>
+      <div style="display:flex; border:1px solid var(--border); border-radius:4px; overflow:hidden; font-family:'DM Mono',monospace; font-size:12px; text-align:center;">
+        <div style="flex:7; border-right:1px solid var(--border); padding:8px; background:rgba(255,255,255,0.02)">funct7 (7)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--green)">rs2 (5)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--blue)">rs1 (5)</div>
+        <div style="flex:3; border-right:1px solid var(--border); padding:8px; background:rgba(255,255,255,0.02)">funct3 (3)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--purple)">rd (5)</div>
+        <div style="flex:7; padding:8px; background:rgba(255,255,255,0.05)">opcode (7)</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">Tipo I (Immediato)</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Usato quando il secondo operando è una costante da 12-bit (es: <code>addi</code>, <code>lw</code>, <code>jalr</code>, <code>slli</code>).</p>
+      <div style="display:flex; border:1px solid var(--border); border-radius:4px; overflow:hidden; font-family:'DM Mono',monospace; font-size:12px; text-align:center;">
+        <div style="flex:12; border-right:1px solid var(--border); padding:8px; color:var(--amber)">imm[11:0] (12)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--blue)">rs1 (5)</div>
+        <div style="flex:3; border-right:1px solid var(--border); padding:8px; background:rgba(255,255,255,0.02)">funct3 (3)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--purple)">rd (5)</div>
+        <div style="flex:7; padding:8px; background:rgba(255,255,255,0.05)">opcode (7)</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-title">Tipo S (Store) e Tipo SB (Branch)</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:8px">Usato per scrivere in memoria (<code>sw</code>, <code>sb</code>) e per salti condizionati (<code>beq</code>, <code>bne</code>). L'immediato viene "spaccato" in due parti per mantenere i registri <code>rs1</code> e <code>rs2</code> sempre nella stessa identica posizione dei formati R/I.</p>
+      <div style="display:flex; border:1px solid var(--border); border-radius:4px; overflow:hidden; font-family:'DM Mono',monospace; font-size:12px; text-align:center;">
+        <div style="flex:7; border-right:1px solid var(--border); padding:8px; color:var(--amber)">imm[11:5] (7)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--green)">rs2 (5)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--blue)">rs1 (5)</div>
+        <div style="flex:3; border-right:1px solid var(--border); padding:8px; background:rgba(255,255,255,0.02)">funct3 (3)</div>
+        <div style="flex:5; border-right:1px solid var(--border); padding:8px; color:var(--amber)">imm[4:0] (5)</div>
+        <div style="flex:7; padding:8px; background:rgba(255,255,255,0.05)">opcode (7)</div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════ SEZIONE 3: Aritmetica ══════════════ -->
+  <section class="section" id="s3">
+    <div class="section-header">
+      <div class="section-num">03</div>
+      <h2>Istruzioni <span class="accent">Aritmetiche</span></h2>
+    </div>
+
+    <p class="lead">Le istruzioni aritmetiche richiedono <strong>rigorosamente tre operandi</strong> (destinazione, sorgente 1, sorgente 2). La ALU riceve input esclusivamente dai registri.</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <div class="card green">
+        <div class="card-title">Addizione e Sottrazione</div>
+        <pre style="margin:5px 0 0; padding:10px; font-size:12px"><span class="kw">add</span> <span class="reg">x5</span>, <span class="reg">x20</span>, <span class="reg">x21</span>  <span class="cmt"># x5 = x20 + x21</span>
+<span class="kw">sub</span> <span class="reg">x5</span>, <span class="reg">x20</span>, <span class="reg">x21</span>  <span class="cmt"># x5 = x20 - x21</span></pre>
+        <p style="font-size:12px;margin-top:8px">I numeri sono in complemento a due. Il calcolatore usa un solo sommatore: per la sottrazione usa l'addizionatore con <code>B-negate</code> e <code>CarryIn=1</code>.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Costanti e Negazione</div>
+        <pre style="margin:5px 0 0; padding:10px; font-size:12px"><span class="kw">addi</span> <span class="reg">x5</span>, <span class="reg">x20</span>, <span class="imm">15</span>  <span class="cmt"># x5 = x20 + 15</span>
+<span class="kw">sub</span>  <span class="reg">x5</span>, <span class="reg">x0</span>,  <span class="reg">x20</span> <span class="cmt"># x5 = 0 - x20 (Negazione)</span></pre>
+        <p style="font-size:12px;margin-top:8px">L'istruzione <code>subi</code> non esiste! Si usa <code>addi</code> con numero negativo. La costante occupa 12 bit (valori da -2048 a +2047).</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Pseudoistruzioni Utili</h3>
+    <p>Il linguaggio Assembly fornisce comandi "finti" (comodità per il programmatore) che l'assemblatore traduce automaticamente nelle vere istruzioni di base (ISA):</p>
+    <ul>
+      <li><code class="t-green">mv x5, x6</code> (Copia registro). Tradotto come: <code>addi x5, x6, 0</code></li>
+      <li><code class="t-amber">not x5, x6</code> (NOT bit a bit). Tradotto come: <code>xori x5, x6, -1</code></li>
+      <li><code class="t-blue">neg x5, x6</code> (Cambia segno). Tradotto come: <code>sub x5, x0, x6</code></li>
+    </ul>
+
+    <div class="callout purple" style="margin-top:16px">
+      <strong>Focus Speciale: L'istruzione <code>li</code> (Load Immediate)</strong><br>
+      Quando scrivi <code class="t-purple">li t0, 2000</code>, in realtà stai usando una pseudoistruzione. Il processore non ha un'istruzione nativa chiamata <code>li</code>. L'istruzione hardware reale per caricare una costante è <code>addi</code>.
+      <br><br>
+      Tuttavia, <code>addi</code> ha uno spazio interno molto limitato: può ospitare solo una costante a <strong>12 bit con segno</strong>.
+      <ul style="margin:8px 0; font-size:13px">
+        <li>Valore minimo: <strong>-2048</strong></li>
+        <li>Valore massimo: <strong>+2047</strong></li>
+      </ul>
+      Siccome 2000 rientra perfettamente in questa "scatola" di 12 bit, l'assemblatore traduce il tuo comando in una singola, fulminea istruzione base: <code style="background:rgba(255,255,255,0.2); padding:2px 6px; border-radius:4px">addi t0, zero, 2000</code>.
+      <br><br>
+      <span style="font-size:13px; opacity:0.9"><em>E se avessi scritto <code>li t0, 5000</code>?</em> Siccome 5000 sfora il limite di 2047, l'assemblatore è costretto a "spaccare" il caricamento usando due istruzioni fisiche separate in sequenza (<code>lui</code> e <code>addi</code>) per comporre il numero gigante pezzo per pezzo!</span>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Dietro le quinte di <code>li</code>: Spezzare i Numeri a 32 bit</h3>
+    <p>I progettisti di RISC-V hanno stabilito che tutte le istruzioni base devono essere lunghe esattamente 32 bit. Per caricare un numero a 32 bit completo in un registro, l'hardware impone di spezzare il lavoro in due istruzioni separate:</p>
+    <ul>
+      <li><strong><code>lui</code> (Load Upper Immediate)</strong>: Si occupa della parte "alta" del numero. Questa istruzione contiene <strong>20 bit</strong> di spazio per i dati. Prende questi 20 bit e li piazza nella parte sinistra del registro (azzerando contemporaneamente i 12 bit di destra).</li>
+      <li><strong><code>addi</code> (Add Immediate)</strong>: Si occupa della parte "bassa". Contiene <strong>12 bit</strong> di spazio per i dati. Prende questi 12 bit e li somma al registro.</li>
+    </ul>
+    <p>La matematica sembra perfetta: <strong>20 + 12 = 32 bit</strong>.</p>
+
+    <div class="callout amber">
+      <strong>L'inghippo del Segno (Perché la pseudoistruzione <code>li</code> ti salva la vita)</strong><br>
+      Potrebbe sembrarti un semplice taglia-e-incolla, ma c'è una complicazione insidiosa: l'istruzione <code>addi</code> lavora con numeri <em>con segno</em> in complemento a due.<br><br>
+      Se il <strong>primo bit dei 12 bit inferiori è un 1</strong> (ovvero se il pezzo basso è &ge; 0x800), l'istruzione <code>addi</code> pensa che tu le stia passando un numero <em>negativo</em> (es. -2048 invece di +2048). Quindi, quando fa la somma con la parte alta caricata da <code>lui</code>, finirà per <strong>sottrarre</strong> un valore, rovinando completamente il numero originale!<br><br>
+      Per evitare questo disastro, l'assemblatore fa un trucco geniale dietro le quinte:
+      <ul style="margin:8px 0; font-size:13px">
+        <li>Guarda i 12 bit inferiori.</li>
+        <li>Se iniziano con un 1 (cioè se sembrano negativi), l'assemblatore <strong>aggiunge +1 alla parte alta dei 20 bit</strong> (dentro l'istruzione <code>lui</code>) per compensare in anticipo la futura sottrazione di <code>addi</code>.</li>
+      </ul>
+      Fare questo calcolo a mano ogni volta sarebbe un incubo per un programmatore. Ecco perché si usa la pseudoistruzione <code>li</code>! Quando tu scrivi <code class="t-purple">li t0, 0x12345678</code>, l'assemblatore fa la magia: spezza il numero, controlla il segno, compensa se necessario, e genera in automatico la coppia perfetta di <code>lui</code> e <code>addi</code>.
+    </div>
+
+    <!-- WIDGET SIMULATORE LUI/ADDI -->
+    <div style="background:var(--surface2); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:24px; margin-top:16px;">
+      <h4 style="margin:0 0 12px 0; font-size:15px; color:var(--text)">Simulatore <code>lui</code> + <code>addi</code></h4>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:16px">Inserisci un numero esadecimale a 32 bit per vedere come il processore lo spezza e se fa scattare la compensazione del segno!</p>
+      
+      <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:16px">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block">Valore 32-bit (Hex)</label>
+          <input type="text" id="li-val" value="0x12345678" style="background:var(--background); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:6px; font-family:'DM Mono',monospace; width:120px;">
+        </div>
+      </div>
+      
+      <div style="display:flex; gap:12px; flex-direction:column; font-family:'DM Mono',monospace; font-size:13px;">
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:140px; color:var(--dim)">Target a 32-bit:</div>
+          <div id="li-target" style="color:var(--text); font-weight:bold">0x12345678</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:140px; color:var(--dim)">1. Valutazione:</div>
+          <div id="li-eval" style="color:var(--amber)">Pezzo basso 0x678 (Bit 11 è 0). Nessuna compensazione.</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:140px; color:var(--purple)">2. Istruzione <code>lui</code>:</div>
+          <div id="li-lui" style="background:rgba(156,39,176,0.1); border:1px solid var(--purple); padding:4px 8px; border-radius:4px">lui t0, 0x12345</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px">
+          <div style="width:140px; color:var(--green)">3. Istruzione <code>addi</code>:</div>
+          <div id="li-addi" style="background:rgba(76,175,80,0.1); border:1px solid var(--green); padding:4px 8px; border-radius:4px">addi t0, t0, 1656</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function updateLiWidget() {
+        let valStr = document.getElementById('li-val').value.trim();
+        if (valStr.startsWith('0x') || valStr.startsWith('0X')) {
+          valStr = valStr.substring(2);
+        }
+        let val = parseInt(valStr, 16);
+        if (isNaN(val)) return;
+        // limit to 32 bits
+        val = val >>> 0;
+        
+        let targetHex = "0x" + val.toString(16).toUpperCase().padStart(8, '0');
+        document.getElementById('li-target').textContent = targetHex;
+
+        let lower12 = val & 0xFFF;
+        let upper20 = val >>> 12;
+
+        // Check if 12th bit is 1 (0x800)
+        let isNegative = (lower12 & 0x800) !== 0;
+        
+        let evalText = "Pezzo basso 0x" + lower12.toString(16).toUpperCase().padStart(3, '0') + " (Bit 11 è " + (isNegative ? "1" : "0") + "). ";
+        
+        if (isNegative) {
+          evalText += "<span style='color:var(--red)'>Compensazione del segno applicata (+1 alla parte alta)!</span>";
+          upper20 = (upper20 + 1) & 0xFFFFF;
+        } else {
+          evalText += "<span style='color:var(--green)'>Nessuna compensazione necessaria.</span>";
+        }
+        
+        document.getElementById('li-eval').innerHTML = evalText;
+        
+        let luiHex = "0x" + upper20.toString(16).toUpperCase().padStart(5, '0');
+        document.getElementById('li-lui').textContent = "lui t0, " + luiHex;
+
+        // lower12 is treated as signed 12-bit
+        let addiVal = lower12;
+        if (isNegative) {
+            addiVal = lower12 - 4096;
+        }
+        document.getElementById('li-addi').textContent = "addi t0, t0, " + addiVal;
+      }
+      document.getElementById('li-val').addEventListener('input', updateLiWidget);
+      updateLiWidget();
+    </script>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Moltiplicazione e Divisione (Estensione M)</h3>
+    
+    <div class="callout purple" style="margin-bottom:16px">
+      <strong>Come funziona l'operazione <code>mul</code> (Moltiplicazione)</strong><br>
+      Moltiplicare due registri da 32 bit può produrre matematicamente un risultato gigantesco, lungo fino a <strong>64 bit</strong>. Siccome l'architettura RV32I ha registri capienti solo 32 bit, non c'è modo fisico di salvare l'intero risultato in una sola volta!<br><br>
+      Per aggirare il limite fisico, RISC-V divide il prodotto in due "fette" usando due istruzioni separate:
+      <ul style="margin:8px 0; font-size:13px">
+        <li><strong><code>mul</code> (Multiply):</strong> Calcola la moltiplicazione e ti restituisce esclusivamente la fetta <strong>inferiore</strong> (i 32 bit più a destra). Se i numeri che stai moltiplicando non sono enormi, questa istruzione basta e avanza, perché il risultato entra comodamente nei 32 bit.</li>
+        <li><strong><code>mulh</code> (Multiply High):</strong> Calcola la moltiplicazione e ti restituisce esclusivamente la fetta <strong>superiore</strong> (i 32 bit più a sinistra, che rappresentano l'eventuale "straripamento").</li>
+      </ul>
+      Se stai maneggiando numeri pericolosamente grandi che potrebbero sforare i 32 bit (andando in overflow sulla singola word), dovrai prima usare <code>mul</code> per salvare il pezzo basso in un registro, e subito dopo <code>mulh</code> per salvare il pezzo alto in un altro registro, combinandoli tu via software!
+    </div>
+
+    <table style="font-size:13px; line-height:1.4">
+      <tr><th>Istruzione</th><th>Azione</th><th>Risultato (64 bit in totale in RV32I)</th></tr>
+      <tr><td><code class="t-purple">mul rd, rs1, rs2</code></td><td>Moltiplica interi (segno)</td><td>Salva in <code>rd</code> i <strong>32 bit bassi</strong> del prodotto.</td></tr>
+      <tr><td><code class="t-purple">mulh rd, rs1, rs2</code></td><td>Moltiplica (segno) Alta</td><td>Salva in <code>rd</code> i <strong>32 bit alti</strong> del prodotto.</td></tr>
+      <tr><td><code class="t-blue">div rd, rs1, rs2</code></td><td>Divisione Intera</td><td><code>rd = rs1 / rs2</code> (quoziente tronco)</td></tr>
+      <tr><td><code class="t-blue">rem rd, rs1, rs2</code></td><td>Resto (Modulo)</td><td><code>rd = rs1 % rs2</code> (resto della divisione)</td></tr>
+    </table>
+  </section>
+
+  <!-- ══════════════ SEZIONE 4: Accesso Memoria ══════════════ -->
+  <section class="section" id="s4">
+    <div class="section-header">
+      <div class="section-num">04</div>
+      <h2>Accesso alla <span class="accent">Memoria (Load/Store)</span></h2>
+    </div>
+
+    <p class="lead">In RISC-V l'indirizzamento è al byte. L'indirizzo di memoria effettivo si calcola sommando un offset costante di 12 bit al valore di un registro Base. <strong>L'architettura usa il Little Endian</strong>.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">1. Accesso alla Word Completa (32-bit / 4 Byte)</h3>
+    <pre><span class="kw">lw</span> <span class="reg">x5</span>, <span class="imm">12</span>(<span class="reg">x21</span>)  <span class="cmt"># Load Word: Copia 4 byte dalla RAM al registro x5</span>
+<span class="kw">sw</span> <span class="reg">x5</span>, <span class="imm">8</span>(<span class="reg">x21</span>)   <span class="cmt"># Store Word: Copia i 32 bit del registro x5 in RAM</span></pre>
+    <p>Se <code>x21</code> contiene l'indirizzo <code>0x1000</code>, <code>lw</code> leggerà le 4 celle agli indirizzi: <code>0x100C, 0x100D, 0x100E, 0x100F</code>. Con il <strong>Little Endian</strong>, il byte residente all'indirizzo più basso (0x100C) finirà nella parte meno significativa (LSB) del registro.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">2. Accesso a Half-Word (16-bit) e Byte (8-bit)</h3>
+    <p>Quando si leggono frammenti più piccoli di 32 bit (come i byte da 8 bit), sorge un problema cruciale: come riempie la CPU i restanti 24 bit vuoti a sinistra nel registro? La magia risiede nel fatto che la differenza tra numeri <em>signed</em> e <em>unsigned</em> non si fa durante le somme matematiche, ma <strong>nel momento esatto in cui carichi il dato dalla memoria!</strong></p>
+
+    <div class="card-grid cols2" style="margin-bottom:16px;">
+      <div class="card amber">
+        <div class="card-title">lb / lh (Caricamento con Segno)</div>
+        <p style="font-size:13px; margin:8px 0">Queste istruzioni eseguono la <strong>Sign Extension (Estensione del segno)</strong>. La CPU prende il byte dalla memoria, guarda il suo bit più a sinistra (il bit di segno) e lo <strong>copia</strong> in tutti i 24 spazi vuoti del registro. Questo stratagemma geniale serve a mantenere il valore matematico intatto (es. il valore -5 a 8 bit rimane -5 anche a 32 bit).</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">lbu / lhu (Caricamento Senza Segno)</div>
+        <p style="font-size:13px; margin:8px 0">Queste varianti eseguono la <strong>Zero Extension</strong>. La CPU prende il byte dalla memoria e riempie passivamente i restanti 24 bit a sinistra con degli <strong>zeri</strong>. È fondamentale usarle quando si maneggiano dati "puri" come caratteri ASCII per le stringhe o canali colore RGB, dove il primo bit non rappresenta un segno negativo.</p>
+      </div>
+    </div>
+    <ul>
+      <li><code class="t-blue">sh / sb</code> : In fase di scrittura (Store), non esiste il problema del segno! Si salvano in RAM solo i bit più bassi del registro ignorando brutalmente la parte alta. Il dato viene semplicemente troncato e posizionato all'indirizzo desiderato.</li>
+    </ul>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">3. L'Endianness: Il segreto dell'estrazione dei Byte</h3>
+    <p>Se usi l'indirizzo "base" di una word a 32 bit (cioè con offset pari a 0), quale dei 4 byte ottieni esattamente? La risposta è: estrarrai il <strong>Byte Meno Significativo (LSB - Least Significant Byte)</strong>, ovvero le ultime due cifre esadecimali all'estrema destra del tuo numero. Il motivo di questo comportamento risiede nell'architettura <strong>Little-Endian</strong> scelta per RISC-V.</p>
+
+    <div class="callout purple" style="margin-bottom:16px">
+      <strong>Il sistema Little-Endian (dalla fine più piccola)</strong><br>
+      La memoria RAM è strutturata a cassetti da 1 singolo byte. Siccome una variabile Word a 32 bit è fisicamente troppo grande per un solo cassetto, la CPU la "fetta" in 4 byte separati e li salva in 4 indirizzi consecutivi.<br>
+      La regola del Little-Endian stabilisce che il pezzo "più piccolo" del numero (meno significativo) debba essere salvato all'indirizzo di memoria "più piccolo".
+    </div>
+
+    <p>Facciamo un esempio pratico. Immagina di voler salvare la word esadecimale <code class="t-purple">0x1A2B3C4D</code> partendo dall'indirizzo base <code>1000</code>. I quattro byte che la compongono sono: <strong>1A</strong> (il più grande/MSB), <strong>2B</strong>, <strong>3C</strong>, e <strong>4D</strong> (il più piccolo/LSB).<br>
+    Ecco come RISC-V li incastra fisicamente nella RAM:</p>
+
+    <div style="display:flex; flex-direction:column; gap:4px; font-family:'DM Mono',monospace; font-size:13px; max-width:400px; margin-bottom:16px">
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; border-left:4px solid var(--purple)">
+        <span style="color:var(--dim)">Indirizzo 1000</span> <strong style="color:var(--text)">4D</strong> <span style="color:var(--muted); font-size:11px">← (Pezzo piccolo nell'indirizzo piccolo)</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; border-left:4px solid var(--purple)">
+        <span style="color:var(--dim)">Indirizzo 1001</span> <strong style="color:var(--text)">3C</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; border-left:4px solid var(--purple)">
+        <span style="color:var(--dim)">Indirizzo 1002</span> <strong style="color:var(--text)">2B</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; border-left:4px solid var(--purple)">
+        <span style="color:var(--dim)">Indirizzo 1003</span> <strong style="color:var(--text)">1A</strong> <span style="color:var(--muted); font-size:11px">← (Pezzo grande nell'indirizzo grande)</span>
+      </div>
+    </div>
+
+    <p>L'istruzione <code>lb</code> o <code>lbu</code> non fa magie, è un cecchino: va all'indirizzo esatto e prende solo ciò che c'è in quel cassetto. Variando l'offset, puoi estrarre chirurgicamente uno qualsiasi dei 4 byte della word:</p>
+    <ul style="margin-bottom:24px">
+      <li><code style="color:var(--green)">lb t0, 0(a0)</code> → Va a 1000 e carica <strong>4D</strong>.</li>
+      <li><code style="color:var(--green)">lb t0, 1(a0)</code> → Va a 1001 e carica <strong>3C</strong>.</li>
+      <li><code style="color:var(--green)">lb t0, 2(a0)</code> → Va a 1002 e carica <strong>2B</strong>.</li>
+      <li><code style="color:var(--green)">lb t0, 3(a0)</code> → Va a 1003 e carica <strong>1A</strong>.</li>
+    </ul>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Laboratorio: Calcolo Indirizzo Base + Offset</h3>
+    <div style="background:var(--surface2); border:1px solid var(--border); padding:20px; border-radius:12px; margin-bottom:24px">
+      <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block">Base (x21) in Hex</label>
+          <input type="text" id="base-addr" value="0x8000" style="background:var(--background); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:6px; font-family:'DM Mono',monospace; width:100px;">
+        </div>
+        <div style="font-size:24px; color:var(--muted)">+</div>
+        <div>
+          <label style="font-size:12px;color:var(--muted);display:block">Offset (Costante)</label>
+          <input type="number" id="offset-val" value="12" style="background:var(--background); color:var(--text); border:1px solid var(--border); padding:8px; border-radius:6px; font-family:'DM Mono',monospace; width:80px;">
+        </div>
+        <div style="font-size:24px; color:var(--muted)">=</div>
+        <div style="flex-grow:1">
+          <label style="font-size:12px;color:var(--muted);display:block">Indirizzo Target (Effettivo)</label>
+          <div id="target-addr" style="background:rgba(156, 39, 176, 0.1); border:1px solid var(--purple); color:var(--text); padding:8px 12px; border-radius:6px; font-family:'DM Mono',monospace; font-size:16px; font-weight:bold;">
+            0x800C
+          </div>
+        </div>
+      </div>
+      <p style="font-size:13px; margin:16px 0 0; color:var(--dim)">L'istruzione <code style="color:var(--purple)">lw x5, <span id="lbl-offset">12</span>(x21)</code> accederà ai 4 byte consecutivi partendo dall'indirizzo calcolato.</p>
+    </div>
+
+    <script>
+      function updateMemWidget() {
+        const base = parseInt(document.getElementById('base-addr').value, 16);
+        const offset = parseInt(document.getElementById('offset-val').value, 10);
+        if(!isNaN(base) && !isNaN(offset)) {
+          const target = base + offset;
+          document.getElementById('target-addr').textContent = "0x" + target.toString(16).toUpperCase().padStart(4, '0');
+          document.getElementById('lbl-offset').textContent = offset;
+        }
+      }
+      document.getElementById('base-addr').addEventListener('input', updateMemWidget);
+      document.getElementById('offset-val').addEventListener('input', updateMemWidget);
+    </script>
+
+    <div class="callout amber">
+      <strong>Restrizioni di Allineamento (Alignment):</strong> Per massimizzare le prestazioni, le <em>Word (32-bit)</em> dovrebbero iniziare sempre da indirizzi multipli di 4 (0, 4, 8, 12, ...). Le <em>Half-Word (16-bit)</em> da multipli di 2. Disallineare i dati comporta un accesso in RAM più lento!
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Accessi a 64 Bit nell'Architettura RV64I</h3>
+    <p>Se il tuo processore è a 64 bit (RV64I), sono disponibili le istruzioni <code>ld</code> (Load Doubleword) e <code>sd</code> (Store Doubleword) che trasferiscono 8 byte per volta in modo atomico. (Equivalente al tipo <code>long int</code> del C).</p>
+  </section>
+
+  <!-- ══════════════ SEZIONE 5: Logica e Shift ══════════════ -->
+  <section class="section" id="s5">
+    <div class="section-header">
+      <div class="section-num">05</div>
+      <h2>Operazioni Logiche e <span class="accent">Shift</span></h2>
+    </div>
+
+    <p class="lead">RISC-V supporta le classiche maschere bit a bit (AND, OR, XOR) e i tre shift standard. Lo shift è fondamentale per moltiplicare/dividere velocemente e per l'addressing degli array.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">Shift (Traslazione di Bit) — Simulatore</h3>
+
+    <div>
+      <div class="sh-tabs">
+        <button class="sh-tab sh-on" onclick="shTab('sll',this)">sll — shift left logico</button>
+        <button class="sh-tab" onclick="shTab('srl',this)">srl — shift right logico</button>
+        <button class="sh-tab" onclick="shTab('sra',this)">sra — shift right aritmetico</button>
+      </div>
+
+      <!-- SLL -->
+      <div class="sh-panel sh-on" id="sh-sll">
+        <div class="sh-desc sh-green">
+          <b>1. Shift Left Logical (Scorrimento Logico a Sinistra)</b><br>
+          Sposta tutti i bit verso sinistra. I bit che "escono" dal margine sinistro vengono persi, mentre gli spazi vuoti che si creano a destra vengono riempiti con degli <b style="color:var(--green)">zeri</b>.<br><br>
+          <b>Comandi RISC-V:</b> <code>sll</code> (tra due registri) e <code>slli</code> (con un valore costante/immediato).<br>
+          <b>Effetto matematico:</b> Ogni shift a sinistra equivale a moltiplicare per 2. Shiftare di 3 posizioni equivale a moltiplicare per 2³ (cioè 8).<br>
+          <pre style="margin:8px 0; padding:10px; font-size:12px; background:rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.05); border-radius:6px;"><span class="cmt"># x6 contiene il valore 5 (in binario: ...0000 0101)</span>
+<span class="kw">slli</span> <span class="reg">x5</span>, <span class="reg">x6</span>, <span class="imm">1</span>   <span class="cmt"># Sposta a sinistra di 1 bit. x5 diventa 10 (binario: ...0000 1010)</span></pre>
+        </div>
+        <div class="sh-brow" id="sh-sll-bits"></div>
+        <div class="sh-lrow" id="sh-sll-lbls"></div>
+        <div class="sh-vals" id="sh-sll-vals"></div>
+        <div class="sh-info" id="sh-sll-info"></div>
+        <div class="sh-ctrls">
+          <button class="sh-btn" onclick="shSllReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSllStep()">Shift ← 1 bit</button>
+          <button class="sh-btn" onclick="shSllAuto()">Auto ×4</button>
+        </div>
+        <div class="sh-legend">
+          <div class="sh-leg"><div class="sh-lbox" style="background:rgba(240,107,107,0.25);border-color:var(--red)"></div><span style="color:var(--red)">bit perso (esce a sinistra)</span></div>
+          <div class="sh-leg"><div class="sh-lbox" style="background:rgba(107,203,139,0.25);border-color:var(--green)"></div><span style="color:var(--green)">0 inserito a destra</span></div>
+        </div>
+      </div>
+
+      <!-- SRL -->
+      <div class="sh-panel" id="sh-srl">
+        <div class="sh-desc">
+          <b>2. Shift Right Logical (Scorrimento Logico a Destra)</b><br>
+          Sposta tutti i bit verso destra. I bit che escono a destra vengono persi. Gli spazi vuoti che si creano a sinistra vengono riempiti con degli <b>zeri</b>.<br>
+          Questa istruzione si usa quando stai lavorando con numeri senza segno (unsigned).<br><br>
+          <b>Comandi RISC-V:</b> <code>srl</code> e <code>srli</code>.<br>
+          <b>Effetto matematico:</b> Ogni shift a destra equivale a dividere per 2 (ignorando il resto).<br>
+          <pre style="margin:8px 0; padding:10px; font-size:12px; background:rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.05); border-radius:6px;"><span class="cmt"># x6 contiene il valore 20 (in binario: ...0001 0100)</span>
+<span class="kw">srli</span> <span class="reg">x5</span>, <span class="reg">x6</span>, <span class="imm">2</span>   <span class="cmt"># Sposta a destra di 2 bit. x5 diventa 5 (binario: ...0000 0101)</span></pre>
+        </div>
+        <div class="sh-brow" id="sh-srl-bits"></div>
+        <div class="sh-lrow" id="sh-srl-lbls"></div>
+        <div class="sh-vals" id="sh-srl-vals"></div>
+        <div class="sh-info" id="sh-srl-info"></div>
+        <div class="sh-ctrls">
+          <button class="sh-btn" onclick="shSrlReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSrlStep()">Shift → 1 bit</button>
+          <button class="sh-btn" onclick="shSrlAuto()">Auto ×4</button>
+        </div>
+      </div>
+
+      <!-- SRA -->
+      <div class="sh-panel" id="sh-sra">
+        <div class="sh-desc sh-amber">
+          <b>3. Shift Right Arithmetic (Scorrimento Aritmetico a Destra)</b><br>
+          Sposta tutti i bit verso destra, ma con una differenza fondamentale: gli spazi vuoti a sinistra non vengono riempiti con zeri, ma con una copia del <b>bit di segno</b> (il bit più a sinistra del numero originale).<br>
+          Questa istruzione si usa per i numeri con segno (signed), perché preserva il fatto che un numero sia positivo (inizia per 0) o negativo (inizia per 1).<br><br>
+          <b>Comandi RISC-V:</b> <code>sra</code> e <code>srai</code>.<br>
+          <pre style="margin:8px 0; padding:10px; font-size:12px; background:rgba(0,0,0,0.1); border:1px solid rgba(255,255,255,0.05); border-radius:6px;"><span class="cmt"># x6 contiene il valore -4 (in binario a 32 bit: 1111...1111 1100)</span>
+<span class="kw">srai</span> <span class="reg">x5</span>, <span class="reg">x6</span>, <span class="imm">1</span>   <span class="cmt"># Sposta a destra di 1 bit copiando l'1 iniziale.</span>
+                 <span class="cmt"># x5 diventa -2 (binario: 1111...1111 1110)</span></pre>
+        </div>
+        <div class="sh-side">
+          <div class="sh-half">
+            <div class="sh-htitle" style="color:var(--green)">Positivo — MSB = 0</div>
+            <div class="sh-brow" id="sh-pos-bits"></div>
+            <div class="sh-lrow" id="sh-pos-lbls"></div>
+            <div class="sh-vals" id="sh-pos-vals"></div>
+          </div>
+          <div class="sh-half">
+            <div class="sh-htitle" style="color:var(--red)">Negativo — MSB = 1</div>
+            <div class="sh-brow" id="sh-neg-bits"></div>
+            <div class="sh-lrow" id="sh-neg-lbls"></div>
+            <div class="sh-vals" id="sh-neg-vals"></div>
+          </div>
+        </div>
+        <div class="sh-ctrls" style="margin-top:10px">
+          <button class="sh-btn" onclick="shSraReset()">Reset</button>
+          <button class="sh-btn sh-primary" onclick="shSraStep()">Shift → 1 bit (entrambi)</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    (function(){
+      window.shTab = function(id, el) {
+        document.querySelectorAll('.sh-tab').forEach(b=>b.classList.remove('sh-on'));
+        document.querySelectorAll('.sh-panel').forEach(p=>p.classList.remove('sh-on'));
+        el.classList.add('sh-on');
+        document.getElementById('sh-'+id).classList.add('sh-on');
+      }
+
+      function toS8(v){return v>=128?v-256:v}
+      function gv(b){return parseInt(b.join(''),2)}
+
+      function renderBits(rowId, lblId, bits, marks){
+        var rc=document.getElementById(rowId), lc=document.getElementById(lblId);
+        if(!rc||!lc)return;
+        rc.innerHTML=''; lc.innerHTML='';
+        var n=bits.length;
+        bits.forEach(function(b,i){
+          var d=document.createElement('div');
+          d.className='sh-b'+(marks&&marks[i]?' '+marks[i]:'');
+          d.textContent=b;
+          rc.appendChild(d);
+          var l=document.createElement('div');
+          l.className='sh-lbl'; l.textContent=n-1-i;
+          lc.appendChild(l);
+        });
+      }
+
+      function setVals(id, bits, prev){
+        var el=document.getElementById(id); if(!el)return;
+        var v=gv(bits), s=toS8(v);
+        el.innerHTML='<span>unsigned: <b>'+v+'</b></span><span>signed: <b>'+s+'</b></span>'+(prev!==undefined?'<span style="color:var(--dim)">(era '+prev+')</span>':'');
+      }
+
+      /* ── SLL ── */
+      var sllB=[0,1,0,1,1,0,1,0], sllPrev=null, sllTimer=null;
+      function shSllReset(){
+        clearTimeout(sllTimer);
+        sllB=[0,1,0,1,1,0,1,0]; sllPrev=null;
+        renderBits('sh-sll-bits','sh-sll-lbls',sllB,null);
+        setVals('sh-sll-vals',sllB);
+        if(document.getElementById('sh-sll-info')) document.getElementById('sh-sll-info').textContent='Valore iniziale: 0b01011010 = 90';
+      }
+      window.shSllStep=function(){
+        clearTimeout(sllTimer);
+        var lost=sllB[0];
+        var marks={}; marks[0]='sh-lost'; marks[sllB.length-1]='sh-filled';
+        renderBits('sh-sll-bits','sh-sll-lbls',sllB,marks);
+        var prev=gv(sllB);
+        setTimeout(function(){
+          sllPrev=prev;
+          sllB=sllB.slice(1).concat([0]);
+          renderBits('sh-sll-bits','sh-sll-lbls',sllB,null);
+          setVals('sh-sll-vals',sllB,sllPrev);
+          if(document.getElementById('sh-sll-info')) document.getElementById('sh-sll-info').textContent='Bit '+lost+' uscito a sinistra — 0 inserito a destra — valore × 2';
+        },260);
+      };
+      window.shSllAuto=function(){
+        clearTimeout(sllTimer);
+        var i=0;
+        function step(){if(i++<4){shSllStep();sllTimer=setTimeout(step,620);}}
+        step();
+      };
+      window.shSllReset=shSllReset;
+      shSllReset();
+
+      /* ── SRL ── */
+      var srlB=[1,0,1,1,0,1,0,0], srlPrev=null, srlTimer=null;
+      function shSrlReset(){
+        clearTimeout(srlTimer);
+        srlB=[1,0,1,1,0,1,0,0]; srlPrev=null;
+        renderBits('sh-srl-bits','sh-srl-lbls',srlB,null);
+        setVals('sh-srl-vals',srlB);
+        if(document.getElementById('sh-srl-info')) document.getElementById('sh-srl-info').textContent='Valore iniziale: 0b10110100 = 180';
+      }
+      window.shSrlStep=function(){
+        clearTimeout(srlTimer);
+        var lost=srlB[srlB.length-1];
+        var marks={}; marks[srlB.length-1]='sh-lost'; marks[0]='sh-filled';
+        renderBits('sh-srl-bits','sh-srl-lbls',srlB,marks);
+        var prev=gv(srlB);
+        setTimeout(function(){
+          srlPrev=prev;
+          srlB=[0].concat(srlB.slice(0,-1));
+          renderBits('sh-srl-bits','sh-srl-lbls',srlB,null);
+          setVals('sh-srl-vals',srlB,srlPrev);
+          if(document.getElementById('sh-srl-info')) document.getElementById('sh-srl-info').textContent='Bit '+lost+' uscito a destra — 0 inserito a sinistra — valore ÷ 2 (unsigned)';
+        },260);
+      };
+      window.shSrlAuto=function(){
+        clearTimeout(srlTimer);
+        var i=0;
+        function step(){if(i++<4){shSrlStep();srlTimer=setTimeout(step,620);}}
+        step();
+      };
+      window.shSrlReset=shSrlReset;
+      shSrlReset();
+
+      /* ── SRA ── */
+      var posB=[0,1,1,0,1,0,0,0], negB=[1,0,1,1,0,0,0,0], sraTimer=null;
+      function shSraReset(){
+        clearTimeout(sraTimer);
+        posB=[0,1,1,0,1,0,0,0]; negB=[1,0,1,1,0,0,0,0];
+        renderBits('sh-pos-bits','sh-pos-lbls',posB,null);
+        renderBits('sh-neg-bits','sh-neg-lbls',negB,null);
+        setVals('sh-pos-vals',posB); setVals('sh-neg-vals',negB);
+      }
+      window.shSraStep=function(){
+        clearTimeout(sraTimer);
+        var pm={}; pm[posB.length-1]='sh-lost'; pm[0]='sh-sign';
+        var nm={}; nm[negB.length-1]='sh-lost'; nm[0]='sh-sign';
+        renderBits('sh-pos-bits','sh-pos-lbls',posB,pm);
+        renderBits('sh-neg-bits','sh-neg-lbls',negB,nm);
+        setTimeout(function(){
+          var psign=posB[0], nsign=negB[0];
+          posB=[psign].concat(posB.slice(0,-1));
+          negB=[nsign].concat(negB.slice(0,-1));
+          renderBits('sh-pos-bits','sh-pos-lbls',posB,null);
+          renderBits('sh-neg-bits','sh-neg-lbls',negB,null);
+          setVals('sh-pos-vals',posB); setVals('sh-neg-vals',negB);
+        },260);
+      };
+      window.shSraReset=shSraReset;
+      shSraReset();
+    })();
+    </script>
+  </section>
+
+  <!-- ══════════════ SEZIONE 6: Salti e Cicli ══════════════ -->
+  <section class="section" id="s6">
+    <div class="section-header">
+      <div class="section-num">06</div>
+      <h2>Salti e <span class="accent">Controllo Flusso</span></h2>
+    </div>
+
+    <p class="lead">RISC-V implementa i costrutti dei linguaggi ad alto livello (IF, FOR, WHILE) tramite <strong>salti condizionati (Branch)</strong>. Queste istruzioni verificano una condizione e alterano il PC (Program Counter) spostandosi su un'etichetta di memoria (label) se è vera.</p>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">1. Istruzioni di Branch (Formato SB)</h3>
+    <ul>
+      <li><code class="t-green">beq rs1, rs2, Label</code> : Branch if EQual (salta se rs1 == rs2)</li>
+      <li><code class="t-green">bne rs1, rs2, Label</code> : Branch if Not Equal (salta se rs1 != rs2)</li>
+      <li><code class="t-blue">blt rs1, rs2, Label</code> : Branch if Less Than (salta se rs1 < rs2, con segno)</li>
+      <li><code class="t-blue">bge rs1, rs2, Label</code> : Branch if Greater/Equal (salta se rs1 >= rs2, con segno)</li>
+      <li><em>Varianti Unsigned</em>: <code class="t-amber">bltu</code> e <code class="t-amber">bgeu</code> trattano i registri come numeri senza segno (da 0 a 2³²-1).</li>
+    </ul>
+
+    <div class="callout purple">
+      <strong>PC-Relative Addressing:</strong> I salti non scrivono l'indirizzo esatto nell'istruzione. Salvano un <strong>Offset a 12-bit</strong>. Il processore esegue internamente: <code>PC = PC + (Offset &times; 2)</code>. Questo genera eseguibili rilocabili indipendenti dalla posizione in memoria!
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">2. Tradurre un IF-THEN-ELSE</h3>
+    <p>Il trucco in assembly è <strong>testare la condizione opposta</strong> per scavalcare il blocco IF (se la condizione originale è falsa, si salta all'ELSE).</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">C++ / Java</div>
+        <pre style="margin:5px 0; padding:10px; font-size:13px"><span class="kw">if</span> (i == j) {
+    f = g + h;
+} <span class="kw">else</span> {
+    f = g - h;
+}</pre>
+      </div>
+      <div class="card green">
+        <div class="card-title">Assembly RISC-V</div>
+        <pre style="margin:5px 0; padding:10px; font-size:13px"><span class="cmt"># Test OPPOSTO (!=) per saltare all'ELSE:</span>
+<span class="kw">bne</span> <span class="reg">x22</span>, <span class="reg">x23</span>, ELSE   <span class="cmt"># Se i != j, vai a ELSE</span>
+<span class="kw">add</span> <span class="reg">x19</span>, <span class="reg">x20</span>, <span class="reg">x21</span>  <span class="cmt"># Ramo IF: f = g + h</span>
+<span class="kw">beq</span> <span class="reg">x0</span>, <span class="reg">x0</span>, ENDIF  <span class="cmt"># Salto incondizionato (esce)</span>
+<span class="type">ELSE:</span>
+<span class="kw">sub</span> <span class="reg">x19</span>, <span class="reg">x20</span>, <span class="reg">x21</span>  <span class="cmt"># Ramo ELSE: f = g - h</span>
+<span class="type">ENDIF:</span></pre>
+      </div>
+    </div>
+
+    <h3 style="font-size:16px;font-weight:500;margin:24px 0 12px">3. Tradurre un ciclo FOR e WHILE</h3>
+    <p>I cicli vengono creati inserendo un'etichetta all'inizio, testando la condizione di uscita (se vera, si salta in fondo), e un salto incondizionato in fondo che riporta il flusso all'inizio.</p>
+    
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">Ciclo FOR in C</div>
+        <pre style="margin:5px 0; padding:10px; font-size:13px"><span class="kw">for</span> (i = <span class="imm">0</span>; i &lt; <span class="imm">100</span>; i++) {
+    <span class="cmt">// corpo del ciclo</span>
+}</pre>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Ciclo FOR in Assembly</div>
+        <pre style="margin:5px 0; padding:10px; font-size:13px"><span class="kw">add</span>  <span class="reg">x19</span>, <span class="reg">x0</span>, <span class="reg">x0</span>       <span class="cmt"># i = 0 (Init)</span>
+<span class="kw">addi</span> <span class="reg">x20</span>, <span class="reg">x0</span>, <span class="imm">100</span>      <span class="cmt"># x20 = 100</span>
+<span class="type">LOOP_FOR:</span>
+<span class="kw">bge</span>  <span class="reg">x19</span>, <span class="reg">x20</span>, END_FOR <span class="cmt"># Se i >= 100 Esci</span>
+<span class="cmt">... Corpo del Ciclo ...</span>
+<span class="kw">addi</span> <span class="reg">x19</span>, <span class="reg">x19</span>, <span class="imm">1</span>     <span class="cmt"># i++</span>
+<span class="kw">beq</span>  <span class="reg">x0</span>, <span class="reg">x0</span>, LOOP_FOR  <span class="cmt"># Ripeti all'infinito</span>
+<span class="type">END_FOR:</span></pre>
+      </div>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+<script>
+// Sidebar active toggle script
+const sections = document.querySelectorAll('.section');
+const navItems = document.querySelectorAll('.sidebar .nav-item');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop;
+    if (pageYOffset >= (sectionTop - 150)) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href').includes(current)) {
+      item.classList.add('active');
+    }
+  });
+});
+</script>
+</body>
+</html>

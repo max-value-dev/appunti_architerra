@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISC-V — Simulatore e Riepilogo</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item" href="05_simulatore.html#s7">
+    <div class="nav-dot"></div> Le tab del simulatore
+    <span class="nav-num">07</span>
+  </a>
+  <a class="nav-item" href="05_simulatore.html#s8">
+    <div class="nav-dot"></div> Riepilogo finale
+    <span class="nav-num">23</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 05 — SIMULATORE</div>
+    <h1>Simulatore e Riepilogo<br><em>Ripes ed il quadro mentale completo</em></h1>
+    <p>Le differenti tab del simulatore Ripes (segmenti, disassemblato, stack frame logici) ed il riepilogo organico finale della velocità e convenzioni.</p>
+  </div>
+
+  <!-- ══════════════ SEZIONE 7 ══════════════ -->
+  <section class="section" id="s7">
+    <div class="section-header">
+      <div class="section-num">07</div>
+      <h2>Le tab del <span class="accent">simulatore</span></h2>
+    </div>
+
+    <p class="lead">Il simulatore (Ripes) mostra la stessa RAM da 5 angolazioni diverse. Non sono zone separate: sono finestre diverse sugli stessi indirizzi.</p>
+
+    <div class="tabs-demo">
+      <div class="tabs-header">
+        <button class="tabs-btn on" onclick="switchTab('text',this)">.text</button>
+        <button class="tabs-btn" onclick="switchTab('disasm',this)">disasm</button>
+        <button class="tabs-btn" onclick="switchTab('data',this)">.data</button>
+        <button class="tabs-btn" onclick="switchTab('stack',this)">stack</button>
+        <button class="tabs-btn" onclick="switchTab('frames',this)">frames</button>
+      </div>
+      <div class="tabs-body">
+        <div class="tabs-panel on" id="tab-text">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Byte grezzi del segmento codice in esadecimale. È esattamente quello che c'è in RAM — nessuna interpretazione.</div>
+          <div class="tab-row-mem"><span class="taddr">00400000</span><span class="tval">13052000</span><span class="tval">ef00c000</span><span class="tval">9308a000</span><span class="tval">73000000</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400010</span><span class="tval">130181ff</span><span class="tval">23208100</span><span class="tval">23201100</span><span class="tval">13044100</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400020</span><span class="tval">3305a502</span><span class="tval">03244100</span><span class="tval">83200100</span><span class="tval">13018100</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← ogni gruppo di 8 cifre hex = 4 byte = 1 istruzione RISC-V</div>
+        </div>
+        <div class="tabs-panel" id="tab-disasm">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Stessi byte di .text, ma il simulatore li "traduce al contrario" in mnemonici assembly leggibili (disassembling).</div>
+          <div class="tab-row-mem"><span class="taddr">00400000</span><span class="tasm">addi</span><span style="color:var(--text)">  sp, sp, -16</span><span class="tcmt">  # 13052000</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400004</span><span class="tasm">jal</span><span style="color:var(--text)">   ra, main</span></div>
+          <div class="tab-row-mem"><span class="taddr">00400008</span><span class="tasm">sw</span><span style="color:var(--text)">    ra, 12(sp)</span></div>
+          <div class="tab-row-mem"><span class="taddr">0040000c</span><span class="tasm">sw</span><span style="color:var(--text)">    s0, 8(sp)</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← 13052000 in hex = addi sp, sp, -16 in assembly. Identici.</div>
+        </div>
+        <div class="tabs-panel" id="tab-data">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Zona RAM dove vivono le variabili globali e le stringhe dichiarate nella sezione .data del tuo codice.</div>
+          <div class="tab-row-mem"><span class="taddr">10010000</span><span class="tval">48656c6c</span><span class="tcmt">  # "Hell"</span></div>
+          <div class="tab-row-mem"><span class="taddr">10010004</span><span class="tval">6f20576f</span><span class="tcmt">  # "o Wo"</span></div>
+          <div class="tab-row-mem"><span class="taddr">10010008</span><span class="tval">726c6400</span><span class="tcmt">  # "rld\0"</span></div>
+          <div style="color:var(--dim);margin-top:8px;font-size:11px">← se nel codice scrivi <span style="color:var(--green)">.string "Hello World"</span>, appare qui come byte ASCII</div>
+        </div>
+        <div class="tabs-panel" id="tab-stack">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Mostra la zona RAM puntata da SP — cioè lo stack attuale con i registri salvati e le variabili locali delle funzioni in esecuzione.</div>
+          <div class="tab-row-mem"><span class="taddr">7fffff0c</span><span class="tval">00000080</span><span class="tcmt">  # ra salvato = 0x80</span></div>
+          <div class="tab-row-mem"><span class="taddr">7fffff08</span><span class="tval">00000005</span><span class="tcmt">  # s0 salvato = 5</span></div>
+          <div class="tab-row-mem"><span class="taddr">7fffff04</span><span class="tval">00000000</span><span class="tcmt">  # locale 1</span></div>
+          <div class="tab-row-mem" style="background:var(--blue-bg);border-radius:4px;padding:2px 4px"><span class="taddr">7fffff00</span><span class="tval">00000000</span><span class="tcmt">  # ← SP qui</span></div>
+        </div>
+        <div class="tabs-panel" id="tab-frames">
+          <div style="color:var(--muted);font-size:11px;margin-bottom:12px">Vista logica della catena di chiamate attiva. Non mostra indirizzi grezzi, ma chi ha chiamato chi — utile per debuggare.</div>
+          <div style="margin: 8px 0; font-size:13px;">
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0">
+              <div style="background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--blue)">main</div>
+              <span style="color:var(--dim)">→ chiamante originale</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0;padding-left:20px">
+              <span style="color:var(--dim)">└→</span>
+              <div style="background:var(--green-bg);border:1px solid var(--green-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--green)">somma</div>
+              <span style="color:var(--dim)">→ chiamata da main</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:6px 0;padding-left:40px">
+              <span style="color:var(--dim)">└→</span>
+              <div style="background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:5px;padding:5px 12px;font-family:'DM Mono',monospace;font-size:12px;color:var(--amber)">moltiplica</div>
+              <span style="color:var(--dim)">← esecuzione corrente</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════ SEZIONE 8 ══════════════ -->
+  <section class="section" id="s8">
+    <div class="section-header">
+      <div class="section-num">23</div>
+      <h2>Riepilogo <span class="accent">finale</span></h2>
+    </div>
+
+    <p class="lead">Tutto collegato in un unico quadro mentale.</p>
+
+    <table>
+      <tr><th>Concetto</th><th>Dove</th><th>Velocità</th><th>Accesso in RISC-V</th></tr>
+      <tr>
+        <td><strong>Registri</strong> (x0–x31)</td>
+        <td class="t-blue">Dentro la CPU</td>
+        <td class="t-green">1 ciclo</td>
+        <td>Diretto: <code>add t0, t1, t2</code></td>
+      </tr>
+      <tr>
+        <td><strong>Stack</strong></td>
+        <td class="t-amber">RAM (zona alta)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con offset da SP/FP</td>
+      </tr>
+      <tr>
+        <td><strong>Heap</strong></td>
+        <td class="t-amber">RAM (zona media)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con puntatori</td>
+      </tr>
+      <tr>
+        <td><strong>Dati globali</strong></td>
+        <td class="t-amber">RAM (sezione .data)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td><code>lw</code>/<code>sw</code> con offset da GP</td>
+      </tr>
+      <tr>
+        <td><strong>Codice</strong></td>
+        <td class="t-amber">RAM (sezione .text)</td>
+        <td class="t-amber">~100 cicli</td>
+        <td>Letto automaticamente da PC</td>
+      </tr>
+    </table>
+
+    <div class="card-grid cols2" style="margin-top:24px">
+      <div class="card blue">
+        <div class="card-title">La regola d'oro</div>
+        <p style="font-size:13px;margin:0">Tieni i dati nei <strong>registri</strong> il più a lungo possibile. Vai in RAM solo quando sei costretto: quando hai più variabili dei registri disponibili, o quando devi salvare lo stato per una chiamata di funzione.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Quando vai in RAM</div>
+        <p style="font-size:13px;margin:0">1. Chiami una funzione → devi salvare <code>ra</code> e i registri <code>s</code> che usi. <br>2. Hai più di ~30 variabili locali. <br>3. Lavori con array o strutture dati grandi.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Endianness in pratica</div>
+        <p style="font-size:13px;margin:0">RISC-V è <strong>little endian</strong>. Non te ne accorgi con <code>lw</code>/<code>sw</code>. Diventa rilevante solo leggendo byte per byte con <code>lb</code>, o comunicando in rete (big endian).</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Le tab del simulatore</div>
+        <p style="font-size:13px;margin:0"><code>.text</code> = byte grezzi del codice. <code>disasm</code> = stessi byte tradotti. <code>.data</code> = globali. <code>stack</code> = zona RAM puntata da SP. <code>frames</code> = catena di chiamate.</p>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Formati istruzione</div>
+        <p style="font-size:13px;margin:0">R (registro-registro), I (immediato/load), S (store), B (branch condizionato), J (jal). Ogni istruzione è sempre 32 bit. Il campo <code>opcode</code> da 7 bit identifica il formato.</p>
+      </div>
+      <div class="card red">
+        <div class="card-title">Le 7 fasi</div>
+        <p style="font-size:13px;margin:0">Pre-chiamata → Invocazione (jal) → Prologo (salva ra/s/fp) → Corpo → Epilogo (ripristina) → Ritorno (ret) → Post-chiamata. Foglia = salta fasi 3 e 5 se non usa s-registri.</p>
+      </div>
+      <div class="card blue">
+        <div class="card-title">Catena di traduzione</div>
+        <p style="font-size:13px;margin:0">C → <strong>Compilatore</strong> → Assembly (.s) → <strong>Assemblatore</strong> → Oggetto (.o) → <strong>Linker</strong> → Eseguibile (ELF) → <strong>Loader</strong> → RAM in esecuzione.</p>
+      </div>
+      <div class="card green">
+        <div class="card-title">Assemblatore a due passi</div>
+        <p style="font-size:13px;margin:0">Passo 1: scansiona tutto e costruisce la Symbol Table (etichetta → valore ILC). Passo 2: traduce in binario consultando la tabella — risolve anche le forward reference.</p>
+      </div>
+      <div class="card amber">
+        <div class="card-title">Linker</div>
+        <p style="font-size:13px;margin:0">Fonde i moduli oggetto, assegna indirizzi definitivi, applica la rilocazione e risolve simboli esterni. Produce il file ELF eseguibile con sezioni .text, .data, reloc info e symbol table.</p>
+      </div>
+      <div class="card purple">
+        <div class="card-title">Loader e binding</div>
+        <p style="font-size:13px;margin:0">L'OS carica l'eseguibile in RAM, inizializza registri e stack, salta al main. Le DLL usano lazy binding: il loader dinamico risolve la funzione al primo utilizzo e aggiorna lo stub PLT.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:40px;padding:28px;background:var(--surface2);border:1px solid var(--border2);border-radius:14px">
+      <div style="font-family:'DM Serif Display',serif;font-size:18px;color:var(--text);margin-bottom:14px">Il quadro completo in una frase</div>
+      <p style="font-size:15px;color:var(--muted);line-height:1.9;margin:0">
+        <strong style="color:var(--text)">RISC-V</strong> è un ISA open, modulare, con istruzioni fisse a 32 bit e 5 formati (R/I/S/B/J).
+        La <strong style="color:var(--text)">CPU</strong> ha 32 registri da 32 bit — veloci e interni. La <strong style="color:var(--text)">RAM</strong> è esterna, lenta, indirizzata byte per byte in <strong style="color:var(--green)">little endian</strong>.
+        Le istruzioni aritmetiche usano 3 operandi; la memoria si accede con base+offset; shift e logica operano bit a bit.
+        I salti condizionati e <code>jal</code>/<code>jalr</code> controllano il flusso; ogni chiamata segue 7 fasi con convenzioni precise sui registri.
+        Il codice C percorre la catena <strong style="color:var(--text)">compilatore → assemblatore a due passi → linker → loader</strong> prima di girare sulla CPU: l'assemblatore risolve le etichette con la symbol table, the linker fonde i moduli oggetto e risolve i simboli esterni, il loader copia in RAM e avvia l'esecuzione.
+      </p>
+    </div>
+  </section>
+
+</main>
+</div>
+
+<script src="shared.js"></script>
+</body>
+</html>

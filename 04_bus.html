@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Il Bus di Sistema - Architettura dei Calcolatori</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <a class="sidebar-title" href="index.html">
+    RISC-V Fondamentali
+    <span>Guida completa</span>
+  </a>
+  <a class="nav-item active" href="04_bus.html#s33">
+    <div class="nav-dot"></div> Il Bus di Sistema
+    <span class="nav-num">08</span>
+  </a>
+  <a class="nav-item" href="05_cache.html#s34">
+    <div class="nav-dot"></div> La Memoria Cache
+    <span class="nav-num">09</span>
+  </a>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">CAPITOLO 08</div>
+    <h1>Il Bus di Sistema<br><em>Il Sistema Nervoso</em></h1>
+    <p>L'insieme di linee elettriche che mettono in comunicazione CPU, Memoria e Periferiche di Input/Output. Tutto sulle regole, l'architettura e le temporizzazioni.</p>
+  </div>
+
+  <!-- ══════════════ MACRO SEZIONE 1 ══════════════ -->
+  <section class="section" id="s33">
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">I. Il Concetto e l'<span class="accent">Evoluzione</span></h2>
+    </div>
+
+    <p class="lead">Il bus è il <strong>sistema nervoso</strong> del computer: l'insieme di linee elettriche che mettono in comunicazione CPU, Memoria e Periferiche di Input/Output. Per evitare conflitti, segue regole rigide chiamate <em>protocollo del bus</em>.</p>
+    
+    <!-- 1. Architettura Classica e Moderna -->
+    <h3 style="font-size:20px; color:var(--text); margin-top:32px; margin-bottom:16px;">1. Architettura Classica vs Moderna</h3>
+    <div class="card-grid cols2" style="margin-bottom: 32px; gap:24px;">
+      <div class="card" style="background: var(--surface2); display:flex; flex-direction:column;">
+        <h4 style="color:var(--text); font-size: 16px; margin-bottom: 12px;">Bus Condiviso (Classico)</h4>
+        <img src="assets/extra/bus_classico.png" alt="Bus Classico Condiviso" style="width:100%; border-radius:4px; margin-bottom:12px; object-fit:contain; background:var(--surface);">
+        <p style="font-size:13px; color:var(--muted); margin-bottom: 12px; line-height: 1.5;">Tutti i componenti (CPU, Memoria, Scheda Video, I/O) sono attaccati agli stessi cavi.</p>
+        <p style="font-size:13px; color:var(--red); margin-bottom: 0;"><em>Problema:</em> Crea un grosso collo di bottiglia perché un solo dispositivo può usare il bus in un dato momento. Se la CPU parla con la RAM, l'Hard Disk deve aspettare.</p>
+      </div>
+      <div class="card" style="background: var(--surface2); display:flex; flex-direction:column;">
+        <h4 style="color:var(--text); font-size: 16px; margin-bottom: 12px;">Punto-Punto (Moderno)</h4>
+        <img src="assets/extra/bus_moderno.png" alt="Architettura Punto a Punto" style="width:100%; border-radius:4px; margin-bottom:12px; object-fit:contain; background:var(--surface);">
+        <p style="font-size:13px; color:var(--muted); margin-bottom: 12px; line-height: 1.5;">Le connessioni moderne (come il PCI Express) usano linee dirette tra i singoli moduli.</p>
+        <p style="font-size:13px; color:var(--green); margin-bottom: 0;"><em>Soluzione:</em> Elimina il collo di bottiglia e permette molteplici comunicazioni simultanee in parallelo senza rallentarsi a vicenda.</p>
+      </div>
+    </div>
+
+    <!-- ══════════════ MACRO SEZIONE 2 ══════════════ -->
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:48px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">II. L'Anatomia del <span class="accent">Bus</span></h2>
+    </div>
+
+    <!-- 1. I Tipi di Bus -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">1. I Tre Canali Fondamentali</h3>
+    <div class="card-grid cols3" style="margin-bottom:32px;">
+      <div class="card" style="border-top: 4px solid var(--blue); display:flex; flex-direction:column;">
+        <h4 style="color:var(--blue); font-size:15px; margin-bottom:8px;">📍 Bus Indirizzi</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height: 1.5;">Serve alla CPU per indicare <em>con chi</em> vuole comunicare. Inserendo un indirizzo, la CPU seleziona la specifica cella di RAM o il dispositivo.</p>
+      </div>
+      <div class="card" style="border-top: 4px solid var(--purple); display:flex; flex-direction:column;">
+        <h4 style="color:var(--purple); font-size:15px; margin-bottom:8px;">⚙️ Bus di Controllo</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height: 1.5;">Decide <em>cosa fare</em>. Trasporta ordini e segnali come "Leggi" (Read), "Scrivi" (Write), gli Interrupt, il Clock o le richieste di Arbitraggio.</p>
+      </div>
+      <div class="card" style="border-top: 4px solid var(--amber); display:flex; flex-direction:column;">
+        <h4 style="color:var(--amber); font-size:15px; margin-bottom:8px;">📦 Bus Dati</h4>
+        <p style="font-size:13px; color:var(--muted); margin:0; line-height: 1.5;">L'autostrada su cui viaggia il contenuto del messaggio (i bit veri e propri dell'istruzione o del dato da salvare).</p>
+      </div>
+    </div>
+
+    <!-- 2. Collegamenti della CPU -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">2. I Collegamenti della CPU</h3>
+    <p style="font-size:14px; color:var(--muted); margin-bottom: 16px;">Come si interfaccia fisicamente il microprocessore col mondo esterno? I suoi pin ("piedini") riflettono esattamente i tre bus appena visti, più le linee per la pura sopravvivenza (Alimentazione e Clock).</p>
+    
+    <div style="display:flex; gap:24px; margin-bottom: 32px; align-items: flex-start; flex-wrap: wrap;">
+      <div style="flex:1; min-width:300px;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; border-left:3px solid var(--blue);">
+            <strong style="color:var(--text); font-size:14px;">Indirizzi (Addressing)</strong>
+            <span style="font-size:13px; color:var(--muted); display:block;">Con <code>n</code> piedini, la CPU genera <code>2^n</code> combinazioni. Es: un bus indirizzi a 32 bit può accedere a max 4 GB di RAM.</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; border-left:3px solid var(--amber);">
+            <strong style="color:var(--text); font-size:14px;">Dati (Data)</strong>
+            <span style="font-size:13px; color:var(--muted); display:block;">Definisce la "Word", ovvero quanti bit la CPU mastica in una singola operazione (es. 32 o 64 bit).</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; border-left:3px solid var(--purple);">
+            <strong style="color:var(--text); font-size:14px;">Controllo e Stato (Control)</strong>
+            <span style="font-size:13px; color:var(--muted); display:block;">Si divide in 6 sotto-categorie: <em>Bus control</em> (Read/Write), <em>Interrupts</em> (urgenze), <em>Bus arbitration</em> (negoziare il bus), <em>Coprocessor</em>, <em>Status</em>, e segnali come il <em>Reset</em>.</span>
+          </div>
+          <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:6px; border-left:3px solid var(--green);">
+            <strong style="color:var(--text); font-size:14px;">Alimentazione e Temporizzazione</strong>
+            <span style="font-size:13px; color:var(--muted); display:block;">I pin vitali: Il <strong>Clock</strong> (il metronomo), l'<strong>Alimentazione</strong> (+5V) e la <strong>Messa a terra</strong> (Ground).</span>
+          </div>
+        </div>
+      </div>
+      <div style="flex:1; min-width:300px; display:flex; justify-content:center; align-items:center; background:var(--surface2); padding:16px; border-radius:8px; border:1px solid var(--border);">
+        <img src="assets/extra/cpu_connessioni.png" alt="Collegamenti della CPU" style="width:100%; max-width:400px; border-radius:4px; object-fit:contain;">
+      </div>
+    </div>
+
+    <!-- 3. Dispositivi: Chi comanda sul Bus? -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">3. Gerarchia dei Dispositivi (Chi comanda?)</h3>
+    <div class="card-grid cols3" style="gap: 16px; margin-bottom: 48px;">
+      <div class="card" style="border-top: 3px solid var(--blue);">
+        <strong style="color:var(--blue); display:block; margin-bottom:8px; font-size:15px;">1. Master (Attivi)</strong>
+        <span style="font-size:13px; color:var(--muted); display:block; margin-bottom:8px;">Prendono l'iniziativa, iniziano le comunicazioni inviando l'indirizzo.</span>
+        <span style="font-size:12px; font-style:italic; color:var(--dim);">Chip Interfaccia: Bus Driver</span>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <strong style="color:var(--green); display:block; margin-bottom:8px; font-size:15px;">2. Slave (Passivi)</strong>
+        <span style="font-size:13px; color:var(--muted); display:block; margin-bottom:8px;">Obbediscono. Rispondono solo se chiamati dal Master (es. la Memoria).</span>
+        <span style="font-size:12px; font-style:italic; color:var(--dim);">Chip Interfaccia: Bus Receiver</span>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <strong style="color:var(--purple); display:block; margin-bottom:8px; font-size:15px;">3. Ibridi</strong>
+        <span style="font-size:13px; color:var(--muted); display:block; margin-bottom:8px;">Fanno entrambe le cose: es. la CPU è Master, ma si comporta da Slave se cede il bus a un coprocessore.</span>
+        <span style="font-size:12px; font-style:italic; color:var(--dim);">Chip Interfaccia: Bus Transceiver</span>
+      </div>
+    </div>
+
+    <!-- ══════════════ MACRO SEZIONE 3 ══════════════ -->
+    <div class="section-header" style="border-bottom:2px solid var(--accent); padding-bottom:12px; margin-bottom:24px; margin-top:64px;">
+      <h2 style="font-size:28px; color:var(--text); margin:0;">III. Le Sfide <span class="accent">Costruttive</span></h2>
+    </div>
+    <p style="font-size:14px; color:var(--text); margin-bottom: 32px;">Progettare un bus significa risolvere tre grandi sfide ingegneristiche fondamentali per le prestazioni dell'intero computer, bilanciando sempre due fattori chiave: Banda e Costo.</p>
+
+    <!-- 0. Metriche -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">3.0 Le Metriche: Banda e Costo</h3>
+    <div class="card-grid cols2" style="margin-bottom: 32px;">
+      <div class="card" style="border-left: 4px solid var(--green);">
+        <h4 style="color:var(--green); font-size:16px; margin-bottom:12px;">La Banda (Bandwidth)</h4>
+        <p style="font-size:13px; color:var(--text); margin:0; line-height:1.5;">La banda passante è la <strong>quantità massima di dati</strong> che può viaggiare sul bus in un secondo (misurata in MB/s o GB/s). È l'obiettivo primario per avere alte prestazioni. Per aumentare la banda, gli ingegneri devono spingere la <em>frequenza del clock</em> al limite, oppure aumentare la <em>larghezza</em> fisica del bus (cioè stendere più cavi per inviare più bit in parallelo).</p>
+      </div>
+      <div class="card" style="border-left: 4px solid var(--red);">
+        <h4 style="color:var(--red); font-size:16px; margin-bottom:12px;">Il Costo</h4>
+        <p style="font-size:13px; color:var(--text); margin:0; line-height:1.5;">Non indica solo il prezzo dei materiali, ma il <strong>costo spaziale, elettrico e termico</strong>. Aumentare il numero di fili significa dover fare connettori più grandi sulla scheda madre. Inoltre, più fili viaggiano vicini ad altissima frequenza, più si creano interferenze elettromagnetiche ("crosstalk") e calore da dissipare, limitando la fattibilità pratica.</p>
+      </div>
+    </div>
+
+    <!-- 1. Larghezza -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px;">3.1 La Larghezza (Width)</h3>
+    <div class="card" style="border-left: 4px solid var(--blue); margin-bottom: 32px; display:flex; flex-wrap:wrap; gap:24px; align-items:center;">
+      <div style="flex:1; min-width:300px;">
+        <p style="font-size:14px; color:var(--muted); margin-top:0; margin-bottom: 12px; line-height: 1.6;">La "larghezza" rappresenta il numero fisico di cavi disponibili e ha un impatto enorme sulle prestazioni del sistema. È divisa in due componenti:</p>
+        <ul style="font-size:14px; color:var(--text); padding-left: 20px; line-height: 1.6; margin-bottom:0;">
+          <li><strong style="color:var(--blue);">Indirizzi:</strong> Determina quanta memoria possiamo installare. (es. 32 cavi = 4GB max).</li>
+          <li><strong style="color:var(--amber);">Dati:</strong> Determina la <em>velocità</em>. Se il bus dati ha <strong>8 linee</strong>, trasferisce solo 1 byte alla volta. Per trasferire una Word da 32 bit, servono <strong>4 viaggi separati</strong> sprecando moltissimo tempo. Un bus largo (es. 64 bit) trasferisce moltissimi dati in un singolo colpo di clock, annullando il collo di bottiglia!</li>
+        </ul>
+      </div>
+      <div style="flex:1; min-width:300px; display:flex; justify-content:center;">
+        <img src="assets/extra/larghezza_bus.png" alt="Larghezza del Bus" style="max-width:100%; border-radius:4px; object-fit:contain; background:var(--surface);">
+      </div>
+    </div>
+
+    <!-- 2. Arbitraggio -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">3.2 L'Arbitraggio</h3>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.6;">L'arbitraggio risolve un problema cruciale: quando più dispositivi "Master" provano a prendere il controllo dell'autostrada dei dati nello stesso istante, serve coordinamento. Se trasmettessero insieme, i segnali elettrici si sovrapporrebbero creando errori. Vediamo le due filosofie principali.</p>
+    
+    <div class="card-grid cols2" style="margin-bottom: 32px; align-items:stretch;">
+      <div class="card" style="background: var(--surface2); display:flex; flex-direction:column;">
+        <strong style="color:var(--text); font-size:16px; display:block; margin-bottom:12px; border-bottom: 2px solid var(--blue); padding-bottom: 4px;">Arbitraggio Centralizzato (Daisy Chaining)</strong>
+        
+        <img src="assets/extra/centralizzato.png" alt="Arbitraggio Centralizzato" style="width:100%; border-radius:4px; margin-bottom:16px; object-fit:contain; background:var(--surface);">
+        
+        <p style="font-size:13px; color:var(--text); margin-bottom:8px; line-height:1.5;">Esiste un unico chip dedicato a fare da "vigile urbano", chiamato <strong>Arbitro</strong>. Il metodo classico per distribuire il permesso è a margherita:</p>
+        <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin-bottom:12px; line-height:1.5;">
+          <li><strong>La Richiesta:</strong> I dispositivi attivano tutti insieme una linea comune chiamata <code>Bus Request</code>.</li>
+          <li><strong>La Concessione:</strong> L'arbitro vede la richiesta e fa partire un segnale di via libera sulla linea <code>Bus Grant</code>.</li>
+          <li><strong>La Propagazione:</strong> Il segnale non va a tutti in parallelo, ma entra nel Dispositivo 1. Se questi voleva il bus, lo blocca e prende il controllo. Altrimenti lo lascia passare al Dispositivo 2.</li>
+        </ul>
+        <div style="background:rgba(33, 150, 243, 0.1); padding:8px; border-radius:4px; border-left:3px solid var(--blue); margin-bottom: 16px;">
+          <span style="font-size:13px; color:var(--text);"><strong>Regola d'oro:</strong> Vince sempre il dispositivo fisicamente più vicino all'Arbitro!</span>
+        </div>
+        
+        <p style="font-size:13px; color:var(--muted); margin-bottom:12px; line-height:1.5;"><strong>Evoluzione (Livelli di Priorità):</strong> Per evitare che i dispositivi lontani rimangano sempre bloccati, si usano linee multiple di Request/Grant e una linea <code>Acknowledge</code> per confermare che il bus è occupato.</p>
+        <img src="assets/extra/centralizzato_v2.png" alt="Arbitraggio Centralizzato Multi-Livello" style="width:100%; border-radius:4px; margin-top:auto; object-fit:contain; background:var(--surface);">
+      </div>
+      
+      <div class="card" style="background: var(--surface2); display:flex; flex-direction:column;">
+        <strong style="color:var(--text); font-size:16px; display:block; margin-bottom:12px; border-bottom: 2px solid var(--green); padding-bottom: 4px;">Arbitraggio Decentralizzato</strong>
+        <img src="assets/extra/decentralizzato.png" alt="Arbitraggio Decentralizzato" style="width:100%; border-radius:4px; margin-bottom:16px; object-fit:contain; background:var(--surface);">
+        <p style="font-size:13px; color:var(--text); margin-bottom:8px; line-height:1.5;">Non esiste un arbitro centrale. I dispositivi si mettono d'accordo da soli monitorando lo stato delle linee comuni. Esistono due soluzioni per implementarlo:</p>
+        <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin-bottom:12px; line-height:1.5;">
+          <li><strong>Soluzione 1 (Poco flessibile):</strong> Si usano tante linee quanti sono i dispositivi. Ogni componente osserva le linee degli altri prima di fare la richiesta. Molto costoso e rigido se si vogliono aggiungere nuovi pezzi.</li>
+          <li><strong>Soluzione 2 (Ottimizzata):</strong> Si usano solo tre linee condivise: <code>Bus Request</code>, <code>Busy</code> (indica se il bus è occupato) e una singola linea di arbitraggio che attraversa i dispositivi (simile al daisy chain).</li>
+        </ul>
+        <div style="background:rgba(76, 175, 80, 0.1); padding:8px; border-radius:4px; border-left:3px solid var(--green); margin-top:auto;">
+          <span style="font-size:13px; color:var(--text);"><strong>Vantaggio:</strong> Più economico e veloce rispetto al sistema centralizzato, perché elimina alla radice i tempi di calcolo del chip arbitro.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Temporizzazione -->
+    <h3 style="font-size:20px; color:var(--text); margin-bottom:16px; margin-top:32px;">3.3 La Temporizzazione (Sincronizzazione)</h3>
+    <p style="font-size:14px; color:var(--muted); margin-bottom: 16px;">Il "Bus Clocking" serve a capire a che ritmo far viaggiare i segnali elettrici. Esistono due filosofie costruttive:</p>
+    
+    <div class="card" style="border-left: 4px solid var(--red); margin-bottom: 16px; background:var(--surface2);">
+      <h4 style="color:var(--red); margin-bottom: 8px; font-size:16px;">A) Il Bus Sincrono (Il Metronomo)</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start;">
+        <div style="flex:1; min-width:300px;">
+          <p style="font-size:13px; color:var(--text); line-height:1.5;">Esiste una linea dedicata che trasmette un'onda quadra continua a frequenza fissa: il <strong>Clock</strong>. Tutta la comunicazione è divisa in rigidi step temporali (i cicli) e tutti devono andare a questo ritmo.</p>
+          <ul style="font-size:13px; color:var(--muted); padding-left:16px; margin-bottom:12px; line-height:1.5;">
+            <li><strong>T1 (Richiesta):</strong> Il Master (CPU) mette l'indirizzo sulle linee e <em>abbassa</em> la linea <code>RD</code> per richiedere una lettura.</li>
+            <li><strong>T2 (Attesa):</strong> La Memoria è lenta e deve cercare fisicamente il dato nei suoi circuiti. <em>Abbassa</em> a sua volta la linea <code>WAIT</code>: "Ho capito, ma non ho finito. Aspetta un ciclo". La CPU va in pausa a vuoto.</li>
+            <li><strong>T3 (Trasferimento):</strong> All'inizio di T3, la Memoria sa che il dato è pronto e lo mette sui cavi. Subito <em>rialza</em> la linea <code>WAIT</code>. La CPU legge il segnale rialzato e capisce: "L'attesa è finita". Al "tic" del clock, fotografa i dati e chiude la transazione rialzando <code>RD</code>.</li>
+          </ul>
+          
+          <!-- Box Active Low e WAIT -->
+          <div style="background:rgba(255,255,255,0.05); border:1px solid var(--border); padding:12px; border-radius:6px; margin-top:16px;">
+            <strong style="color:var(--text); font-size:13px; display:block; margin-bottom:6px;">💡 Approfondimento: I segnali "Active-Low" (<span style="text-decoration: overline;">MREQ</span>, <span style="text-decoration: overline;">RD</span>, <span style="text-decoration: overline;">WAIT</span>)</strong>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+              Nel diagramma, noterai che i segnali principali hanno una lineetta dritta sopra: <strong><span style="text-decoration: overline;">MREQ</span></strong> (Memory Request: avvio comunicazione), <strong><span style="text-decoration: overline;">RD</span></strong> (Read: lettura) e <strong><span style="text-decoration: overline;">WAIT</span></strong>. Questo indica che funzionano al contrario (Active-Low):
+            </p>
+            <ul style="font-size:12px; color:var(--muted); padding-left:16px; margin-bottom:8px;">
+              <li>Per <strong>accendere</strong> la richiesta (es. "voglio leggere" o "voglio farti aspettare"), il chip abbassa la tensione a 0 Volt (la linea "precipita" in basso).</li>
+              <li>Per <strong>spegnere</strong> la richiesta (es. "fine lettura" o "finito di aspettare"), il chip rialza la tensione a 5 Volt (la linea torna in alto).</li>
+            </ul>
+            <p style="font-size:12px; color:var(--muted); margin-bottom:0; line-height:1.5;">
+              Ecco perché nel grafico vediamo <strong><span style="text-decoration: overline;">WAIT</span></strong> tornare in alto all'inizio del terzo ciclo (T3): la memoria lo rialza per <strong>disattivare</strong> l'attesa proprio mentre mette il dato sui fili, dando il via libera alla CPU!
+            </p>
+          </div>
+          
+        </div>
+        <div style="flex:1; min-width:300px; display:flex; justify-content:center; align-items:center;">
+          <img src="assets/extra/sincrono_segnali.png" alt="Bus Sincrono a Segnali Colorati" style="max-width:100%; border-radius:4px; object-fit:contain; background:var(--surface);">
+        </div>
+      </div>
+      
+      <!-- PRO TIP: Fronte di discesa ad altissimo impatto -->
+      <div style="background: var(--red); color: white; padding: 20px; border-radius: 8px; margin-top: 24px; box-shadow: 0 4px 15px rgba(244, 67, 54, 0.3);">
+         <h5 style="margin: 0 0 12px 0; font-size: 18px; display:flex; align-items:center; gap:8px;">
+            <span style="font-size:24px;">🔥</span> Il Segreto del Fronte di Discesa
+         </h5>
+         <p style="font-size: 14px; margin-bottom: 12px; opacity: 0.95; line-height:1.5;">Nei corsi base ci insegnano che "tutto scatta in salita". In realtà, il <strong>fronte di discesa</strong> (metà ciclo) è vitale per due motivi di pura architettura hardware:</p>
+         <ul style="font-size: 14px; margin: 0; padding-left: 20px; line-height:1.5;">
+           <li style="margin-bottom: 8px;"><strong>1. Anticollisione (No Corse Critiche):</strong> Dare il comando di lettura prima che la tensione dell'indirizzo sia stabile creerebbe il caos. Attivando il segnale (<span style="text-decoration: overline;">RD</span>) sul fronte di discesa, la CPU regala al circuito un prezioso <em>mezzo ciclo di respiro</em> per assestarsi perfettamente.</li>
+           <li><strong>2. Clock a Due Fasi (Efficienza Erema):</strong> Il tempo si sdoppia. In <em>salita</em> si emettono i dati (es. metto l'indirizzo), in <em>discesa</em> si eseguono i controlli. La CPU impacchetta più azioni nello stesso ciclo senza perdite di tempo!</li>
+         </ul>
+      </div>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:24px;">
+        <div style="flex:1; background:rgba(76, 175, 80, 0.1); padding:12px; border-radius:4px; border-left:3px solid var(--green);">
+          <strong style="color:var(--green); font-size:14px; display:block; margin-bottom:4px;">Il Vantaggio: Semplicità e Risparmio</strong>
+          <span style="font-size:13px; color:var(--text);">Costruire questo hardware è facile ed economico. I componenti sanno che devono solo "guardare" i fili al tic esatto del clock (senza gestire logiche complesse). Se i tempi di tutti i dispositivi sono noti, si può persino eliminare del tutto la linea WAIT, risparmiando spazio.</span>
+        </div>
+        <div style="flex:1; background:rgba(255, 0, 0, 0.1); padding:12px; border-radius:4px; border-left:3px solid var(--red);">
+          <strong style="color:var(--red); font-size:14px; display:block; margin-bottom:4px;">Il Difetto: Lo Spreco di Tempo</strong>
+          <span style="font-size:13px; color:var(--text);">La durata è rigida: un'azione impiega per forza numeri interi di cicli. Se un circuito calcola il risultato in "1 ciclo e mezzo" fisico, non si può trasmettere a metà. Il computer deve aspettare obbligatoriamente l'inizio del secondo ciclo intero, perdendo mezzo ciclo completamente a vuoto!</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="card" style="border-left: 4px solid var(--amber); margin-bottom: 32px; background:var(--surface2);">
+      <h4 style="color:var(--amber); margin-bottom: 8px; font-size:16px;">B) Il Bus Asincrono (L'Handshake)</h4>
+      <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start;">
+        <div style="flex:1; min-width:300px;">
+          <p style="font-size:13px; color:var(--text); line-height:1.5;">Nessun metronomo globale. I dispositivi si mettono d'accordo usando una "stretta di mano" (Handshake) passo dopo passo, tramite due segnali: <strong>MSYN</strong> (Master Sync) e <strong>SSYN</strong> (Slave Sync).</p>
+          <ol style="font-size:13px; color:var(--muted); padding-left:20px; margin-bottom:12px;">
+            <li><strong>Indirizzo:</strong> Il Master (es. CPU) mette l'indirizzo sui cavi e aspetta che si stabilizzi.</li>
+            <li><strong>Master chiama (MSYN = 1):</strong> Il Master alza la bandierina: "Ehi, l'indirizzo è pronto!" e blocca il bus agli altri.</li>
+            <li><strong>Slave cerca:</strong> Lo Slave (es. RAM) si riconosce e va a prendere il dato richiesto mettendolo sui cavi.</li>
+            <li><strong>Slave conferma (SSYN = 1):</strong> Lo Slave alza la sua bandierina: "Fatto! Il dato è sui cavi, puoi prenderlo".</li>
+            <li><strong>Master chiude (MSYN = 0):</strong> Il Master fotografa il dato letto, non ha più bisogno del bus e abbassa MSYN ("Ricevuto").</li>
+            <li><strong>Slave si riposa (SSYN = 0):</strong> Lo Slave vede che il Master ha finito e abbassa a sua volta SSYN. Il bus torna libero.</li>
+          </ol>
+        </div>
+        <div style="flex:1; min-width:300px; display:flex; justify-content:center;">
+          <img src="assets/extra/asincrono.png" alt="Bus Asincrono Handshake" style="max-width:100%; border-radius:4px; object-fit:contain; background:var(--surface);">
+        </div>
+      </div>
+      
+      <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:16px;">
+        <div style="flex:1; background:rgba(76, 175, 80, 0.1); padding:12px; border-radius:4px; border-left:3px solid var(--green);">
+          <strong style="color:var(--green); font-size:14px; display:block; margin-bottom:4px;">Il Superpotere: Flessibilità Assoluta</strong>
+          <span style="font-size:13px; color:var(--text);">La transazione dipende solo dalla velocità reale dei due dispositivi coinvolti. La CPU (velocissima) invia la richiesta e aspetta finché la memoria non è pronta ad alzare SSYN, sia che ci metta un nanosecondo, sia un secondo intero. Nessuno andrà mai "fuori tempo".</span>
+        </div>
+        <div style="flex:1; background:rgba(255, 193, 7, 0.1); padding:12px; border-radius:4px; border-left:3px solid var(--amber);">
+          <strong style="color:var(--amber); font-size:14px; display:block; margin-bottom:4px;">Il Difetto: Lentezza e Complessità</strong>
+          <span style="font-size:13px; color:var(--text);">Il balletto dei 4 passi (alza MSYN, alza SSYN, abbassa MSYN, abbassa SSYN) richiede tempo fisico per la corrente ("Lentezza Burocratica"). Inoltre, i dispositivi devono avere circuiti logici complessi per gestire questo rigido protocollo.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  </section>
+
+</main>
+</div>
+
+<script>
+// Highlight nav item on scroll
+const sections = document.querySelectorAll('section');
+const navItems = document.querySelectorAll('.sidebar .nav-item');
+
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(section => {
+    const sectionTop = section.offsetTop;
+    const sectionHeight = section.clientHeight;
+    if (pageYOffset >= (sectionTop - 150)) {
+      current = section.getAttribute('id');
+    }
+  });
+
+  navItems.forEach(item => {
+    item.classList.remove('active');
+    if (item.getAttribute('href').includes(current)) {
+      item.classList.add('active');
+    }
+  });
+});
+</script>
+</body>
+</html>
