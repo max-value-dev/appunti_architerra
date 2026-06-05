@@ -172,14 +172,15 @@
         <div class="cat-icon">09</div>
         <div class="cat-badge">Prestazioni</div>
       </div>
-      <div class="cat-title">Prestazioni e Clock</div>
+      <div class="cat-title">Esame Scritto</div>
       <p class="cat-desc">Calcolare le prestazioni della CPU e il trasferimento dati: MIPS, MFLOPS, Cicli, ed esercizi su Mbit/MB.</p>
       <div class="cat-topics-list">
-        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Metriche Base <span class="cat-topic-num">S38</span></div>
-        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Esercizi sul Clock <span class="cat-topic-num">S39</span></div>
-        <div class="cat-topic-item"><div class="cat-topic-dot"></div> MIPS e MFLOPS <span class="cat-topic-num">S40</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Esercizi con il clock <span class="cat-topic-num">S38</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> IPS e MIPS <span class="cat-topic-num">S40</span></div>
         <div class="cat-topic-item"><div class="cat-topic-dot"></div> Grandezze e Prefissi <span class="cat-topic-num">S41</span></div>
         <div class="cat-topic-item"><div class="cat-topic-dot"></div> Megabit vs Megabyte <span class="cat-topic-num">S42</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Esercizi con memoria <span class="cat-topic-num">S43</span></div>
+        <div class="cat-topic-item"><div class="cat-topic-dot"></div> Domande di Teoria <span class="cat-topic-num">S44</span></div>
       </div>
     </a>
 
@@ -214,11 +215,12 @@ const SECTIONS = [
   { id: "s33", num: "33", title: "Il Bus di Sistema", file: "04_bus.html", chapter: "Il Bus", single: "bus indirizzi dati controllo fili condiviso master slave sincrono asincrono arbitraggio" },
   { id: "s34", num: "34", title: "La Memoria Cache", file: "05_cache.html", chapter: "La Cache", single: "cache memoria gerarchia livello località hit miss" },
   { id: "s35", num: "35", title: "Input / Output", file: "06_io.html", chapter: "Input/Output", single: "input output periferiche dispositivi i/o interfacce" },
-  { id: "s38", num: "38", title: "Metriche Base", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "frequenza clock prestazioni mito" },
-  { id: "s39", num: "39", title: "Esercizi sul Clock", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "tempo esecuzione formula cpi n f" },
-  { id: "s40", num: "40", title: "MIPS e MFLOPS", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "mips mflops milioni istruzioni floating point operazioni" },
-  { id: "s41", num: "41", title: "Grandezze e Prefissi", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "kilo mega giga tera peta kib mib gib decimale binario" },
-  { id: "s42", num: "42", title: "Megabit vs Megabyte", file: "09_prestazioni.html", chapter: "Prestazioni e Clock", single: "megabit megabyte mbit mb frame buffer rete" }
+  { id: "s38", num: "38", title: "Esercizi con il clock", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "frequenza clock prestazioni mito tempo esecuzione formula cpi n f" },
+  { id: "s40", num: "40", title: "IPS e MIPS", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "mips milioni istruzioni" },
+  { id: "s41", num: "41", title: "Grandezze e Prefissi", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "kilo mega giga tera peta kib mib gib decimale binario" },
+  { id: "s42", num: "42", title: "Megabit vs Megabyte", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "megabit megabyte mbit mb frame buffer rete" },
+  { id: "s43", num: "43", title: "Esercizi con memoria", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "memoria esercizi little endian load store byte" },
+  { id: "s44", num: "44", title: "Domande di Teoria", file: "09_prestazioni.html", chapter: "Esame Scritto", single: "teoria domande località spaziale temporale cache mix" }
 ];
 
 function doSearch() {

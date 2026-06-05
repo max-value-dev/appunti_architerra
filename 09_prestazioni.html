@@ -18,15 +18,11 @@
     <span>Guida completa</span>
   </a>
   <a class="nav-item" href="09_prestazioni.html#s38">
-    <div class="nav-dot"></div> Metriche Base
+    <div class="nav-dot"></div> Esercizi con il clock
     <span class="nav-num">38</span>
   </a>
-  <a class="nav-item" href="09_prestazioni.html#s39">
-    <div class="nav-dot"></div> Esercizi sul Clock
-    <span class="nav-num">39</span>
-  </a>
   <a class="nav-item" href="09_prestazioni.html#s40">
-    <div class="nav-dot"></div> MIPS e MFLOPS
+    <div class="nav-dot"></div> IPS e MIPS
     <span class="nav-num">40</span>
   </a>
   <a class="nav-item" href="09_prestazioni.html#s41">
@@ -36,6 +32,14 @@
   <a class="nav-item" href="09_prestazioni.html#s42">
     <div class="nav-dot"></div> Mbit vs MB
     <span class="nav-num">42</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s43">
+    <div class="nav-dot"></div> Esercizi con memoria
+    <span class="nav-num">43</span>
+  </a>
+  <a class="nav-item" href="09_prestazioni.html#s44">
+    <div class="nav-dot"></div> Domande di Teoria
+    <span class="nav-num">44</span>
   </a>
 </nav>
 
@@ -52,16 +56,29 @@
   <section class="section" id="s38">
     <div class="section-header">
       <div class="section-num">38</div>
-      <h2>Il Falso Mito della <span class="accent">Frequenza</span></h2>
+      <h2>Esercizi con il <span class="accent">clock</span></h2>
     </div>
 
-    <p class="lead">Il punto che confonde più spesso chi studia le prestazioni di una CPU è questo: <strong>la frequenza NON indica quante istruzioni al secondo fa la CPU</strong>. La frequenza indica solo quanti "battiti" (cicli di clock) il processore compie in un secondo.</p>
+    <p class="lead">Per calcolare le prestazioni di una CPU e il tempo di esecuzione di un programma, si parte da una singola formula fondamentale.</p>
 
-    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px; border-left:4px solid var(--red); margin-bottom:32px;">
-      <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">
-        Non significa automaticamente che a 4 GHz esegui 4 miliardi di istruzioni al secondo, perché ogni istruzione può richiedere più o meno cicli! Una CPU con frequenza (GHz) più alta non è automaticamente più veloce rispetto a un'altra CPU: potrebbe avere un CPI pessimo (ogni istruzione spreca molti cicli) o dover eseguire un numero esagerato di istruzioni per fare la stessa cosa.
-      </p>
+    <div class="callout purple" style="margin-bottom:24px;">
+      <strong>Il Tempo di Esecuzione (T)</strong><br>
+      Il programma ha <strong>N</strong> istruzioni, ognuna richiede in media <strong>CPI</strong> cicli. Quindi fa <code>N &times; CPI</code> cicli totali.<br>
+      Se la CPU riesce a fare <strong>f</strong> cicli in un solo secondo, il tempo totale richiesto per eseguire il programma è:
+      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+        <span>T =</span>
+        <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+          <div style="border-bottom:1px solid currentColor; padding:0 4px;">N &times; CPI</div>
+          <div style="padding:0 4px;">f</div>
+        </div>
+      </div>
+      Oppure, usando il periodo (visto che <code>1/f = T<sub>clock</sub></code>), la formula alternativa identica è: 
+      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center;">
+        T = N &times; CPI &times; T<sub>clock</sub>
+      </div>
     </div>
+
+    <p class="lead">Per usare questa formula correttamente, analizziamo i suoi componenti:</p>
 
     <div class="card-grid cols2" style="margin-bottom:24px;">
       <!-- N e CPI -->
@@ -81,78 +98,156 @@
         <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">2. Frequenza (f) e Periodo (T_clock)</h4>
         <ul style="font-size:13px; color:var(--text); line-height:1.5; padding-left:16px; margin:0;">
           <li style="margin-bottom:8px;"><strong>Frequenza (f):</strong> Quanti cicli il processore fa in un secondo. Es. <code>4 GHz = 4&times;10⁹ cicli/s</code>.</li>
-          <li><strong>Periodo (T<sub>clock</sub>):</strong> È il contrario della frequenza (<code>1/f</code>), e dice quanto dura un singolo ciclo. Se <code>f = 1 GHz</code>, allora <code>T<sub>clock</sub> = 1 ns</code> (un nanosecondo).</li>
+          <li><strong>Periodo (T<sub>clock</sub>):</strong> È il contrario della frequenza (<code>1/f</code>). Attenzione agli esercizi: se dicono <strong>"il periodo del clock"</strong>, si riferiscono proprio alla durata temporale di un singolo ciclo. Spesso è misurata in nanosecondi (10<sup>-9</sup> secondi). Un periodo di 1 ns corrisponderebbe esattamente a una frequenza di 1 GHz.</li>
         </ul>
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; margin-top:12px; font-family:'DM Mono',monospace; color:var(--accent); font-size:13px; text-align:center;">
-          T<sub>clock</sub> = 1 / f
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; margin-top:12px; font-family:'DM Mono',monospace; color:var(--accent); font-size:13px; text-align:center; display:flex; align-items:center; justify-content:center; gap:8px;">
+          <span>T<sub>clock</sub> =</span>
+          <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+            <div style="border-bottom:1px solid currentColor; padding:0 4px;">1</div>
+            <div style="padding:0 4px;">f</div>
+          </div>
         </div>
       </div>
     </div>
-  </section>
 
-  <section class="section" id="s39">
-    <div class="section-header">
-      <div class="section-num">39</div>
-      <h2>La Formula <span class="accent">Suprema</span></h2>
-    </div>
-
-    <p class="lead">Ora uniamo tutto per capire come calcolare il tempo di esecuzione di un programma.</p>
-
-    <div class="callout purple" style="margin-bottom:24px;">
-      <strong>Il Tempo di Esecuzione (T)</strong><br>
-      Il programma ha <strong>N</strong> istruzioni, ognuna richiede in media <strong>CPI</strong> cicli. Quindi fa <code>N &times; CPI</code> cicli totali.<br>
-      Se la CPU riesce a fare <strong>f</strong> cicli in un solo secondo, il tempo totale richiesto per eseguire il programma è:
-      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center;">
-        T = (N &times; CPI) / f
-      </div>
-      Oppure, usando il periodo (visto che <code>1/f = T<sub>clock</sub></code>), la formula alternativa identica è: 
-      <div style="font-size:18px; margin:16px 0; font-family:'DM Mono',monospace; text-align:center;">
-        T = N &times; CPI &times; T<sub>clock</sub>
-      </div>
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px; border-left:4px solid var(--red); margin-bottom:32px;">
+      <h4 style="margin-top:0; color:var(--red); font-size:15px; margin-bottom:8px;">Il Falso Mito della Frequenza</h4>
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin:0;">
+        Il punto che confonde più spesso è questo: <strong>la frequenza NON indica quante istruzioni al secondo fa la CPU</strong>. Non significa automaticamente che a 4 GHz esegui 4 miliardi di istruzioni al secondo, perché ogni istruzione può richiedere più o meno cicli! Una CPU con frequenza (GHz) più alta non è automaticamente più veloce rispetto a un'altra CPU: potrebbe avere un CPI pessimo (ogni istruzione spreca molti cicli) o dover eseguire un numero esagerato di istruzioni per fare la stessa cosa.
+      </p>
     </div>
   </section>
 
   <section class="section" id="s40">
     <div class="section-header">
       <div class="section-num">40</div>
-      <h2>Istruzioni al Secondo: <span class="accent">MIPS e MFLOPS</span></h2>
+      <h2>Istruzioni al Secondo: <span class="accent">IPS e MIPS</span></h2>
     </div>
 
-    <p class="lead">Spesso si cerca un modo facile per dire quante istruzioni la CPU "digerisce" al secondo. Da qui nascono due unità di misura molto popolari: MIPS e MFLOPS.</p>
-
-    <div class="card-grid cols2" style="margin-bottom:32px;">
-      <!-- MIPS -->
-      <div class="card" style="border-left:4px solid var(--green);">
-        <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">MIPS</h4>
-        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;"><strong>Millions of Instructions Per Second.</strong> Misura quante istruzioni generiche vengono eseguite in un secondo. Dato che <em>Istruzioni/sec = f / CPI</em>, la formula per ottenere i MIPS è:</p>
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; font-family:'DM Mono',monospace; color:var(--green); font-size:13px; text-align:center;">
-          MIPS = f / (CPI &times; 10⁶)<br>oppure<br>MIPS = N / (T &times; 10⁶)
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <!-- Metodo 1 -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">1. Usando frequenza e CPI</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Se conosci la frequenza del processore <strong>f</strong> e il <strong>CPI</strong>, cioè i cicli per istruzione:</p>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:16px; font-family:'DM Mono',monospace; color:var(--blue); font-size:16px; text-align:center;">
+          IPS = <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;"><div style="border-bottom:1px solid currentColor; padding:0 4px;">f</div><div style="padding:0 4px;">CPI</div></div>
+        </div>
+        <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:8px;">Esempio:</strong>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin-bottom:12px;">
+          <li><strong>f</strong> = 2 GHz = 2 &times; 10<sup>9</sup> cicli/s</li>
+          <li><strong>CPI</strong> = 2</li>
+        </ul>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--muted);">IPS =</span>
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">2 &times; 10<sup>9</sup></div>
+              <div style="padding:0 4px;">2</div>
+            </div>
+            <span>= 1 &times; 10<sup>9</sup></span>
+          </div>
+          <div>
+            <span style="color:var(--accent);">Quindi il processore esegue:</span><br>
+            1.000.000.000 istruzioni/s
+          </div>
         </div>
       </div>
 
-      <!-- MFLOPS -->
-      <div class="card" style="border-left:4px solid var(--red);">
-        <h4 style="font-size:16px; color:var(--red); margin-bottom:12px;">MFLOPS</h4>
-        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;"><strong>Millions of Floating-Point Operations Per Second.</strong> A differenza dei MIPS, i MFLOPS contano <strong>solo</strong> le operazioni matematiche complesse in virgola mobile.</p>
-        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:8px; font-family:'DM Mono',monospace; color:var(--red); font-size:13px; text-align:center;">
-          MFLOPS = (Operazioni FP) / (T &times; 10⁶)
+      <!-- Metodo 2 -->
+      <div class="card" style="border-left:4px solid var(--purple);">
+        <h4 style="font-size:16px; color:var(--purple); margin-bottom:12px;">2. Usando numero di istruzioni e tempo</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Se conosci il numero totale di istruzioni <strong>N</strong> e il tempo di esecuzione <strong>T</strong>:</p>
+        <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:16px; font-family:'DM Mono',monospace; color:var(--purple); font-size:16px; text-align:center;">
+          IPS = <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;"><div style="border-bottom:1px solid currentColor; padding:0 4px;">N</div><div style="padding:0 4px;">T</div></div>
         </div>
-        <p style="font-size:12px; color:var(--muted); line-height:1.5; margin-top:8px;">Es: Se il 40% delle <code>N</code> istruzioni sono calcoli floating-point, <code>Op. FP = 0.40 &times; N</code>.</p>
+        <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:8px;">Esempio:</strong>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin-bottom:12px;">
+          <li><strong>N</strong> = 500 milioni di istruzioni (500 &times; 10<sup>6</sup>)</li>
+          <li><strong>T</strong> = 2 secondi</li>
+        </ul>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="color:var(--muted);">IPS =</span>
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">500 &times; 10<sup>6</sup></div>
+              <div style="padding:0 4px;">2</div>
+            </div>
+            <span>= 250 &times; 10<sup>6</sup></span>
+          </div>
+          <div>
+            <span style="color:var(--accent);">Quindi il processore esegue:</span><br>
+            250.000.000 istruzioni/s
+          </div>
+        </div>
       </div>
     </div>
 
-    <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; padding:16px; border-left:4px solid var(--accent); margin-bottom:32px;">
-      <strong style="color:var(--accent); font-size:15px; display:block; margin-bottom:8px;">Riassunto Super Importante</strong>
-      <table style="width:100%; font-size:13px; color:var(--text); text-align:left; border-collapse:collapse;">
-        <tr style="border-bottom:1px solid var(--border);"><th style="padding:8px; color:var(--muted);">Grandezza</th><th style="padding:8px; color:var(--muted);">Significato</th></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace; width:80px;">N</td><td style="padding:8px;">Numero totale di istruzioni del programma</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">CPI</td><td style="padding:8px;">Cicli necessari in media per una singola istruzione</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">f</td><td style="padding:8px;">Cicli eseguiti al secondo (Frequenza)</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">T<sub>clock</sub></td><td style="padding:8px;">Durata temporale di un singolo ciclo</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">T</td><td style="padding:8px;">Tempo totale di esecuzione in secondi</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">MIPS</td><td style="padding:8px;">Milioni di istruzioni al secondo</td></tr>
-        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px; font-family:'DM Mono',monospace;">MFLOPS</td><td style="padding:8px;">Milioni di operazioni in virgola mobile al secondo</td></tr>
-      </table>
+    <!-- MIPS e Riassunto -->
+    <div class="card" style="border-left:4px solid var(--green); margin-bottom:32px;">
+      <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">Spesso si usa anche MIPS</h4>
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:16px;">I MIPS sono i <strong>milioni di istruzioni al secondo</strong>:</p>
+      
+      <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:6px; padding:12px; font-family:'DM Mono',monospace; color:var(--green); font-size:15px; text-align:center; margin-bottom:20px;">
+        MIPS = <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;"><div style="border-bottom:1px solid currentColor; padding:0 4px;">IPS</div><div style="padding:0 4px;">10<sup>6</sup></div></div>
+      </div>
+
+      <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:12px;">Quindi puoi scrivere direttamente:</p>
+      
+      <div class="card-grid cols2" style="margin-bottom:24px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-family:'DM Mono',monospace; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px;">
+          <span>MIPS =</span>
+          <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+            <div style="border-bottom:1px solid currentColor; padding:0 4px;">f</div>
+            <div style="padding:0 4px;">CPI &times; 10<sup>6</sup></div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:center; gap:8px; font-family:'DM Mono',monospace; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px;">
+          <span>MIPS =</span>
+          <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+            <div style="border-bottom:1px solid currentColor; padding:0 4px;">N</div>
+            <div style="padding:0 4px;">T &times; 10<sup>6</sup></div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border); padding-top:16px;">
+        <strong style="font-size:14px; color:var(--text); display:block; margin-bottom:16px;">📌 Riassunto Formule</strong>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; font-family:'DM Mono',monospace; font-size:13px; color:var(--text);">
+          
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="color:var(--blue);">IPS</span> = 
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">f</div>
+              <div style="padding:0 4px;">CPI</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.05);">
+            <span style="color:var(--purple);">IPS</span> = 
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">N</div>
+              <div style="padding:0 4px;">T</div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span style="color:var(--green);">MIPS</span> = 
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">f</div>
+              <div style="padding:0 4px;">CPI &times; 10<sup>6</sup></div>
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:center; gap:8px;">
+            <span style="color:var(--green);">MIPS</span> = 
+            <div style="display:inline-block; vertical-align:middle; text-align:center; line-height:1.2; font-size:90%;">
+              <div style="border-bottom:1px solid currentColor; padding:0 4px;">N</div>
+              <div style="padding:0 4px;">T &times; 10<sup>6</sup></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </section>
 
@@ -162,94 +257,43 @@
       <h2>Grandezze e Prefissi: <span class="accent">Kilo, Mega, Giga</span></h2>
     </div>
 
-    <p class="lead">Prima di fare qualsiasi calcolo di memoria o rete, devi dominare i prefissi delle grandezze. Attenzione: esiste una differenza tra il mondo decimale e quello binario.</p>
-
-    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:24px;">
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:32px; margin-top:24px;">
       <table style="width:100%; text-align:left; border-collapse:collapse;">
         <thead>
           <tr style="background:rgba(255,255,255,0.05); border-bottom:1px solid var(--border);">
             <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Prefisso</th>
-            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Simbolo</th>
-            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Potenza</th>
-            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Valore Decimale</th>
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Decimale (KB, MB, GB...)</th>
+            <th style="padding:12px 16px; color:var(--muted); font-weight:500; font-size:13px;">Binario (KiB, MiB, GiB...)</th>
           </tr>
         </thead>
         <tbody style="font-size:14px; color:var(--text); font-family:'DM Mono',monospace;">
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 16px;">kilo</td>
-            <td style="padding:12px 16px; color:var(--blue);">k / K</td>
-            <td style="padding:12px 16px;">10³</td>
-            <td style="padding:12px 16px;">1.000</td>
+            <td style="padding:12px 16px; color:var(--blue);">Kilo / Kibi</td>
+            <td style="padding:12px 16px;">10<sup>3</sup> = 1.000 B</td>
+            <td style="padding:12px 16px;">2<sup>10</sup> = 1.024 B</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 16px;">mega</td>
-            <td style="padding:12px 16px; color:var(--green);">M</td>
-            <td style="padding:12px 16px;">10⁶</td>
-            <td style="padding:12px 16px;">1.000.000</td>
+            <td style="padding:12px 16px; color:var(--green);">Mega / Mebi</td>
+            <td style="padding:12px 16px;">10<sup>6</sup> = 1.000.000 B</td>
+            <td style="padding:12px 16px;">2<sup>20</sup> = 1.048.576 B</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 16px;">giga</td>
-            <td style="padding:12px 16px; color:var(--amber);">G</td>
-            <td style="padding:12px 16px;">10⁹</td>
-            <td style="padding:12px 16px;">1.000.000.000</td>
+            <td style="padding:12px 16px; color:var(--amber);">Giga / Gibi</td>
+            <td style="padding:12px 16px;">10<sup>9</sup> = 1.000.000.000 B</td>
+            <td style="padding:12px 16px;">2<sup>30</sup> = 1.073.741.824 B</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 16px;">tera</td>
-            <td style="padding:12px 16px; color:var(--purple);">T</td>
-            <td style="padding:12px 16px;">10¹²</td>
-            <td style="padding:12px 16px;">1.000.000.000.000</td>
+            <td style="padding:12px 16px; color:var(--purple);">Tera / Tebi</td>
+            <td style="padding:12px 16px;">10<sup>12</sup> B</td>
+            <td style="padding:12px 16px;">2<sup>40</sup> B</td>
           </tr>
           <tr>
-            <td style="padding:12px 16px;">peta</td>
-            <td style="padding:12px 16px; color:var(--red);">P</td>
-            <td style="padding:12px 16px;">10¹⁵</td>
-            <td style="padding:12px 16px;">1.000.000.000.000.000</td>
+            <td style="padding:12px 16px; color:var(--red);">Peta / Pebi</td>
+            <td style="padding:12px 16px;">10<sup>15</sup> B</td>
+            <td style="padding:12px 16px;">2<sup>50</sup> B</td>
           </tr>
         </tbody>
       </table>
-    </div>
-
-    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">La Grande Confusione: Decimale vs Binario</h3>
-    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:16px;">
-      Storicamente, l'informatica ha "rubato" i prefissi decimali (Kilo = 1.000) per usarli in ambito binario (Kilo = 1.024, perché 2<sup>10</sup> è la potenza di due più vicina a 1000). Questo ha creato caos: quando compri un disco da "1 Terabyte", il produttore calcola 10<sup>12</sup> byte (sistema decimale). Ma il computer, lavorando in base 2, ne conta molti meno (circa 0.9 TiB).
-      <br><br>Per risolvere questa confusione, sono stati introdotti i <strong>Prefissi Binari (KiB, MiB, GiB...)</strong> che tolgono ogni ambiguità.
-    </p>
-
-    <div class="card-grid cols2" style="margin-bottom:24px;">
-      <!-- Sistema Decimale (KB) -->
-      <div class="card" style="border-top: 4px solid var(--blue);">
-        <h4 style="font-size:16px; color:var(--blue); margin-bottom:8px;">Sistema Decimale (KB, MB)</h4>
-        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Basato sulle potenze di 10. Si usa <strong>sempre</strong> per misurare le velocità di rete (Mbit/s), le frequenze (GHz) o per vendere hard disk commerciali.</p>
-        <ul style="font-size:13px; color:var(--text); padding-left:16px; margin:0; line-height:1.6;">
-          <li><strong>KB</strong> (Kilobyte) = 10<sup>3</sup> = 1.000 B</li>
-          <li><strong>MB</strong> (Megabyte) = 10<sup>6</sup> = 1.000.000 B</li>
-          <li><strong>GB</strong> (Gigabyte) = 10<sup>9</sup> = 1.000.000.000 B</li>
-          <li><strong>TB</strong> (Terabyte) = 10<sup>12</sup> B</li>
-          <li><strong>PB</strong> (Petabyte) = 10<sup>15</sup> B</li>
-        </ul>
-      </div>
-
-      <!-- Sistema Binario (KiB) -->
-      <div class="card" style="border-top: 4px solid var(--purple);">
-        <h4 style="font-size:16px; color:var(--purple); margin-bottom:8px;">Sistema Binario (KiB, MiB)</h4>
-        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Basato sulle potenze di 2. Si usa per misurare la <strong>RAM</strong>, la grandezza dei file nel computer (es. Windows) o lo spazio reale allocabile in memoria.</p>
-        <ul style="font-size:13px; color:var(--text); padding-left:16px; margin:0; line-height:1.6;">
-          <li><strong>KiB</strong> (Kibibyte) = 2<sup>10</sup> = 1.024 B</li>
-          <li><strong>MiB</strong> (Mebibyte) = 2<sup>20</sup> = 1.048.576 B</li>
-          <li><strong>GiB</strong> (Gibibyte) = 2<sup>30</sup> = 1.073.741.824 B</li>
-          <li><strong>TiB</strong> (Tebibyte) = 2<sup>40</sup> B</li>
-          <li><strong>PiB</strong> (Pebibyte) = 2<sup>50</sup> B</li>
-        </ul>
-      </div>
-    </div>
-
-    <div class="callout amber" style="margin-bottom:32px;">
-      <strong>Attenzione agli esercizi:</strong><br>
-      Molti professori usano ancora la vecchia notazione abusata, scrivendo <code>KB</code> per intendere <code>1024 Byte</code>. Controlla sempre il contesto! Regola d'oro:
-      <ul style="margin:8px 0 0 0; padding-left:20px;">
-        <li>Se si parla di <strong>Memoria RAM, Cache o Dimensione File</strong>, la CPU ragiona a fette di bit, quindi si usa la base 2 (1024).</li>
-        <li>Se si parla di <strong>Rete o Frequenza di Clock</strong>, il cavo o il quarzo "pulsano" elettricamente, quindi si usa la base 10.</li>
-      </ul>
     </div>
   </section>
 
@@ -306,6 +350,390 @@
       <div style="margin-top:16px; padding:12px; background:rgba(255,100,100,0.1); border-left:3px solid var(--red); border-radius:4px;">
         <p style="font-size:13px; margin:0; color:var(--text);"><strong>Se non avessi moltiplicato per 8</strong>, avresti diviso erroneamente <em>Byte</em> per <em>bit</em>, ottenendo un risultato completamente sballato. La regola d'oro è: <strong>uniformare sempre le unità di misura prima di dividere!</strong></p>
       </div>
+    </div>
+  </section>
+
+  <section class="section" id="s43">
+    <div class="section-header">
+      <div class="section-num">43</div>
+      <h2>Esercizi con <span class="accent">memoria</span> (Little Endian)</h2>
+    </div>
+
+    <p class="lead">RISC-V utilizza la convenzione <strong>Little Endian</strong>: il byte meno significativo (quello "più piccolo") di un valore viene sempre salvato all’indirizzo di memoria più piccolo.</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      <!-- Esempio Memoria -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">Come viene salvato un valore a 32 bit</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Se abbiamo il valore esadecimale a 32 bit (4 byte) <code>0xAABBCCDD</code>, questo verrà diviso in quattro byte: <code>AA</code>, <code>BB</code>, <code>CC</code> e <code>DD</code>.</p>
+        
+        <div style="display:flex; justify-content:center; margin-bottom:16px;">
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:8px; overflow:hidden; font-family:'DM Mono',monospace; font-size:13px; color:var(--text); width:100%; max-width:250px;">
+            <div style="display:flex; border-bottom:1px solid var(--border); background:rgba(255,255,255,0.05); padding:8px;"><div style="flex:1; color:var(--muted);">Indirizzo</div><div style="flex:1; text-align:right;">Byte</div></div>
+            <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px; align-items:center;"><div style="flex:1; color:var(--muted);">base + 3</div><div style="flex:1; text-align:right; color:var(--red);">0xAA</div></div>
+            <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px; align-items:center;"><div style="flex:1; color:var(--muted);">base + 2</div><div style="flex:1; text-align:right; color:var(--red);">0xBB</div></div>
+            <div style="display:flex; border-bottom:1px solid rgba(255,255,255,0.05); padding:8px; align-items:center;"><div style="flex:1; color:var(--muted);">base + 1</div><div style="flex:1; text-align:right; color:var(--red);">0xCC</div></div>
+            <div style="display:flex; padding:8px; align-items:center;"><div style="flex:1; color:var(--muted);">base + 0</div><div style="flex:1; text-align:right; color:var(--green); font-weight:bold;">0xDD</div></div>
+          </div>
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Il byte <strong>DD</strong> (il meno significativo) va all'indirizzo più piccolo (base + 0).</p>
+      </div>
+
+      <!-- LOAD e STORE rules -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">Regole LOAD e STORE</h4>
+        
+        <strong style="font-size:14px; color:var(--text); display:block; margin-bottom:4px;">LOAD (es. lw)</strong>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:12px;">Leggo i byte dalla memoria partendo dall’indirizzo più piccolo. Quando ricostruisco il registro a 32 bit, il byte letto all’indirizzo più piccolo diventa il meno significativo (quello tutto a destra).</p>
+
+        <strong style="font-size:14px; color:var(--text); display:block; margin-bottom:4px;">STORE (es. sw, sh, sb)</strong>
+        <p style="font-size:13px; color:var(--muted); line-height:1.5; margin-bottom:0;">Prendo dal registro prima i byte meno significativi (quelli a destra) e li inserisco fisicamente agli indirizzi di memoria più piccoli.</p>
+      </div>
+    </div>
+
+    <!-- Esempi pratici -->
+    <h4 style="font-size:16px; color:var(--accent); margin-bottom:16px;">Esempi Pratici</h4>
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      
+      <!-- Esempio LW -->
+      <div class="card" style="border-left:4px solid var(--purple);">
+        <h5 style="font-size:14px; color:var(--purple); margin-bottom:8px; font-family:'DM Mono',monospace;">lw (Load Word)</h5>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Supponiamo di avere in memoria ai byte 0, 1, 2, 3 i valori esadecimali <code>80</code>, <code>81</code>, <code>82</code>, <code>83</code>.</p>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px;">
+          <span style="color:var(--muted);">mem[0]</span> = 80<br>
+          <span style="color:var(--muted);">mem[1]</span> = 81<br>
+          <span style="color:var(--muted);">mem[2]</span> = 82<br>
+          <span style="color:var(--muted);">mem[3]</span> = 83<br>
+          <br>
+          <span style="color:var(--accent);">Registro caricato:</span><br>
+          0x83828180
+        </div>
+      </div>
+
+      <!-- Esempio SW, SH, SB -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h5 style="font-size:14px; color:var(--green); margin-bottom:8px; font-family:'DM Mono',monospace;">Store (sw, sh, sb)</h5>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Supponiamo di avere nel registro <code>0xAABBCCDD</code> e volerlo salvare all'indirizzo 0.</p>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; display:flex; flex-direction:column; gap:12px;">
+          <div>
+            <strong style="color:var(--green);">sw</strong> (Store Word, 4 byte):<br>
+            <span style="color:var(--muted);">mem[0]=DD, mem[1]=CC, mem[2]=BB, mem[3]=AA</span>
+          </div>
+          <div>
+            <strong style="color:var(--green);">sh</strong> (Store Half, 2 byte):<br>
+            <span style="color:var(--muted);">mem[0]=DD, mem[1]=CC</span>
+          </div>
+          <div>
+            <strong style="color:var(--green);">sb</strong> (Store Byte, 1 byte):<br>
+            <span style="color:var(--muted);">mem[0]=DD</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="section" id="s44">
+    <div class="section-header">
+      <div class="section-num">44</div>
+      <h2>Domande di Teoria <span class="accent">Frequenti</span></h2>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:0 0 16px; color:var(--accent);">1. Località della Cache</h3>
+    <p class="lead" style="margin-top:0;">Le cache funzionano in modo efficiente sfruttando due principi fondamentali di "località" degli accessi alla memoria. Spesso all'esame viene chiesto di riconoscerli.</p>
+
+    <div class="card-grid cols3" style="margin-bottom:48px;">
+      
+      <!-- Località Spaziale -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">Solo Località Spaziale</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Uso indirizzi di memoria <strong>vicini</strong> tra loro.</p>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px;">
+          <span style="color:var(--muted);">Esempio:</span><br>
+          A[0], A[1], A[2], A[3]
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Leggo elementi adiacenti in memoria senza mai riusare lo stesso dato.</p>
+      </div>
+
+      <!-- Località Temporale -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">Solo Località Temporale</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Riuso <strong>lo stesso dato</strong> dopo poco tempo.</p>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px;">
+          <span style="color:var(--muted);">Esempio:</span><br>
+          A[5], A[5], A[5], A[5]
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Accedo ripetutamente alla stessa identica cella di memoria, senza spostarmi su quelle vicine.</p>
+      </div>
+
+      <!-- Entrambe -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">Entrambe (Mix)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Uso dati <strong>vicini</strong> e li <strong>riuso</strong>.</p>
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px;">
+          <span style="color:var(--muted);">Esempio:</span><br>
+          Scorro più volte lo stesso array
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Come in un algoritmo di ordinamento: leggo posizioni adiacenti e le rileggo più volte durante l'esecuzione.</p>
+      </div>
+
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:0 0 16px; color:var(--accent);">2. Formato Fisso vs Variabile delle Istruzioni</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">La lunghezza delle istruzioni influenza direttamente quanto è semplice per il processore prelevarle (<em>fetch</em>) e capirle (<em>decode</em>).</p>
+
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      
+      <!-- Formato Fisso -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">Formato Fisso (es. RISC-V)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Tutte le istruzioni sono lunghe uguali (es. <strong>32 bit = 4 byte</strong>).</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:16px;">
+          <span style="color:var(--muted);">PC = 0x1000 &rarr; Istr 1 (4 byte)</span><br>
+          <span style="color:var(--muted);">PC = 0x1004 &rarr; Istr 2 (4 byte)</span><br>
+          <span style="color:var(--muted);">PC = 0x1008 &rarr; Istr 3 (4 byte)</span>
+        </div>
+
+        <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:8px;">Vantaggi (Cosa ricordare):</strong>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0 0 12px 0;">
+          <li><strong style="color:var(--green);">Fetch semplice:</strong> il PC aumenta in modo prevedibile (+4).</li>
+          <li><strong style="color:var(--green);">Decode semplice:</strong> l'hardware sa sempre dove si trovano i vari bit.</li>
+          <li><strong style="color:var(--green);">Pipeline regolare:</strong> flusso costante, senza ritardi di decodifica.</li>
+        </ul>
+      </div>
+
+      <!-- Formato Variabile -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">Formato Variabile (es. x86)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Le istruzioni hanno dimensioni diverse a seconda del tipo (es. da 1 a 15 byte).</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:16px;">
+          <span style="color:var(--muted);">Istruzione 1 &rarr; 2 byte</span><br>
+          <span style="color:var(--muted);">Istruzione 2 &rarr; 5 byte</span><br>
+          <span style="color:var(--muted);">Istruzione 3 &rarr; 1 byte</span>
+        </div>
+
+        <strong style="font-size:13px; color:var(--text); display:block; margin-bottom:8px;">Caratteristiche:</strong>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0 0 12px 0;">
+          <li><strong style="color:var(--red);">Hardware complesso:</strong> deve decodificare un'istruzione prima di sapere dove inizia la successiva.</li>
+          <li><strong style="color:var(--green);">Codice Compatto:</strong> il codice totale occupa meno memoria perché le operazioni semplici usano pochissimi byte.</li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Miti da sfatare all'esame -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--purple); margin-bottom:24px;">
+      <h4 style="margin-top:0; color:var(--purple); font-size:15px; margin-bottom:12px;">🚫 Miti da sfatare (Risposte Sbagliate Frequenti)</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.6; margin-bottom:16px;">Se all'esame ti chiedono i vantaggi del formato fisso (RISC-V), <strong>non farti fregare</strong> da queste opzioni:</p>
+      
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+          <strong style="font-size:13px; color:var(--red);">Falso: "Riduce la dimensione totale del codice"</strong>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0; line-height:1.4;">Sbagliato! Un formato fisso a 32 bit costringe <em>tutte</em> le istruzioni a occupare 4 byte, anche se basterebbe meno. Il codice a lunghezza variabile è di solito più "compatto" in memoria.</p>
+        </div>
+        
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+          <strong style="font-size:13px; color:var(--red);">Falso: "Elimina la necessità di allineamento"</strong>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0; line-height:1.4;">Sbagliato! Al contrario, il fatto che siano fisse a 32 bit (4 byte) implica solitamente che debbano essere rigorosamente allineate ad indirizzi multipli di 4.</p>
+        </div>
+
+        <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+          <strong style="font-size:13px; color:var(--red);">Falso: "Permette valori immediati più grandi in tutte le istruzioni"</strong>
+          <p style="font-size:12px; color:var(--muted); margin:4px 0 0; line-height:1.4;">Sbagliato! Avendo solo 32 bit in totale per definire opcode, registri e funct, rimane poco spazio per il numero immediato (es. massimo 12 bit per una addi).</p>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">3. L'Illusione della Portabilità in Assembly</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Un falso mito ricorrente nei quiz è che l'Assembly o i moduli eseguibili offrano uno "standard comune" per la portabilità tra diverse architetture. Questo è categoricamente sbagliato: <strong>ogni architettura ha la sua ISA (Instruction Set Architecture) unica.</strong></p>
+
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      
+      <!-- Assembly Non Portabile -->
+      <div class="card" style="border-left:4px solid var(--red);">
+        <h4 style="font-size:16px; color:var(--red); margin-bottom:12px;">Assembly = Specifico dell'ISA</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Istruzioni, registri e codifica binaria dipendono 100% dal processore (es. x86, ARM, RISC-V).</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px;">
+          <span style="color:var(--muted);">In RISC-V:</span> <span style="color:var(--green);">add x3, x1, x2</span><br><br>
+          <span style="color:var(--muted);">In x86:</span> <span style="color:var(--blue);">add eax, ebx</span>
+        </div>
+
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0;">Un modulo eseguibile compilato per RISC-V contiene <strong>codice macchina RISC-V</strong> e non potrà mai girare direttamente su x86. Formati come ELF o PE strutturano il file, ma non rendono "magico" il codice al loro interno!</p>
+      </div>
+
+      <!-- Linguaggi ad Alto Livello (Portabilità) -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h4 style="font-size:16px; color:var(--green); margin-bottom:12px;">Alto Livello = Portabilità (del Sorgente)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">La portabilità si ottiene scrivendo in linguaggi superiori (C, Java). Il <strong>codice sorgente</strong> (es. <code>a = b + c;</code>) è portabile, ma va ricompilato.</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+          <div><span style="color:var(--muted);">Sorgente C</span> &rarr; Compiler RISC-V &rarr; <strong style="color:var(--green);">Eseguibile RISC-V</strong></div>
+          <div><span style="color:var(--muted);">Sorgente C</span> &rarr; Compiler x86 &rarr; <strong style="color:var(--blue);">Eseguibile x86</strong></div>
+        </div>
+
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0;">Il risultato finale non è universale, ma è sempre un <strong>modulo eseguibile diverso</strong> per ciascuna architettura.</p>
+      </div>
+
+    </div>
+
+    <!-- Miti da sfatare all'esame -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--purple); margin-bottom:24px;">
+      <h4 style="margin-top:0; color:var(--purple); font-size:15px; margin-bottom:12px;">🚫 Risposta Sbagliata Frequente</h4>
+      <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+        <strong style="font-size:13px; color:var(--red);">Falso: "L'Assembly segue uno standard comune per permettere la portabilità del modulo eseguibile tra architetture diverse"</strong>
+        <p style="font-size:13px; color:var(--muted); margin:8px 0 0; line-height:1.5;">Assolutamente falso! La frase corretta da ricordare è: <em>"Il linguaggio assemblativo è specifico di una determinata ISA, quindi NON garantisce la portabilità del modulo eseguibile tra architetture diverse."</em></p>
+      </div>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">4. Il Rapporto tra Assembly e ISA</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">I quiz possono confondere usando "istruzioni ISA" e "istruzioni Assembly" come termini separati. In realtà sono intimamente legati: l'Assembly è la forma testuale leggibile, l'ISA ne definisce l'astrazione e le regole, e il codice macchina è la vera forma binaria letta dal processore.</p>
+
+    <div class="card-grid cols2" style="margin-bottom:32px;">
+      
+      <!-- La corrispondenza -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">Corrispondenza 1 a 1</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Esiste <strong>tipicamente</strong> una corrispondenza uno-a-uno tra le istruzioni reali in Assembly e la codifica binaria (codice macchina) dell'ISA.</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px; display:flex; flex-direction:column; gap:8px;">
+          <div><span style="color:var(--muted); width:120px; display:inline-block;">Testo (Assembly)</span> <span style="color:var(--blue);">add x3, x1, x2</span></div>
+          <div><span style="color:var(--muted); width:120px; display:inline-block;">Regola (ISA)</span> <span style="color:var(--green);">x3 = x1 + x2</span></div>
+          <div><span style="color:var(--muted); width:120px; display:inline-block;">Binario (Macchina)</span> <span style="font-size:10px; color:var(--text); word-wrap:break-word;">00000000001000001000000110110011</span></div>
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Ogni istruzione reale che scrivi in Assembly si traduce in un'istruzione ISA che il processore capisce ed esegue direttamente.</p>
+      </div>
+
+      <!-- Le eccezioni -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:12px;">Perché "Tipicamente"? (Pseudo-istruzioni)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">La parola "tipicamente" è usata perché l'eccezione è rappresentata dalle <strong>pseudo-istruzioni</strong>. Sono "scorciatoie" di testo.</p>
+        
+        <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--text); background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; margin-bottom:12px;">
+          <span style="color:var(--muted);">Scrivi:</span> <span style="color:var(--amber);">li x5, 10</span> (Load Immediate)<br><br>
+          <span style="color:var(--muted);">L'Assembler traduce in:</span><br>
+          <span style="color:var(--green);">addi x5, x0, 10</span> (1 vera istruzione ISA)
+        </div>
+        <p style="font-size:12px; color:var(--muted); line-height:1.4; margin:0;">Se il numero immediato fosse stato gigante, l'assemblatore avrebbe potuto espandere la singola <code>li</code> testuale in <strong>due</strong> vere istruzioni ISA (es. <code>lui</code> + <code>addi</code>).</p>
+      </div>
+
+    </div>
+
+    <!-- Miti da sfatare all'esame -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--purple);">
+      <h4 style="margin-top:0; color:var(--purple); font-size:15px; margin-bottom:12px;">🚫 Risposta Sbagliata Frequente</h4>
+      <div style="background:rgba(0,0,0,0.2); padding:12px; border-radius:6px; border-left:3px solid var(--red);">
+        <strong style="font-size:13px; color:var(--red);">Falso: "Un'istruzione ISA corrisponde tipicamente a diverse istruzioni assembly"</strong>
+        <p style="font-size:13px; color:var(--muted); margin:8px 0 0; line-height:1.5;">Di base è falso, al massimo capita l'opposto con le pseudo-istruzioni! La risposta corretta da ricordare è: <em>"Esiste tipicamente una corrispondenza uno-a-uno tra le istruzioni del linguaggio assembly e le istruzioni ISA."</em></p>
+      </div>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">5. Casi d'Uso del Modulo ImmGen</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Il modulo <strong>ImmGen</strong> (Immediate Generator) nel datapath RISC-V entra in gioco ogni volta che un'istruzione ha una costante (immediato) nascosta nei suoi bit. Il suo compito è estrarre questi bit, ricomporli nel formato corretto ed estenderli a 32 bit (solitamente tramite <em>sign-extension</em>).</p>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      
+      <!-- Immediate -->
+      <div class="card" style="border-left:4px solid var(--purple);">
+        <h4 style="font-size:16px; color:var(--purple); margin-bottom:8px;">1. Istruzioni Immediate (Tipo I)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;">Es: <code style="color:var(--text);">addi x5, x6, 10</code></p>
+        <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+          <ul style="font-size:12px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0;">
+            <li><strong style="color:var(--text);">Uso:</strong> Fornisce il secondo operando alla ALU.</li>
+            <li><strong style="color:var(--text);">Calcolo:</strong> <code>x5 = x6 + 10</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Load -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:8px;">2. Load (Tipo I)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;">Es: <code style="color:var(--text);">lw x5, 8(x6)</code></p>
+        <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+          <ul style="font-size:12px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0;">
+            <li><strong style="color:var(--text);">Uso:</strong> Diventa l'offset aggiunto al registro base.</li>
+            <li><strong style="color:var(--text);">Calcolo:</strong> <code>indirizzo = x6 + 8</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Store -->
+      <div class="card" style="border-left:4px solid var(--green);">
+        <h4 style="font-size:16px; color:var(--green); margin-bottom:8px;">3. Store (Tipo S)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;">Es: <code style="color:var(--text);">sw x5, 12(x6)</code></p>
+        <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+          <ul style="font-size:12px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0;">
+            <li><strong style="color:var(--text);">Uso:</strong> Identico alla Load, calcola l'offset per l'indirizzo in memoria.</li>
+            <li><strong style="color:var(--text);">Calcolo:</strong> <code>indirizzo = x6 + 12</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Branch -->
+      <div class="card" style="border-left:4px solid var(--amber);">
+        <h4 style="font-size:16px; color:var(--amber); margin-bottom:8px;">4. Branch (Tipo SB)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:8px;">Es: <code style="color:var(--text);">beq x1, x2, label</code></p>
+        <div style="background:rgba(0,0,0,0.2); padding:10px; border-radius:6px;">
+          <ul style="font-size:12px; color:var(--muted); line-height:1.5; padding-left:16px; margin:0;">
+            <li><strong style="color:var(--text);">Uso:</strong> Offset aggiunto al PC corrente per saltare.</li>
+            <li><strong style="color:var(--text);">Calcolo:</strong> Se <code>x1 == x2</code> &rarr; <code>Nuovo PC = PC + offset</code></li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Quando NON si usa -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; border-left:4px solid var(--red);">
+      <h4 style="margin-top:0; color:var(--red); font-size:15px; margin-bottom:12px;">🚫 Quando l'ImmGen NON serve (Istruzioni R-Type)</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.5; margin:0;">
+        Le istruzioni puramente aritmetiche e logiche tra registri (come <code>add x5, x6, x7</code>, <code>sub</code>, <code>and</code>, ecc.) <strong>non usano l'ImmGen</strong>. In questi casi, tutti gli operandi necessari alla ALU provengono direttamente dai registri, e non c'è nessuna costante cablata nei bit dell'istruzione da dover estrarre!
+      </p>
+    </div>
+
+    <h3 style="font-size:18px; font-weight:600; margin:32px 0 16px; color:var(--accent);">6. Il Collo di Bottiglia del Single-Cycle</h3>
+    <p style="font-size:14px; color:var(--text); line-height:1.6; margin-bottom:24px;">Nel datapath Single-Cycle, la regola aurea è: <strong>tutte le istruzioni durano esattamente 1 ciclo di clock</strong>. Il clock agisce come un metronomo globale inesorabile. Questo crea un inevitabile "spreco" di tempo per le istruzioni più veloci.</p>
+
+    <!-- Visualizzazione Spreco -->
+    <div style="background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:24px;">
+      <h4 style="margin-top:0; color:var(--accent); font-size:15px; margin-bottom:12px;">⌚ L'effetto "Attesa al Semaforo"</h4>
+      <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:16px;">Se il periodo di clock è costretto a essere tarato sull'istruzione più lenta (es. <code>900 ps</code>), un'istruzione più veloce (es. Tipo R da <code>700 ps</code>) finirà di propagare i suoi segnali elettrici in anticipo, ma <strong>dovrà aspettare il prossimo "tick" del clock</strong> per salvare definitivamente i risultati e passare all'istruzione successiva.</p>
+      
+      <div style="font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); background:rgba(0,0,0,0.2); padding:16px; border-radius:8px; overflow-x:auto;">
+        <span style="color:var(--muted);">0 ps &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 700 ps &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 900 ps</span><br>
+        <span style="color:var(--green);">|--------------------|</span><span style="color:var(--red);">----------|</span><br>
+        <span style="color:var(--text);">Inizio</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--green);">Risultato</span> &nbsp;&nbsp; <span style="color:var(--accent);">Fronte Clock</span><br>
+        <span style="color:var(--text);">Istruzione</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--green);">Pronto</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span style="color:var(--accent);">(Scrittura Registri / Prox PC)</span>
+      </div>
+      <p style="font-size:12px; color:var(--red); line-height:1.4; margin:12px 0 0;">Il "buco rosso" (da 700ps a 900ps) è tempo <strong>sprecato</strong>. Il processore Single-Cycle base non possiede la logica per accorgersi di aver finito in anticipo. Deve obbedire al metronomo e attendere lo scadere dei 900ps.</p>
+    </div>
+
+    <div class="card-grid cols2" style="margin-bottom:24px;">
+      
+      <!-- Single Cycle -->
+      <div class="card" style="border-left:4px solid var(--red);">
+        <h4 style="font-size:16px; color:var(--red); margin-bottom:12px;">CPU Single-Cycle Classica</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Semplice da progettare, ma poco ottimizzata.</p>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0;">
+          <li>Ogni istruzione dura esattamente <strong>1 ciclo</strong>.</li>
+          <li>Tutti i cicli hanno <strong>la stessa identica durata</strong>.</li>
+          <li>Il clock è vincolato alla <strong>latenza massima</strong> (deve aspettare l'istruzione più lenta in assoluto, solitamente la <code>lw</code>).</li>
+        </ul>
+      </div>
+
+      <!-- Clock Variabile Ideale -->
+      <div class="card" style="border-left:4px solid var(--blue);">
+        <h4 style="font-size:16px; color:var(--blue); margin-bottom:12px;">CPU a Clock Variabile (Modello)</h4>
+        <p style="font-size:13px; color:var(--text); line-height:1.5; margin-bottom:12px;">Un modello teorico ideale usato negli esercizi.</p>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.6; padding-left:16px; margin:0;">
+          <li>Ogni istruzione dura sempre <strong>1 ciclo</strong>.</li>
+          <li>Ma <strong>la durata del ciclo cambia magicamente</strong> adattandosi al tempo reale necessario all'istruzione.</li>
+          <li>Il tempo totale diventa una <strong>media pesata</strong> delle latenze reali.</li>
+        </ul>
+      </div>
+
     </div>
   </section>
 
